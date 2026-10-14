@@ -553,7 +553,7 @@ function clashBadgeHtml(ev,clickable){
 function eventPaymentStatus(t){
   const items=[...(t.flights||[]),...(t.hotels||[]),...(t.activities||[]),...(t.transport||[])];
   if(!items.length)return null;
-  const withPay=items.filter(i=>i.depositAmount||i.paymentDueDate||i.fullyPaid);
+  const withPay=items.filter(i=>i.depositAmount||i.fullPaymentAmount||i.paymentDueDate||i.fullyPaid);
   if(!withPay.length)return null;
   const allPaid=withPay.every(i=>i.fullyPaid==='yes');
   const td=new Date().toISOString().slice(0,10);
@@ -1677,6 +1677,9 @@ function rActs(t){
         ${a.duration?`<div class="eg"><span class="ek">Duration</span><span class="ev">${esc(a.duration)}</span></div>`:''}
         ${a.cost?`<div class="eg"><span class="ek">Cost</span><span class="ev">${esc(a.currency)} ${parseFloat(a.cost).toLocaleString()}</span></div>`:''}
         ${a.bookingDetails?`<div class="eg"><span class="ek">Booking</span><span class="ev">${esc(a.bookingDetails)}</span></div>`:''}
+        ${a.fullPaymentAmount?`<div class="eg"><span class="ek">Full Payment</span><span class="ev">${esc(a.fullPaymentCurrency||a.currency)} ${parseFloat(a.fullPaymentAmount).toLocaleString()}</span></div>`:''}
+        ${a.depositAmount?`<div class="eg"><span class="ek">Deposit</span><span class="ev">${esc(a.depositCurrency||a.currency)} ${parseFloat(a.depositAmount).toLocaleString()}${a.depositPaid==='yes'?' (paid)':''}</span></div>`:''}
+        ${a.fullPaymentAmount&&a.depositAmount&&(a.fullPaymentCurrency||a.currency)===(a.depositCurrency||a.currency)?`<div class="eg"><span class="ek">Balance</span><span class="ev">${esc(a.fullPaymentCurrency||a.currency)} ${(parseFloat(a.fullPaymentAmount)-parseFloat(a.depositAmount)).toLocaleString()}</span></div>`:''}
       </div>
       ${a.notes?`<div style="margin-top:6px;font-size:11px;color:var(--text2)">${esc(a.notes)}</div>`:''}
       ${a.ocrText?`<details style="margin-top:6px"><summary style="font-size:11px;color:var(--primary);cursor:pointer">OCR Text</summary><div class="ocr-out">${esc(a.ocrText)}</div></details>`:''}
@@ -2460,7 +2463,7 @@ function buildItineraryItems(t,opts){
   const items=[];
   const fmtD2=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
   const fmtT2=dt=>{if(!dt)return '';try{const d2=new Date(dt.includes('T')?dt:dt.replace(' ','T'));if(isNaN(d2))return dt;return d2.toLocaleTimeString('en-GB',{hour:'numeric',minute:'2-digit',hour12:true});}catch(e){return dt;}};
-  const payDet=(e)=>{const r=[];if(!incPayments)return r;if(e.depositAmount)r.push(['Deposit',`${e.currency||'SGD'} ${e.depositAmount}${e.depositPaid==='true'?' (Paid)':' (Unpaid)'}`]);if(e.depositDate)r.push(['Deposit Date',fmtD2(e.depositDate)]);if(e.paymentDueDate)r.push(['Payment Due',fmtD2(e.paymentDueDate)]);if(e.fullyPaid==='true')r.push(['Status','Fully Paid']);return r;};
+  const payDet=(e)=>{const r=[];if(!incPayments)return r;if(e.fullPaymentAmount)r.push(['Full Payment',`${e.fullPaymentCurrency||e.currency||'SGD'} ${e.fullPaymentAmount}`]);if(e.depositAmount)r.push(['Deposit',`${e.depositCurrency||e.currency||'SGD'} ${e.depositAmount}${e.depositPaid==='yes'?' (Paid)':' (Unpaid)'}`]);if(e.depositDate)r.push(['Deposit Date',fmtD2(e.depositDate)]);if(e.paymentDueDate)r.push(['Payment Due',fmtD2(e.paymentDueDate)]);if(e.fullyPaid==='yes')r.push(['Status','Fully Paid']);return r;};
   if(secs.includes('flights'))(t.flights||[]).forEach(f=>{
     const d=f.departureTime?(f.departureTime.includes('T')?f.departureTime.split('T')[0]:f.departureTime.split(' ')[0]):'';
     if(!inRange(d||t.startDate))return;
@@ -2673,7 +2676,7 @@ function genItineraryXLSX(t,opts){
   const flds=opts.fields||['costs','booking','notes'];
   if(flds.includes('notes'))hdr.push('Notes');
   if(incCost)hdr.push('Cost','Currency');
-  if(incPayments)hdr.push('Deposit','Deposit Paid','Payment Due','Fully Paid');
+  if(incPayments)hdr.push('Full Payment','Deposit','Deposit Date','Payment Due','Fully Paid');
   const rows=[hdr];
   const items=buildItineraryItems(t,opts);
   const evStart=new Date(t.startDate+'T00:00:00');
@@ -2683,11 +2686,12 @@ function genItineraryXLSX(t,opts){
     if(flds.includes('notes'))r.push(it.details.find(d=>d[0]==='Notes')?it.details.find(d=>d[0]==='Notes')[1]:'');
     if(incCost)r.push(it.cost||'',it.currency);
     if(incPayments){
+      const full=it.details.find(d=>d[0]==='Full Payment');
       const dep=it.details.find(d=>d[0]==='Deposit');
       const depDate=it.details.find(d=>d[0]==='Deposit Date');
       const pmtDue=it.details.find(d=>d[0]==='Payment Due');
       const status=it.details.find(d=>d[0]==='Status');
-      r.push(dep?dep[1]:'',depDate?depDate[1]:'',pmtDue?pmtDue[1]:'',status?status[1]:'');
+      r.push(full?full[1]:'',dep?dep[1]:'',depDate?depDate[1]:'',pmtDue?pmtDue[1]:'',status?status[1]:'');
     }
     rows.push(r);
   });
@@ -2696,7 +2700,7 @@ function genItineraryXLSX(t,opts){
   ws2['!cols']=[{wch:5},{wch:16},{wch:11},{wch:30},{wch:40},{wch:22}];
   if(flds.includes('notes'))ws2['!cols'].push({wch:25});
   if(incCost)ws2['!cols'].push({wch:10},{wch:8});
-  if(incPayments)ws2['!cols'].push({wch:18},{wch:12},{wch:14},{wch:10});
+  if(incPayments)ws2['!cols'].push({wch:18},{wch:18},{wch:12},{wch:14},{wch:10});
   XLSX.utils.book_append_sheet(wb,ws2,'Itinerary');
 
   const fn=t.name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'-').toLowerCase();
@@ -3650,12 +3654,16 @@ function parseBookingText(rawTxt){
 }
 
 // ===== PAYMENT TRACKING =====
-function paymentHtml(e){
-  e=e||{};
-  const hasPay=!!(e.depositAmount||e.depositDate||e.depositPaid||e.paymentDueDate||e.fullyPaid);
+function paymentHtml(e,opts){
+  e=e||{};opts=opts||{};
+  const baseCur=e.currency||'SGD';
+  const hasPay=!!(e.depositAmount||e.depositDate||e.depositPaid||e.paymentDueDate||e.fullyPaid||e.fullPaymentAmount);
   return `<button type="button" class="form-details-toggle${hasPay?' open':''}" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')" style="grid-column:1/-1"><span class="fdt-arrow">▶</span> Payment tracking</button>
     <div class="form-details${hasPay?' open':''}" style="grid-column:1/-1"><div class="fg">
+      ${opts.fullPayment?`<div class="fi"><label>Full Payment Amount <span style="font-weight:400;color:var(--text3)">(incl. deposit)</span></label><input class="fc" type="number" step="0.01" name="fullPaymentAmount" value="${e.fullPaymentAmount||''}"></div>
+      <div class="fi"><label>Full Payment Currency</label>${curSel(e.fullPaymentCurrency||baseCur,'fullPaymentCurrency')}</div>`:''}
       <div class="fi"><label>Deposit Amount</label><input class="fc" type="number" step="0.01" name="depositAmount" value="${e.depositAmount||''}"></div>
+      <div class="fi"><label>Deposit Currency</label>${curSel(e.depositCurrency||baseCur,'depositCurrency')}</div>
       <div class="fi"><label>Deposit Date</label><input class="fc" type="date" name="depositDate" value="${e.depositDate||''}"></div>
       <div class="fi"><label>Deposit Paid?</label><select class="fc" name="depositPaid"><option value=""${!e.depositPaid?' selected':''}>—</option><option value="yes"${e.depositPaid==='yes'?' selected':''}>Yes</option><option value="no"${e.depositPaid==='no'?' selected':''}>No</option></select></div>
       <div class="fi"><label>Payment Due</label><input class="fc" type="date" name="paymentDueDate" value="${e.paymentDueDate||''}"></div>
@@ -3663,7 +3671,11 @@ function paymentHtml(e){
     </div></div>`;
 }
 function gatherPayment(g){
-  return{depositAmount:g('depositAmount'),depositDate:g('depositDate'),depositPaid:g('depositPaid'),paymentDueDate:g('paymentDueDate'),fullyPaid:g('fullyPaid')};
+  const m=document.querySelector('.modal'),opt=n=>m&&m.querySelector(`[name="${n}"]`)?g(n):undefined;
+  const r={depositAmount:g('depositAmount'),depositCurrency:g('depositAmount')?g('depositCurrency'):'',depositDate:g('depositDate'),depositPaid:g('depositPaid'),paymentDueDate:g('paymentDueDate'),fullyPaid:g('fullyPaid')};
+  const fp=opt('fullPaymentAmount');
+  if(fp!==undefined){r.fullPaymentAmount=fp;r.fullPaymentCurrency=fp?g('fullPaymentCurrency'):'';}
+  return r;
 }
 
 // ===== FORM MODALS =====
@@ -3857,7 +3869,7 @@ function fAct(ev,a){
       <div class="fi full"><label>Booking Details</label><input class="fc" name="bd" value="${esc(a.bookingDetails||'')}"></div>
       <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(a.notes||'')}</textarea></div>
     </div></div>
-    ${paymentHtml(a)}
+    ${paymentHtml(a,{fullPayment:true})}
     ${dzHtml(dz)}
   </div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
