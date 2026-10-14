@@ -1675,7 +1675,7 @@ function rActs(t){
         ${a.date&&a.endDate?`<div class="eg"><span class="ek">Dates</span><span class="ev">${fmt(a.date)} — ${fmt(a.endDate)} (${calcNights(a.date,a.endDate)||'?'}d)</span></div>`:a.date?`<div class="eg"><span class="ek">Date</span><span class="ev">${fmt(a.date)}</span></div>`:''}
         ${a.time?`<div class="eg"><span class="ek">Time</span><span class="ev">${esc(a.time)}</span></div>`:''}
         ${a.duration?`<div class="eg"><span class="ek">Duration</span><span class="ev">${esc(a.duration)}</span></div>`:''}
-        ${a.cost?`<div class="eg"><span class="ek">Cost</span><span class="ev">${esc(a.currency)} ${parseFloat(a.cost).toLocaleString()}</span></div>`:''}
+        ${a.cost&&!a.fullPaymentAmount?`<div class="eg"><span class="ek">Cost</span><span class="ev">${esc(a.currency)} ${parseFloat(a.cost).toLocaleString()}</span></div>`:''}
         ${a.bookingDetails?`<div class="eg"><span class="ek">Booking</span><span class="ev">${esc(a.bookingDetails)}</span></div>`:''}
         ${a.fullPaymentAmount?`<div class="eg"><span class="ek">Full Payment</span><span class="ev">${esc(a.fullPaymentCurrency||a.currency)} ${parseFloat(a.fullPaymentAmount).toLocaleString()}</span></div>`:''}
         ${a.depositAmount?`<div class="eg"><span class="ek">Deposit</span><span class="ev">${esc(a.depositCurrency||a.currency)} ${parseFloat(a.depositAmount).toLocaleString()}${a.depositPaid==='yes'?' (paid)':''}</span></div>`:''}
@@ -3875,6 +3875,8 @@ function fAct(ev,a){
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
     const oE=document.getElementById('or-'+dz);
     const d={name:g('name'),location:g('loc'),date:g('date'),endDate:g('endDate'),time:g('time'),duration:g('dur'),cost:g('cost'),currency:g('currency'),rateToSGD:snapRate(g('currency')),bookingDetails:g('bd'),notes:g('notes'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:a.ocrText)||'',...gatherPayment(g)};
+    // Full payment (incl. deposit) replaces the activity's cost
+    if(d.fullPaymentAmount){d.cost=d.fullPaymentAmount;d.currency=d.fullPaymentCurrency;d.rateToSGD=snapRate(d.currency);}
     if(e)Object.assign(a,d);else ev.activities.push({id:uid(),...d});
     saveS();render();toast(e?'Activity updated':'Activity added');
   });
@@ -3882,6 +3884,10 @@ function fAct(ev,a){
   setTimeout(()=>{
     const m=document.querySelector('.modal');if(!m)return;
     const sd=m.querySelector('[name="date"]'),ed=m.querySelector('[name="endDate"]'),dy=m.querySelector('[name="days"]');
+    // Full payment (incl. deposit) drives Cost: mirror it and lock the Cost fields while set
+    const fpA=m.querySelector('[name="fullPaymentAmount"]'),fpC=m.querySelector('[name="fullPaymentCurrency"]'),cA=m.querySelector('[name="cost"]'),cC=m.querySelector('[name="currency"]');
+    const syncCost=()=>{const on=!!fpA.value;if(on){cA.value=fpA.value;cC.value=fpC.value;}cA.readOnly=on;cC.style.pointerEvents=on?'none':'';cA.style.opacity=cC.style.opacity=on?'.6':'';cA.title=cC.title=on?'Set by Full Payment Amount':'';};
+    fpA.addEventListener('input',syncCost);fpC.addEventListener('change',syncCost);syncCost();
     const syncDays=()=>{if(sd.value&&ed.value){const n=calcNights(sd.value,ed.value);if(n)dy.value=n;}};
     const syncEnd=()=>{if(sd.value&&dy.value&&parseInt(dy.value)>0){const d=new Date(sd.value+'T00:00:00');d.setDate(d.getDate()+parseInt(dy.value));ed.value=d.toISOString().slice(0,10);}};
     sd.addEventListener('change',()=>{if(dy.value&&!ed.value)syncEnd();else syncDays();});
