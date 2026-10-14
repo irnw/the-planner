@@ -2930,12 +2930,14 @@ function autoFillForm(txt,dzId){
     setTimeout(()=>{const ci=m.querySelector('[name="ci"]'),co=m.querySelector('[name="co"]'),ni=m.querySelector('[name="nights"]');if(ci&&co&&ni&&ci.value&&co.value&&!ni.value){const n=calcNights(ci.value,co.value);if(n)ni.value=n;}},100);
   }else if(m.querySelector('[name="loc"]')&&!m.querySelector('[name="type"]')){
     // Activity form
-    s('name',parsed.name);s('loc',parsed.locations?parsed.locations[0]:'');
+    s('name',parsed.title||parsed.name);s('time',suTime24(parsed.departureTime));s('loc',parsed.locations?parsed.locations[0]:'');
     s('date',parsed.date);s('cost',parsed.cost);s('bd',parsed.pnr||parsed.bookingNumber);
     if(parsed.currency){const cEl=m.querySelector('[name="currency"]');if(cEl)cEl.value=parsed.currency;}
   }else if(m.querySelector('[name="type"]')){
     // Transport form
-    s('name',parsed.name);s('loc',parsed.locations?parsed.locations[0]:'');
+    s('name',parsed.provider||parsed.name);s('time',suTime24(parsed.departureTime));
+    if(parsed.transportType){const tEl=m.querySelector('[name="type"]');if(tEl)tEl.value=parsed.transportType;}
+    if(parsed.title&&parsed.title!==parsed.provider)s('notes',parsed.title);s('loc',parsed.locations?parsed.locations[0]:'');
     s('date',parsed.date);s('cost',parsed.cost);s('bd',parsed.pnr||parsed.bookingNumber);
     if(parsed.currency){const cEl=m.querySelector('[name="currency"]');if(cEl)cEl.value=parsed.currency;}
   }
@@ -3189,8 +3191,8 @@ function showSmartUpload(){
       }else{
         const entry={id:uid(),cost:parsed.cost||'',currency:parsed.currency||'SGD',rateToSGD:snapRate(parsed.currency||'SGD'),notes:parsed.rawText?'[Auto-extracted]':'',ocrText:parsed.rawText||''};
         if(type==='hotel'){Object.assign(entry,{name:parsed.hotelName||parsed.name||'',bookingNumber:parsed.bookingNumber||parsed.pnr||'',website:'',checkIn:parsed.date||'',checkOut:parsed.dateTo||''});ev.hotels.push(entry);}
-        else if(type==='activity'){Object.assign(entry,{name:parsed.name||'',location:parsed.locations?parsed.locations[0]:'',date:parsed.date||'',time:'',duration:'',bookingDetails:parsed.pnr||''});ev.activities.push(entry);}
-        else{Object.assign(entry,{type:'Other',name:parsed.name||'',location:parsed.locations?parsed.locations[0]:'',date:parsed.date||'',time:'',duration:'',bookingDetails:parsed.pnr||''});ev.transport.push(entry);}
+        else if(type==='activity'){Object.assign(entry,{name:parsed.title||parsed.name||'',location:parsed.locations?parsed.locations[0]:'',date:parsed.date||'',time:suTime24(parsed.departureTime),duration:'',bookingDetails:parsed.pnr||''});ev.activities.push(entry);}
+        else{Object.assign(entry,{type:parsed.transportType||'Other',name:parsed.provider||parsed.name||'',location:parsed.locations?parsed.locations[0]:'',date:parsed.date||'',time:suTime24(parsed.departureTime),duration:'',bookingDetails:parsed.pnr||'',notes:parsed.title&&parsed.title!==parsed.provider?parsed.title:entry.notes});ev.transport.push(entry);}
       }
       const tab=type==='flight'?'flights':type==='hotel'?'hotels':type==='activity'?'activities':'transport';
       toast(type==='flight'?`${legs.length} flight${legs.length>1?'s':''} added to ${ev.name}`:'Added to '+ev.name);
@@ -3870,7 +3872,7 @@ function _extractCost(txt,r){
   if(r.cost&&!r.currency){
     const totalCtx=txt.match(/(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare|Charge[ds]?|Paid|Due|Payable)?)\s*[:#]?\s*(.{0,30})/i);
     if(totalCtx){const ctx=totalCtx[1].toLowerCase();
-      for(const[sym,iso]of Object.entries(CURRENCY_SYMBOLS)){if(ctx.includes(sym)){r.currency=iso;break;}}}
+      for(const[sym,iso]of Object.entries(CURRENCY_SYMBOLS).sort((a,b)=>b[0].length-a[0].length)){if(ctx.includes(sym)){r.currency=iso;break;}}}
   }
   // Fallback: any "MYR 95.04" or "IDR 2,320,000" pattern
   if(!r.cost){const cm=txt.match(/(SGD|USD|MYR|IDR|EUR|GBP|THB|PHP|AUD)\s*([\d,]+\.?\d*)/i);if(cm){r.currency=cm[1].toUpperCase();r.cost=cm[2].replace(/,/g,'');}}
@@ -3912,12 +3914,30 @@ function parseBookingText(rawTxt){
     /\b(HOTEL|RESORT|HOSTEL|VILLA|INN|GUESTHOUSE|BUNGALOW|HOMESTAY|LODGE|APARTMENT|ACCOMMODATION)\b/i.test(txt)||
     (/\bcheck.?in\b/i.test(txt)&&/\bcheck.?out\b/i.test(txt)&&/\b\d+\s*nights?\b/i.test(txt))||
     /\byour\s+booking\s+in\b/i.test(txt)||/\bexpecting\s+you\b/i.test(txt);
-  const flightKw=/\b(FLIGHT|BOARDING\s*PASS|E-?TICKET|ITINERARY\s*(?:RECEIPT)?|AIRLINE|GATE\s*\d|TERMINAL\s*\d|BAGGAGE\s*ALLOW|FLIGHT\s*DURATION|FLIGHT\s*SUMMARY)\b/i.test(txt)||
-    new RegExp('\\b(?:'+_FNCODES+')\\s?\\d{2,5}\\b').test(txt);
+  // Booking/order references ("KL88231") aren't flight numbers
+  const txtNoRefs=txt.replace(/(?:[Bb]ooking|BOOKING|[Oo]rder|ORDER|[Rr]eference|REFERENCE|[Rr]ef\.?|[Cc]onfirmation|CONFIRMATION|[Vv]oucher|PNR)(?:[ \t]+(?:[Rr]eference|REFERENCE|[Rr]ef\.?|[Nn]o\.?|NO\.?|[Nn]umber|NUMBER|ID|[Cc]ode|CODE|#))?[ \t]*[:：#]?[ \t]*[A-Z0-9-]{4,20}\b/g,' ');
+  const strongFlightKw=/\b(FLIGHT|BOARDING\s*PASS|AIRLINE|AIRWAYS|GATE\s*\d|TERMINAL\s*\d|BAGGAGE\s*ALLOW|FLIGHT\s*DURATION|FLIGHT\s*SUMMARY)\b/i.test(txt);
+  const groundKw=/\b(ferry|fast\s*boat|speed\s*boat|train|railway|bus|coach|shuttle|car\s*(?:rental|hire)|KTM|ETS|shinkansen)\b/i.test(txt);
+  const flightKw=strongFlightKw||(!groundKw&&(/\b(E-?TICKET|ITINERARY\s*(?:RECEIPT)?)\b/i.test(txt)||new RegExp('\\b(?:'+_FNCODES+')\\s?\\d{2,5}\\b').test(txtNoRefs)));
+  // Product title on OTA receipts (Trip.com/Klook: "Activity  <title>  Departure time…")
+  const titleM=txt.match(/(?:^|\n|\s{2,})(?:Activity|Product|Item|Ticket|Package)\s*\n?\s{0,4}([A-Z0-9][^\n\[]{8,140}?)(?:\s*\[|\s{2,}|\n|\s+(?:Departure|Date|Travel|Visit|Usage|Pick-?up)\b)/);
+  const title=titleM?titleM[1].trim():'';
+  const transTitleKw=/\b(ferry|boat|speed\s*boat|train|rail(?:way)?|bus|coach|shuttle|transfer|taxi|car\s*(?:rental|hire)|KTM|ETS|shinkansen)\b/i;
+  const transTextKw=/\b(ferry|fast\s*boat|speed\s*boat|train\s*ticket|railway|bus\s*ticket|coach\s*ticket|car\s*(?:rental|hire)|shinkansen|KTM|ETS)\b/i;
   if(hotelKw&&!flightKw)r.type='hotel';
   else if(flightKw)r.type='flight';
+  // Tours that merely include a transfer ("Snorkeling Tour with Boat Transfer") stay activities
+  else if(title?(transTitleKw.test(title)&&!/\b(tour|snorkel\w*|div(?:e|ing)|excursion|experience|class|lesson|admission|museum|safari|hike|trek|day\s*trip)\b/i.test(title)):transTextKw.test(txt))r.type='transport';
   else if(/\b(TOUR|ACTIVITY|EXCURSION|EXPERIENCE|ADMISSION|TICKET|CONCERT|SHOW|EVENT)\b/i.test(txt))r.type='activity';
   else r.type='transport';
+  if(title)r.title=title.replace(/\s+/g,' ').slice(0,100);
+  if(r.type==='transport'){
+    const tt=(title||txt);
+    r.transportType=/ferry/i.test(tt)?'Ferry':/boat/i.test(tt)?'Boat':/train|rail|KTM|ETS|shinkansen/i.test(tt)?'Train':/bus|coach|shuttle/i.test(tt)?'Bus':/car\s*(?:rental|hire)/i.test(tt)?'Car Rental':/taxi|grab|transfer/i.test(tt)?'Taxi/Grab':'Other';
+    // Operator, e.g. "D'STARS Fast Ferry", "Eka Jaya Fast Boat"
+    const opM=tt.match(/((?:[A-Z][A-Za-z'’&.-]*\s){1,3}(?:Fast\s+)?(?:Ferry|Ferries|Boat|Express|Cruises?|Shuttle|Bus|Rail(?:ways?)?|Transport))\b/);
+    if(opM)r.provider=opM[1].trim().replace(/^(?:Lembongan|Penida|Gili|Bali)\s+boat\s+ticket\s+/i,'');
+  }
 
   // ===== 2. Pre-process: strip noise sections for date extraction =====
   const txtClean=txt
@@ -3969,19 +3989,23 @@ function parseBookingText(rawTxt){
   }
 
   // ===== 6. Airport codes & route =====
-  const foundAirports=findAirports(txt);
+  const foundAirports=r.type==='flight'?findAirports(txt):[];// codes like KTM/ETS on train tickets aren't airports
   const distinctAps=[];
   for(const a of foundAirports){if(!distinctAps.length||distinctAps[distinctAps.length-1].code!==a.code)distinctAps.push(a);}
   if(distinctAps.length>=1){r.from=distinctAps[0].city;r.fromCode=distinctAps[0].code;}
   if(distinctAps.length>=2){r.to=distinctAps[1].city;r.toCode=distinctAps[1].code;}
   // Also try "From X to Y" pattern
-  if(!r.from||!r.to){const routeM=txt.match(/\bFrom\s+([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)\s+to\s+([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)\b/);
+  if(!r.from||!r.to){const routeM=txt.match(/\bFrom[ \t]+([A-Z][a-z]+(?:[ \t][A-Z][a-z]+)*)[ \t]+to[ \t]+([A-Z][a-z]+(?:[ \t][A-Z][a-z]+)*)\b/);
     if(routeM){if(!r.from)r.from=routeM[1];if(!r.to)r.to=routeM[2];}}
   // Also try "City → City" or "City to City" from route headers
-  if(!r.from||!r.to){const arrowM=txt.match(/([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)\s*(?:→|->|to)\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)/);
+  if(!r.from||!r.to){const arrowM=txt.match(/([A-Z][a-z]+(?:[ \t][A-Z][a-z]+)*)[ \t]*(?:→|->|\bto\b)[ \t]*([A-Z][a-z]+(?:[ \t][A-Z][a-z]+)*)/);
     if(arrowM){if(!r.from)r.from=arrowM[1];if(!r.to)r.to=arrowM[2];}}
   const locSet=new Set(distinctAps.map(a=>a.city));
-  CITIES.forEach(c=>{if(t.includes(c.toUpperCase()))locSet.add(c);});
+  CITIES.forEach(c=>{
+    if(t.includes(c.toUpperCase())){locSet.add(c);return;}
+    const city=c.split(',')[0].trim();// "Nusa Lembongan" — only distinctive names, to avoid words like "Male"
+    if(city!==c&&(city.includes(' ')||city.length>=7)&&new RegExp('\\b'+city.toUpperCase().replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b').test(t))locSet.add(city);
+  });
   // Extract location from "Your booking in [Location]"
   const bookingLocM=txt.match(/your\s+booking\s+in\s+([A-Z][A-Za-z\s]{2,30})\s+is/i);
   if(bookingLocM)locSet.add(bookingLocM[1].trim());
@@ -4012,6 +4036,11 @@ function parseBookingText(rawTxt){
     // SQ e-ticket: "Saturday 25 Jul 2026" on its own line after airport codes
     if(!r.date){const sqDateM=txt.match(/(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{4})/i);
       if(sqDateM){const d=parseDate(sqDateM[1]);if(d)r.date=d;}}
+  }
+  // Tickets/tours: labelled travel date ("Departure time: Oct 10, 2026", "Travel date …", "Visit date …")
+  if(!r.date&&r.type!=='flight'&&r.type!=='hotel'){
+    const lab=txt.match(/(?:Departure\s*(?:time|date)|Travel\s*date|Visit\s*date|Activity\s*date|Usage\s*date|Date\s*of\s*(?:travel|visit|use)|Pick-?up\s*(?:time|date)|Valid\s*on|Selected\s*date)\s*[:：]?\s*([^\n]{0,50})/i);
+    if(lab){const d=_findDates(lab[1]);if(d[0])r.date=d[0].date;const tm=lab[1].match(/\b(\d{1,2}:\d{2}(?:\s*[AaPp]\.?[Mm]\b)?)/);if(tm)r.departureTime=_hhmm(tm[1]);}
   }
   // Generic date extraction as fallback
   if(!r.date){
@@ -4044,6 +4073,11 @@ function parseBookingText(rawTxt){
     const uniqueDates=[...new Set(foundDates)].sort();
     if(uniqueDates.length>=1)r.date=uniqueDates[0];
     if(uniqueDates.length>=2&&!r.dateTo)r.dateTo=uniqueDates[uniqueDates.length-1];
+    // "Oct 10, 2026" style, ignoring booking/payment/issue dates
+    if(!r.date){
+      const clean=dateSrc.replace(/(?:Booking\s*(?:on|date)|Booked\s*on|Payment\s*(?:received|date)|(?:E-?receipt\s*)?issued|Issue\s*date|Date\s*of\s*issue|Order\s*date)\s*[:：]?\s*[^\n]{0,30}?\d{4}/gi,' ');
+      const ds=_findDates(clean);if(ds[0])r.date=ds[0].date;
+    }
   }
 
   // ===== 9. Times (flights only) =====
@@ -4082,7 +4116,8 @@ function parseBookingText(rawTxt){
   // ===== 13. Build display name =====
   if(r.type==='flight')r.name=r.airline?`${r.airline} ${r.flightNumber||'Flight'}`+(r.from&&r.to?` (${r.from} → ${r.to})`:''):(r.from&&r.to?`${r.from} → ${r.to}`:'Flight');
   else if(r.type==='hotel')r.name=r.hotelName||(r.locations.length?r.locations[0]+' Hotel':'Hotel Booking');
-  else r.name=r.locations.join(' → ')||'Uploaded Booking';
+  else if(r.type==='transport')r.name=r.provider||r.title||r.locations.join(' → ')||'Uploaded Booking';
+  else r.name=r.title||r.locations.join(' → ')||'Uploaded Booking';
   return r;
 }
 
