@@ -300,6 +300,21 @@ textarea.fc{resize:vertical;min-height:50px}
 [data-apple-drag]:active{cursor:grabbing}
 body.apple-dragging [data-drop-ev]{outline:2px dashed var(--primary);outline-offset:-2px}
 [data-drop-ev].drop-over{outline:2px solid var(--primary)!important;background:var(--card-hover)}
+.tz-place{font-size:10px;color:var(--text3);margin-left:2px}
+.tz-home{font-size:10px;color:var(--text3);margin-top:1px}
+.dup-banner{border:1px solid var(--orange);background:color-mix(in srgb,var(--orange) 8%,transparent);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.dup-h{font-size:12px;font-weight:600;color:var(--orange);margin-bottom:6px}
+.dup-row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;padding:4px 0}
+.dup-row .btn{font-size:11px;padding:4px 10px}
+.dup-src{font-size:9px;padding:1px 6px;border-radius:8px;border:1px solid var(--glass-border);color:var(--text3)}
+.mg-wrap{overflow-x:auto}
+table.mg{width:100%;border-collapse:collapse;font-size:12px}
+table.mg th{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);text-align:left;padding:4px 6px}
+table.mg td{padding:3px 4px;vertical-align:top;border-top:1px solid var(--border)}
+td.mg-l{color:var(--text3);white-space:nowrap;padding-top:9px}
+.mg-opt{display:flex;gap:6px;align-items:flex-start;padding:5px 6px;border-radius:6px;cursor:pointer;border:1px solid transparent}
+.mg-opt input{margin-top:2px;accent-color:var(--primary)}
+.mg-opt:has(input:checked){border-color:var(--primary);background:color-mix(in srgb,var(--primary) 10%,transparent)}
 .kind-pick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .kind-opt{position:relative;cursor:pointer}
 .kind-opt input{position:absolute;opacity:0;pointer-events:none}
@@ -1660,6 +1675,7 @@ function vDetail(){
 function rFlights(t){
   const sorted=sortEntries(t.flights||[],'flights');
   return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><h3 style="font-size:14px">Flights</h3><div style="display:flex;gap:8px;align-items:center">${sortCtrlHtml('entry',sortKey,sortDir)}<button class="btn btn-p" data-action="add-flight">+ Add Flight</button></div></div>
+  ${dupBannerHtml(t,'flights')}
   ${sorted.length?sorted.map(f=>`
     <div class="entry">
       <div class="entry-top"><h4>${esc(f.airline||'')} ${esc(f.flightNumber||'')}${f.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div style="display:flex;gap:4px">${f.appleUid?`<button class="btn btn-ghost" data-action="apple-detach" data-eid="${f.id}" title="Make it a separate Apple event again">Detach</button>`:''}<button class="btn btn-ghost" data-action="dup-flight" data-eid="${f.id}" title="Duplicate (return flight)">Dup</button><button class="btn btn-ghost" data-action="edit-flight" data-eid="${f.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-flight" data-eid="${f.id}">Del</button></div></div>
@@ -1667,8 +1683,8 @@ function rFlights(t){
         ${f.from||f.to?`<div class="eg"><span class="ek">Route</span><span class="ev">${esc(f.from||'?')} → ${esc(f.to||'?')}</span></div>`:''}
         ${f.pnr?`<div class="eg"><span class="ek">PNR</span><span class="ev" style="font-family:monospace">${esc(f.pnr)}</span></div>`:''}
         ${f.seat?`<div class="eg"><span class="ek">Seat</span><span class="ev">${esc(f.seat)}</span></div>`:''}
-        ${f.departureTime?`<div class="eg"><span class="ek">Depart</span><span class="ev">${fmtDT(f.departureTime)}</span></div>`:''}
-        ${f.arrivalTime?`<div class="eg"><span class="ek">Arrive</span><span class="ev">${fmtDT(f.arrivalTime)}</span></div>`:''}
+        ${f.departureTime?`<div class="eg"><span class="ek">Depart</span><span class="ev">${fmtFlightDT(f.departureTime,f.from,flightTzs(f).dep)}</span></div>`:''}
+        ${f.arrivalTime?`<div class="eg"><span class="ek">Arrive</span><span class="ev">${fmtFlightDT(f.arrivalTime,f.to,flightTzs(f).arr)}</span></div>`:''}
         ${f.duration?`<div class="eg"><span class="ek">Duration</span><span class="ev">${esc(f.duration)}</span></div>`:''}
         ${f.cost?`<div class="eg"><span class="ek">Cost</span><span class="ev">${esc(f.currency)} ${parseFloat(f.cost).toLocaleString()}</span></div>`:''}
       </div>
@@ -1680,6 +1696,7 @@ function rFlights(t){
 function rHotels(t){
   const sorted=sortEntries(t.hotels||[],'hotels');
   return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><h3 style="font-size:14px">Hotels</h3><div style="display:flex;gap:8px;align-items:center">${sortCtrlHtml('entry',sortKey,sortDir)}<button class="btn btn-p" data-action="add-hotel">+ Add Hotel</button></div></div>
+  ${dupBannerHtml(t,'hotels')}
   ${sorted.length?sorted.map(h=>`
     <div class="entry">
       <div class="entry-top"><h4>${esc(h.name||'Hotel')}${h.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div style="display:flex;gap:4px">${h.appleUid?`<button class="btn btn-ghost" data-action="apple-detach" data-eid="${h.id}" title="Make it a separate Apple event again">Detach</button>`:''}<button class="btn btn-ghost" data-action="edit-hotel" data-eid="${h.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-hotel" data-eid="${h.id}">Del</button></div></div>
@@ -1699,6 +1716,7 @@ function rHotels(t){
 function rActs(t){
   const sorted=sortEntries(t.activities||[],'activities');
   return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><h3 style="font-size:14px">Activities</h3><div style="display:flex;gap:8px;align-items:center">${sortCtrlHtml('entry',sortKey,sortDir)}<button class="btn btn-p" data-action="add-act">+ Add Activity</button></div></div>
+  ${dupBannerHtml(t,'activities')}
   ${sorted.length?sorted.map(a=>`
     <div class="entry">
       <div class="entry-top"><h4>${esc(a.name||'Activity')}${a.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div style="display:flex;gap:4px">${a.appleUid?`<button class="btn btn-ghost" data-action="apple-detach" data-eid="${a.id}" title="Make it a separate Apple event again">Detach</button>`:''}<button class="btn btn-ghost" data-action="edit-act" data-eid="${a.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-act" data-eid="${a.id}">Del</button></div></div>
@@ -1718,6 +1736,7 @@ function rActs(t){
 function rTrans(t){
   const sorted=sortEntries(t.transport||[],'transport');
   return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><h3 style="font-size:14px">Transport</h3><div style="display:flex;gap:8px;align-items:center">${sortCtrlHtml('entry',sortKey,sortDir)}<button class="btn btn-p" data-action="add-trans">+ Add Transport</button></div></div>
+  ${dupBannerHtml(t,'transport')}
   ${sorted.length?sorted.map(x=>`
     <div class="entry">
       <div class="entry-top"><h4>${esc(x.type||'')} ${esc(x.name||'Transport')}${x.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div style="display:flex;gap:4px">${x.appleUid?`<button class="btn btn-ghost" data-action="apple-detach" data-eid="${x.id}" title="Make it a separate Apple event again">Detach</button>`:''}<button class="btn btn-ghost" data-action="edit-trans" data-eid="${x.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-trans" data-eid="${x.id}">Del</button></div></div>
@@ -1757,7 +1776,7 @@ function rAttach(t){
 function rTimeline(t){
   // Collect all entries with dates
   const items=[];
-  (t.flights||[]).forEach(f=>{const d=f.departureTime?(f.departureTime.includes('T')?f.departureTime.split('T')[0]:f.departureTime.split(' ')[0]):'';items.push({type:'flight',date:d||t.startDate,time:f.departureTime,label:`${f.airline||''} ${f.flightNumber||''}`.trim()||'Flight',sub:`${f.from||'?'} → ${f.to||'?'}`,cost:f.cost?`${f.currency} ${parseFloat(f.cost).toLocaleString()}`:''});});
+  (t.flights||[]).forEach(f=>{const d=f.departureTime?(f.departureTime.includes('T')?f.departureTime.split('T')[0]:f.departureTime.split(' ')[0]):'';const fz=flightTzs(f),homeNote=(()=>{const ms=fz.dep&&f.departureTime&&!/T00:00$/.test(f.departureTime)?zonedToUtc(f.departureTime,fz.dep):NaN;return !isNaN(ms)&&tzOffsetMin(ms,fz.dep)!==tzOffsetMin(ms,HOME_TZ)?' · departs '+new Date(ms).toLocaleTimeString('en-GB',{timeZone:HOME_TZ,hour:'numeric',minute:'2-digit',hour12:true})+' '+HOME_TZ_LABEL+' time':'';})();items.push({type:'flight',date:d||t.startDate,time:f.departureTime,label:`${f.airline||''} ${f.flightNumber||''}`.trim()||'Flight',sub:`${f.from||'?'} → ${f.to||'?'}${homeNote}`,cost:f.cost?`${f.currency} ${parseFloat(f.cost).toLocaleString()}`:''});});
   (t.hotels||[]).forEach(h=>{items.push({type:'hotel',date:h.checkIn||t.startDate,time:'',label:h.name||'Hotel',sub:`${fmt(h.checkIn)} — ${fmt(h.checkOut)} (${nights(h.checkIn,h.checkOut)}n)`,cost:h.cost?`${h.currency} ${parseFloat(h.cost).toLocaleString()}`:''});});
   (t.activities||[]).forEach(a=>{items.push({type:'activity',date:a.date||t.startDate,time:a.time||'',label:a.name||'Activity',sub:a.location||'',cost:a.cost?`${a.currency} ${parseFloat(a.cost).toLocaleString()}`:''});});
   (t.transport||[]).forEach(x=>{items.push({type:'transport',date:x.date||t.startDate,time:x.time||'',label:`${x.type||''} ${x.name||''}`.trim()||'Transport',sub:x.location||'',cost:x.cost?`${x.currency} ${parseFloat(x.cost).toLocaleString()}`:''});});
@@ -2150,8 +2169,8 @@ function parseICSFeed(text){
     else if(prop==='DESCRIPTION')cur.description=unesc(val);
     else if(prop==='RRULE')cur.rrule=val;
     else if(prop==='STATUS')cur.status=val.trim().toUpperCase();
-    else if(prop==='DTSTART')cur.start=parseICSDate(val);
-    else if(prop==='DTEND')cur.end=parseICSDate(val);
+    else if(prop==='DTSTART'){cur.start=parseICSDate(val);const z=left.match(/TZID=([^;:]+)/i);if(cur.start&&z)cur.start.tz=z[1];}
+    else if(prop==='DTEND'){cur.end=parseICSDate(val);const z=left.match(/TZID=([^;:]+)/i);if(cur.end&&z)cur.end.tz=z[1];}
   }
   return evts;
 }
@@ -2164,7 +2183,7 @@ const APPLE_KINDS={flight:'flights',hotel:'hotels',activity:'activities',transpo
 const APPLE_KIND_LABELS={flight:'Flight',hotel:'Hotel',activity:'Activity',transport:'Transport'};
 function _appleEntries(){const out=[];for(const ev of S.events||[])for(const[kind,arr]of Object.entries(APPLE_KINDS))for(const e of ev[arr]||[])if(e.appleUid)out.push({ev,kind,arr,e});return out;}
 function attachedAppleUids(){return new Set(_appleEntries().map(x=>x.e.appleUid));}
-const _appleSrcOf=ap=>({name:ap.name||'',startDate:ap.startDate||'',endDate:ap.endDate||'',startTime:ap.startTime||'',endTime:ap.endTime||'',locations:ap.locations||[],notes:ap.notes||''});
+const _appleSrcOf=ap=>({name:ap.name||'',startDate:ap.startDate||'',endDate:ap.endDate||'',startTime:ap.startTime||'',endTime:ap.endTime||'',locations:ap.locations||[],notes:ap.notes||'',startTz:ap.startTz||'',endTz:ap.endTz||''});
 function _appleDuration(st,et,sd,ed){
   if(!st||!et)return '';
   const t=(d,x)=>new Date((d||'2000-01-01')+'T'+x).getTime();
@@ -2189,9 +2208,20 @@ function _applyAppleToEntry(kind,e,src){
     const fm=(src.name||'').match(new RegExp('\\b('+_FNCODES+')\\s?(\\d{1,4})\\b'));
     const codes=((src.name||'').match(/\b[A-Z]{3}\b/g)||[]).filter(c=>AIRPORTS[c]);
     const pnr=(src.notes.match(/(?:Booking\s*Ref(?:erence)?|PNR|Reservation\s*code)\s*[:#]?\s*([A-Z0-9]{5,8})\b/i)||[])[1]||e.pnr||'';
+    // Apple stores flights as moments in the calendar's zone (DTSTART;TZID=…). Airline-added events name each
+    // airport's zone in the notes ("Starts: … (Asia/Singapore) Ends: … (Indian/Maldives)"); otherwise use the
+    // airport's zone. Times are kept as local airport times, like Apple shows them.
+    const zoneIn=lab=>{const m=src.notes.match(new RegExp('(?:'+lab+')\\s*[:：][^\\n(]*\\(([A-Za-z]+\\/[A-Za-z_\\/-]+)\\)','i'));return m?m[1]:'';};
+    const depTz=zoneIn('Starts?|Depart(?:s|ure)?')||AIRPORT_TZ[codes[0]]||'',arrTz=zoneIn('Ends?|Arriv(?:es|al)?')||AIRPORT_TZ[codes[1]]||'';
+    const calTz=src.startTz||HOME_TZ;
+    const dMs=src.startTime?zonedToUtc(src.startDate+'T'+src.startTime,calTz):NaN,aMs=src.endTime?zonedToUtc((src.endDate||src.startDate)+'T'+src.endTime,src.endTz||calTz):NaN;
+    const ls=!isNaN(dMs)&&depTz?(z=>({date:z.slice(0,10),time:z.slice(11)}))(utcToZoned(dMs,depTz)):null;
+    const le=!isNaN(aMs)&&arrTz?(z=>({date:z.slice(0,10),time:z.slice(11)}))(utcToZoned(aMs,arrTz)):null;
+    e.departureTz=depTz;e.arrivalTz=arrTz;
     Object.assign(e,{flightNumber:fm?fm[1]+fm[2]:(e.flightNumber||''),airline:fm&&AIRLINE_MAP[fm[1]]?AIRLINE_MAP[fm[1]]:(e.airline||''),
       from:codes[0]?AIRPORTS[codes[0]]:(e.from||''),to:codes[1]?AIRPORTS[codes[1]]:(e.to||''),pnr,
-      departureTime:src.startDate+(src.startTime?'T'+src.startTime:'T00:00'),arrivalTime:(src.endDate||src.startDate)+(src.endTime?'T'+src.endTime:(src.startTime?'T'+src.startTime:'T00:00')),
+      departureTime:ls?ls.date+'T'+ls.time:src.startDate+(src.startTime?'T'+src.startTime:'T00:00'),
+      arrivalTime:le?le.date+'T'+le.time:(src.endDate||src.startDate)+(src.endTime?'T'+src.endTime:(src.startTime?'T'+src.startTime:'T00:00')),
       duration:dur,notes:src.notes});
   }else if(kind==='hotel'){
     let co=src.endDate||src.startDate;if(co<=src.startDate)co=_addDays(src.startDate,1);
@@ -2203,8 +2233,9 @@ function _applyAppleToEntry(kind,e,src){
   }else{
     Object.assign(e,{name:src.name,location:loc,date:src.startDate,endDate:src.endDate&&src.endDate!==src.startDate?src.endDate:'',time:src.startTime,duration:dur,notes:src.notes});
   }
-  e.appleSrc=src;
+  e.appleSrc=src;e.appleV=APPLE_MAP_V;
 }
+const APPLE_MAP_V=3;// bump when the Apple→entry mapping improves, so attached entries are refreshed
 function attachAppleEvent(appleEvId,targetId,kind){
   const ap=S.events.find(e=>e.id===appleEvId&&e.source==='apple'),target=S.events.find(e=>e.id===targetId);
   if(!ap||!target||target.source==='apple')return;
@@ -2230,6 +2261,63 @@ function detachAppleEntry(ev,entryId){
     saveS();render();toast(`“${src.name}” is a separate Apple event again`);return;
   }
 }
+// ===== MERGE DUPLICATE ENTRIES (e.g. Apple event + Smart Upload of the same flight) =====
+const MERGE_FIELDS={
+  flights:[['flightNumber','Flight #'],['airline','Airline'],['from','From'],['to','To'],['departureTime','Depart','dt'],['arrivalTime','Arrive','dt'],['duration','Duration'],['pnr','PNR'],['seat','Seat'],['cost','Cost','cost'],['notes','Notes'],['attachUrl','Attachment']],
+  hotels:[['name','Name'],['checkIn','Check-in','d'],['checkOut','Check-out','d'],['bookingNumber','Booking #'],['website','Website'],['cost','Cost','cost'],['notes','Notes']],
+  activities:[['name','Name'],['location','Location'],['date','Date','d'],['endDate','End date','d'],['time','Time'],['duration','Duration'],['bookingDetails','Booking'],['cost','Cost','cost'],['notes','Notes']],
+  transport:[['type','Type'],['name','Name'],['location','Location'],['date','Date','d'],['time','Time'],['duration','Duration'],['bookingDetails','Booking'],['cost','Cost','cost'],['notes','Notes']]
+};
+// Schedule fields default to the Apple side (it stays synced); booking details default to the other side
+const MERGE_APPLE_FIRST=new Set(['from','to','departureTime','arrivalTime','duration','checkIn','checkOut','date','endDate','time','location']);
+const MERGE_EXTRA=['currency','rateToSGD','ocrText','depositAmount','depositCurrency','depositDate','depositPaid','paymentDueDate','fullyPaid','fullPaymentAmount','fullPaymentCurrency','attachUrl','website','bookingNumber','seat'];
+const _normName=x=>String(x||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+const _entryDate=(arr,e)=>arr==='flights'?(e.departureTime||'').slice(0,10):arr==='hotels'?e.checkIn:e.date;
+function _sameEntry(arr,a,b){
+  const da=_entryDate(arr,a),db=_entryDate(arr,b);
+  const near=da&&db&&Math.abs(new Date(da)-new Date(db))<=864e5;
+  if(arr==='flights'){const fn=x=>(x.flightNumber||'').toUpperCase().replace(/\s+/g,'').replace(/^([A-Z0-9]{2})0+(?=\d)/,'$1');return !!fn(a)&&fn(a)===fn(b)&&near;}
+  const na=_normName(a.name),nb=_normName(b.name),similar=na&&nb&&(na.includes(nb)||nb.includes(na));
+  if(arr==='hotels')return da&&da===db&&(similar||(a.checkOut&&a.checkOut===b.checkOut));
+  return da===db&&!!da&&similar;
+}
+function findDuplicatePairs(ev,arr){
+  const list=ev[arr]||[],pairs=[],used=new Set();
+  for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
+    const a=list[i],b=list[j];
+    if(used.has(a.id)||used.has(b.id)||(a.appleUid&&b.appleUid)||(a._notDup||[]).includes(b.id))continue;
+    if(_sameEntry(arr,a,b)){pairs.push(b.appleUid?[b,a]:[a,b]);used.add(a.id);used.add(b.id);}// Apple-linked first
+  }
+  return pairs;
+}
+function dupBannerHtml(ev,arr){
+  const pairs=findDuplicatePairs(ev,arr);if(!pairs.length)return '';
+  const label=e=>arr==='flights'?`${e.flightNumber||'Flight'} ${e.from||''}→${e.to||''}`:(e.name||e.type||'Entry');
+  return `<div class="dup-banner"><div class="dup-h">⚠ ${pairs.length} possible duplicate${pairs.length>1?'s':''}</div>${pairs.map(([a,b])=>`<div class="dup-row"><span>${esc(label(a))}${a.appleUid?' <span class="dup-src">Apple</span>':''} <span style="color:var(--text3)">↔</span> ${esc(label(b))}${b.appleUid?' <span class="dup-src">Apple</span>':''}</span><span style="display:flex;gap:6px"><button class="btn btn-ghost" data-action="dup-ignore" data-arr="${arr}" data-a="${a.id}" data-b="${b.id}">Not a duplicate</button><button class="btn btn-p" data-action="dup-merge" data-arr="${arr}" data-a="${a.id}" data-b="${b.id}">Review &amp; merge</button></span></div>`).join('')}</div>`;
+}
+function showMergeEntries(ev,arr,aId,bId){
+  const a=(ev[arr]||[]).find(x=>x.id===aId),b=(ev[arr]||[]).find(x=>x.id===bId);if(!a||!b)return;
+  const show=(v,kind,e)=>!v?'<span style="color:var(--text3)">—</span>':kind==='dt'?fmtDT(v):kind==='d'?fmt(v):kind==='cost'?esc((e.currency||'')+' '+v):esc(String(v).length>90?String(v).slice(0,90)+'…':v);
+  const nameOf=e=>e.appleUid?'Apple Calendar':(e.ocrText?'Uploaded':'Entered');
+  const rows=MERGE_FIELDS[arr].filter(([f])=>String(a[f]||'')!==String(b[f]||'')).map(([f,l,kind])=>{
+    const pickA=!b[f]?true:!a[f]?false:(a.appleUid?MERGE_APPLE_FIRST.has(f):!MERGE_APPLE_FIRST.has(f));
+    return `<tr><td class="mg-l">${l}</td><td><label class="mg-opt"><input type="radio" name="mg-${f}" value="a"${pickA?' checked':''}><span>${show(a[f],kind,a)}</span></label></td><td><label class="mg-opt"><input type="radio" name="mg-${f}" value="b"${pickA?'':' checked'}><span>${show(b[f],kind,b)}</span></label></td></tr>`;
+  }).join('');
+  modal('Merge duplicate entries',`<p style="font-size:12px;color:var(--text2);margin-bottom:10px">Pick the value to keep where they differ. Everything else (payments, scanned text, attachments) is combined into one entry${a.appleUid||b.appleUid?' that stays linked to Apple Calendar — Apple-synced fields update again if the Apple event changes':''}.</p>
+    ${rows?`<div class="mg-wrap"><table class="mg"><thead><tr><th></th><th>${nameOf(a)}</th><th>${nameOf(b)}</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<p style="font-size:12px">The two entries are identical.</p>'}`,()=>{
+    const keep=a,drop=b;// keep the Apple-linked one (a) so the link survives
+    const before=JSON.parse(JSON.stringify(keep)),idx=ev[arr].indexOf(drop);
+    for(const[f]of MERGE_FIELDS[arr]){
+      const r=document.querySelector(`input[name="mg-${f}"]:checked`);
+      if(r&&r.value==='b'){keep[f]=drop[f];if(f==='cost'){keep.currency=drop.currency;keep.rateToSGD=drop.rateToSGD;}if(f==='from')delete keep.departureTz;if(f==='to')delete keep.arrivalTz;}
+    }
+    for(const f of MERGE_EXTRA)if(!keep[f]&&drop[f])keep[f]=drop[f];
+    ev[arr]=ev[arr].filter(x=>x!==drop);
+    saveS();render();
+    toastUndo('Entries merged',()=>{Object.keys(keep).forEach(k=>delete keep[k]);Object.assign(keep,before);ev[arr].splice(idx,0,drop);saveS();render();});
+  },{saveLabel:'Merge'});
+}
+
 // Pick the event (unless dropped on one) and the entry type
 function showAttachApple(appleEvId,targetId){
   const ap=S.events.find(e=>e.id===appleEvId);if(!ap)return;
@@ -2265,7 +2353,7 @@ function importAppleCalendar(icsText){
       if(endDate<startDate)endDate=startDate;
     }
     incoming.push({appleUid:v.uid,name:v.summary,startDate,endDate,startTime,endTime,
-      locations:v.location?[v.location]:[],notes:v.description||''});
+      locations:v.location?[v.location]:[],notes:v.description||'',startTz:v.start.tz||'',endTz:(v.end&&v.end.tz)||v.start.tz||''});
   }
   const byUid=new Map(incoming.map(e=>[e.appleUid,e]));
   let changed=0;
@@ -2277,7 +2365,7 @@ function importAppleCalendar(icsText){
     const inc=byUid.get(e.appleUid);
     if(!inc){if(allowDeletes){ev[arr]=ev[arr].filter(x=>x!==e);changed++;}continue;}// deleted in Apple Calendar → removed from the trip
     const src=_appleSrcOf(inc);
-    if(JSON.stringify(src)!==JSON.stringify(e.appleSrc||{})){_applyAppleToEntry(kind,e,src);changed++;}
+    if(JSON.stringify(src)!==JSON.stringify(e.appleSrc||{})||(e.appleV||1)<APPLE_MAP_V){_applyAppleToEntry(kind,e,src);changed++;}
     byUid.delete(e.appleUid);
   }
   // Update or delete existing apple-sourced events (never touches tracker-native events)
@@ -2286,7 +2374,7 @@ function importAppleCalendar(icsText){
     if(attached.has(ev.appleUid)){changed++;return false;}// standalone copy of an attached event (e.g. synced from another device)
     const inc=byUid.get(ev.appleUid);
     if(!inc){if(!allowDeletes)return true;changed++;return false;} // deleted in Apple Calendar
-    const fields=['name','startDate','endDate','startTime','endTime','notes'];
+    const fields=['name','startDate','endDate','startTime','endTime','notes','startTz','endTz'];
     const diff=fields.some(f=>(ev[f]||'')!==(inc[f]||''))||JSON.stringify(ev.locations||[])!==JSON.stringify(inc.locations);
     if(diff){Object.assign(ev,inc);ev.year=parseInt(inc.startDate)||ev.year;changed++;}
     byUid.delete(ev.appleUid);
@@ -3305,7 +3393,7 @@ function showSmartUpload(){
         legs.forEach((l,i)=>{
           const dep=dt(l.date,l.time),arr=dt(l.adate||l.date,l.atime);
           let duration=l.duration||'';
-          if(!duration&&l.time&&l.atime&&dep&&arr){const ms=new Date(arr)-new Date(dep);if(ms>0){const h=Math.floor(ms/36e5),mn=Math.round((ms%36e5)/6e4);duration=h+'h '+(mn<10?'0':'')+mn+'m';}}
+          if(!duration&&l.time&&l.atime&&dep&&arr)duration=flightDuration(dep,arr,tzForPlace(l.from),tzForPlace(l.to));
           const code=(l.fn.match(/^[A-Z0-9]{2}/i)||[''])[0].toUpperCase();
           ev.flights.push({id:uid(),airline:AIRLINE_MAP[code]||l.airline||parsed.airline||'',flightNumber:l.fn.replace(/\s+/g,'').toUpperCase(),pnr:parsed.pnr||'',seat:l.seat,from:l.from,to:l.to,departureTime:dep,arrivalTime:arr,duration,
             cost:i===0?cost:'',currency:cur,rateToSGD:snapRate(cur),notes:i===0&&cost&&legs.length>1?`Booking total for ${legs.length} flights`:'',ocrText:i===0?(parsed.rawText||''):''});
@@ -3370,6 +3458,51 @@ const MMAP={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'
 const AIRLINE_MAP={'SQ':'Singapore Airlines','TR':'Scoot','GA':'Garuda','ID':'Batik Air','CI':'China Airlines','CX':'Cathay Pacific','FY':'Firefly','AK':'AirAsia','MH':'Malaysia Airlines','TG':'Thai Airways','EK':'Emirates','QR':'Qatar Airways','3K':'Jetstar Asia','JT':'Lion Air','5J':'Cebu Pacific','PR':'Philippine Airlines','QZ':'AirAsia Indonesia','OD':'Batik Air Malaysia','ET':'Ethiopian Airlines','QG':'Citilink','IN':'NAM Air','JL':'Japan Airlines','NH':'ANA','KE':'Korean Air','OZ':'Asiana','VN':'Vietnam Airlines','WJ':'Susi Air','IW':'Wings Air','QF':'Qantas','NZ':'Air New Zealand','AI':'Air India','BR':'EVA Air','TK':'Turkish Airlines','LH':'Lufthansa','BA':'British Airways','AF':'Air France','KL':'KLM','SK':'SAS','AY':'Finnair','LX':'Swiss','OS':'Austrian','UA':'United Airlines','AA':'American Airlines','DL':'Delta','WN':'Southwest','AC':'Air Canada','CZ':'China Southern','MU':'China Eastern','CA':'Air China','HU':'Hainan Airlines','SL':'Thai Lion Air','FD':'Thai AirAsia','DD':'Nok Air','PG':'Bangkok Airways','BI':'Royal Brunei','UL':'SriLankan Airlines','WY':'Oman Air','GF':'Gulf Air','SV':'Saudia','RJ':'Royal Jordanian','MS':'EgyptAir','SA':'South African Airways','KQ':'Kenya Airways','ET':'Ethiopian Airlines','TP':'TAP Portugal','IB':'Iberia','AZ':'ITA Airways'};
 const AIRLINE_NAMES=['Singapore Airlines','Scoot','Garuda','Batik Air','China Airlines','Cathay Pacific','Firefly','AirAsia','Malaysia Airlines','Thai Airways','Emirates','Qatar Airways','Jetstar','Jetstar Asia','Lion Air','Cebu Pacific','Philippine Airlines','Ethiopian Airlines','Citilink','Japan Airlines','ANA','Korean Air','Asiana','Vietnam Airlines','Qantas','Air New Zealand','Air India','EVA Air','Turkish Airlines','Lufthansa','British Airways','Air France','KLM','SAS','Finnair','Swiss','Austrian','United Airlines','American Airlines','Delta','Southwest','Air Canada','China Southern','China Eastern','Air China','Hainan Airlines','Thai Lion Air','Thai AirAsia','Nok Air','Bangkok Airways','Royal Brunei','SriLankan Airlines','Oman Air','Gulf Air','Saudia','Royal Jordanian','EgyptAir','South African Airways','Kenya Airways','TAP Portugal','Iberia','ITA Airways','Ryanair','easyJet','Wizz Air','IndiGo','SpiceJet','Vietjet','Bamboo Airways','Starlux','Peach Aviation','Spring Airlines','AirAsia X','Batik Air Malaysia'];
 const AIRPORTS={SIN:'Singapore',KUL:'Kuala Lumpur',CGK:'Jakarta',DPS:'Bali',NRT:'Tokyo Narita',HND:'Tokyo Haneda',KIX:'Osaka',BKK:'Bangkok',ICN:'Seoul',PVG:'Shanghai',PEK:'Beijing',MLE:'Maldives',MNL:'Manila',CEB:'Cebu',TPE:'Taipei',SYD:'Sydney',MEL:'Melbourne',LHR:'London',HKG:'Hong Kong',HAN:'Hanoi',SGN:'Ho Chi Minh',HKT:'Phuket',CNX:'Chiang Mai',PEN:'Penang',LGK:'Langkawi',USM:'Koh Samui',JOG:'Yogyakarta',SUB:'Surabaya',MDC:'Manado',LBJ:'Labuan Bajo',TRK:'Tarakan',KNO:'Medan',ADD:'Addis Ababa',JRO:'Kilimanjaro',NBO:'Nairobi',DAR:'Dar es Salaam',DOH:'Doha',DXB:'Dubai',IST:'Istanbul',CDG:'Paris',AMS:'Amsterdam',FRA:'Frankfurt',ZRH:'Zurich',FCO:'Rome',BCN:'Barcelona',MAD:'Madrid',CAI:'Cairo',CPT:'Cape Town',BWN:'Brunei',RGN:'Yangon',REP:'Siem Reap',SZB:'Subang',XSP:'Singapore Seletar',TWU:'Tawau',BKI:'Kota Kinabalu',SDK:'Sandakan',MYY:'Miri',KCH:'Kuching',BTJ:'Banda Aceh',PKU:'Pekanbaru',UPG:'Makassar',BPN:'Balikpapan',PLM:'Palembang',SOC:'Solo',SRG:'Semarang',AMQ:'Ambon',GTO:'Gorontalo',KDI:'Kendari',WGP:'Waingapu',TMC:'Tambolaka',MOF:'Maumere',ENE:'Ende',RTG:'Ruteng',BMU:'Bima',LOP:'Lombok',HLP:'Jakarta Halim',DMK:'Bangkok Don Mueang',CNS:'Cairns',AKL:'Auckland',WLG:'Wellington',DEL:'Delhi',BOM:'Mumbai',CMB:'Colombo',KTM:'Kathmandu',JFK:'New York JFK',LAX:'Los Angeles',SFO:'San Francisco',ORD:'Chicago',MIA:'Miami',YVR:'Vancouver',YYZ:'Toronto',GRU:'São Paulo',LIM:'Lima',BOG:'Bogota',SCL:'Santiago',EZE:'Buenos Aires',MUC:'Munich',VIE:'Vienna',CPH:'Copenhagen',OSL:'Oslo',ARN:'Stockholm',HEL:'Helsinki',LIS:'Lisbon',ATH:'Athens',WAW:'Warsaw',PRG:'Prague',BUD:'Budapest',DUB:'Dublin',EDI:'Edinburgh',GVA:'Geneva',MXP:'Milan',CTS:'Sapporo',FUK:'Fukuoka',ITM:'Osaka Itami',GMP:'Seoul Gimpo',CJU:'Jeju',DAD:'Da Nang',PQC:'Phu Quoc',KBV:'Krabi',HDY:'Hat Yai',CEI:'Chiang Rai',LPQ:'Luang Prabang',VTE:'Vientiane',PNH:'Phnom Penh',SBW:'Sibu',BTU:'Bintulu',LBU:'Labuan',JHB:'Johor Bahru',IPH:'Ipoh',TGG:'Kuala Terengganu',AOR:'Alor Setar',SZX:'Shenzhen',CAN:'Guangzhou',HGH:'Hangzhou',CTU:'Chengdu',KMG:'Kunming',XMN:'Xiamen',WUH:'Wuhan',NKG:'Nanjing',TSN:'Tianjin',TAO:'Qingdao',CKG:'Chongqing',NGO:'Nagoya',BEJ:'Berau',KOE:'Kupang',ARD:'Alor',AUH:'Abu Dhabi',MCT:'Muscat',JED:'Jeddah',ZNZ:'Zanzibar',SEZ:'Seychelles',MRU:'Mauritius',DIL:'Dili',BDO:'Bandung',PDG:'Padang',BTH:'Batam',TNJ:'Tanjung Pinang',DJJ:'Jayapura',SOQ:'Sorong',TTE:'Ternate',MKW:'Manokwari',LDU:'Lahad Datu',OKA:'Okinawa',HIJ:'Hiroshima',SDJ:'Sendai',PPS:'Puerto Princesa',USU:'Coron',MPH:'Boracay',IAO:'Siargao',DVO:'Davao',CXR:'Nha Trang'};
+// Airport time zones (flights are stored in each airport's local time)
+const AIRPORT_TZ=(()=>{const m={};for(const[tz,codes]of Object.entries({"Asia/Singapore":"SIN XSP","Asia/Kuala_Lumpur":"KUL PEN LGK SZB TWU BKI SDK MYY KCH SBW BTU LBU JHB IPH TGG AOR LDU","Asia/Jakarta":"CGK HLP KNO PKU PLM SRG SOC JOG BTJ BDO PDG BTH TNJ SUB","Asia/Makassar":"DPS LBJ TRK UPG BPN MDC KDI GTO WGP TMC MOF ENE RTG BMU LOP KOE ARD BEJ","Asia/Jayapura":"AMQ DJJ SOQ TTE MKW","Asia/Dili":"DIL","Asia/Tokyo":"NRT HND KIX ITM CTS FUK NGO OKA HIJ SDJ","Asia/Seoul":"ICN GMP CJU","Asia/Shanghai":"PVG PEK SZX CAN HGH CTU KMG XMN WUH NKG TSN TAO CKG","Asia/Hong_Kong":"HKG","Asia/Taipei":"TPE","Asia/Manila":"MNL CEB PPS USU MPH IAO DVO","Asia/Bangkok":"BKK DMK HKT CNX USM KBV HDY CEI","Asia/Ho_Chi_Minh":"SGN HAN DAD PQC CXR","Asia/Vientiane":"LPQ VTE","Asia/Phnom_Penh":"PNH REP","Asia/Yangon":"RGN","Asia/Brunei":"BWN","Indian/Maldives":"MLE","Asia/Colombo":"CMB","Asia/Kolkata":"DEL BOM","Asia/Kathmandu":"KTM","Australia/Sydney":"SYD","Australia/Melbourne":"MEL","Australia/Brisbane":"CNS","Pacific/Auckland":"AKL WLG","Asia/Dubai":"DXB AUH","Asia/Qatar":"DOH","Asia/Muscat":"MCT","Asia/Riyadh":"JED","Europe/Istanbul":"IST","Africa/Addis_Ababa":"ADD","Africa/Dar_es_Salaam":"JRO DAR ZNZ","Africa/Nairobi":"NBO","Africa/Cairo":"CAI","Africa/Johannesburg":"CPT","Indian/Mahe":"SEZ","Indian/Mauritius":"MRU","Europe/London":"LHR EDI","Europe/Dublin":"DUB","Europe/Paris":"CDG","Europe/Amsterdam":"AMS","Europe/Berlin":"FRA MUC","Europe/Zurich":"ZRH GVA","Europe/Rome":"FCO MXP","Europe/Madrid":"BCN MAD","Europe/Vienna":"VIE","Europe/Copenhagen":"CPH","Europe/Oslo":"OSL","Europe/Stockholm":"ARN","Europe/Helsinki":"HEL","Europe/Lisbon":"LIS","Europe/Athens":"ATH","Europe/Warsaw":"WAW","Europe/Prague":"PRG","Europe/Budapest":"BUD","America/New_York":"JFK MIA","America/Los_Angeles":"LAX SFO","America/Chicago":"ORD","America/Vancouver":"YVR","America/Toronto":"YYZ","America/Sao_Paulo":"GRU","America/Lima":"LIM","America/Bogota":"BOG","America/Santiago":"SCL","America/Argentina/Buenos_Aires":"EZE"}))codes.split(' ').forEach(c=>m[c]=tz);return m;})();
+const HOME_TZ='Asia/Singapore',HOME_TZ_LABEL='Singapore';
+function tzForPlace(city){
+  if(!city)return '';
+  if(AIRPORT_TZ[city])return AIRPORT_TZ[city];
+  const c=String(city).toLowerCase();
+  for(const[code,name]of Object.entries(AIRPORTS))if(name.toLowerCase()===c&&AIRPORT_TZ[code])return AIRPORT_TZ[code];
+  for(const[code,name]of Object.entries(AIRPORTS))if((name.toLowerCase().startsWith(c)||c.startsWith(name.toLowerCase()))&&AIRPORT_TZ[code])return AIRPORT_TZ[code];
+  return '';
+}
+function tzOffsetMin(utcMs,tz){
+  const p=new Intl.DateTimeFormat('en-US',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).formatToParts(new Date(utcMs));
+  const g=t=>+p.find(x=>x.type===t).value;
+  return (Date.UTC(g('year'),g('month')-1,g('day'),g('hour')%24,g('minute'))-Math.floor(utcMs/6e4)*6e4)/6e4;
+}
+// "2026-10-24T20:25" in a time zone → epoch ms
+function zonedToUtc(local,tz){
+  const m=String(local||'').match(/(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);if(!m||!tz)return NaN;
+  const guess=Date.UTC(+m[1],m[2]-1,+m[3],+m[4],+m[5]);
+  let utc=guess-tzOffsetMin(guess,tz)*6e4;utc=guess-tzOffsetMin(utc,tz)*6e4;return utc;
+}
+// epoch ms → "2026-10-24T21:50" wall time in a time zone
+function utcToZoned(ms,tz){
+  const p=new Intl.DateTimeFormat('en-CA',{timeZone:tz,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).formatToParts(new Date(ms));
+  const g=t=>p.find(x=>x.type===t).value;return `${g('year')}-${g('month')}-${g('day')}T${String(+g('hour')%24).padStart(2,'0')}:${g('minute')}`;
+}
+function flightTzs(f){return{dep:f.departureTz||tzForPlace(f.from),arr:f.arrivalTz||tzForPlace(f.to)};}
+// Duration across time zones when both airports are known
+function flightDuration(dep,arr,depTz,arrTz){
+  if(!dep||!arr||/T00:00$/.test(dep)&&/T00:00$/.test(arr))return '';
+  const a=depTz?zonedToUtc(dep,depTz):new Date(dep).getTime(),b=arrTz?zonedToUtc(arr,arrTz):new Date(arr).getTime();
+  const mins=Math.round((b-a)/6e4);if(!(mins>0))return '';
+  return Math.floor(mins/60)+'h '+String(mins%60).padStart(2,'0')+'m';
+}
+// Like Apple Calendar: local time at the airport, plus Singapore time when that zone differs
+function fmtFlightDT(dt,place,tz){
+  if(!dt)return '—';
+  const main=fmtDT(dt);
+  if(!tz||/T00:00$/.test(dt))return main;
+  const ms=zonedToUtc(dt,tz);if(isNaN(ms)||tzOffsetMin(ms,tz)===tzOffsetMin(ms,HOME_TZ))return main;
+  const home=new Date(ms).toLocaleString('en-GB',{timeZone:HOME_TZ,weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit',hour12:true});
+  const placeLbl=place||tz.split('/').pop().replace(/_/g,' ');
+  return `${main} <span class="tz-place">${esc(placeLbl)}</span><div class="tz-home">${esc(home)} ${HOME_TZ_LABEL} time</div>`;
+}
 const CITIES=['Singapore','Kuala Lumpur, Malaysia','Penang, Malaysia','Langkawi, Malaysia','Johor Bahru, Malaysia','Kota Kinabalu, Malaysia','Ipoh, Malaysia','Melaka, Malaysia','Tioman, Malaysia','Redang, Malaysia','Perhentian, Malaysia','Cameron Highlands, Malaysia','Jakarta, Indonesia','Bali, Indonesia','Denpasar, Indonesia','Yogyakarta, Indonesia','Surabaya, Indonesia','Manado, Indonesia','Labuan Bajo, Indonesia','Tarakan, Indonesia','Komodo, Indonesia','Lembeh, Indonesia','Halmahera, Indonesia','Nusa Lembongan, Indonesia','Nusa Penida, Indonesia','Nusa Dua, Indonesia','Ubud, Indonesia','Seminyak, Indonesia','Canggu, Indonesia','Sanur, Indonesia','Lombok, Indonesia','Gili Trawangan, Indonesia','Gili Air, Indonesia','Flores, Indonesia','Raja Ampat, Indonesia','Bunaken, Indonesia','Derawan, Indonesia','Bandung, Indonesia','Semarang, Indonesia','Medan, Indonesia','Makassar, Indonesia','Tokyo, Japan','Osaka, Japan','Kyoto, Japan','Hokkaido, Japan','Okinawa, Japan','Fukuoka, Japan','Nagoya, Japan','Hiroshima, Japan','Nara, Japan','Sapporo, Japan','Yokohama, Japan','Kobe, Japan','Bangkok, Thailand','Phuket, Thailand','Chiang Mai, Thailand','Koh Samui, Thailand','Krabi, Thailand','Phi Phi, Thailand','Koh Tao, Thailand','Koh Lipe, Thailand','Chiang Rai, Thailand','Pattaya, Thailand','Hua Hin, Thailand','Koh Phangan, Thailand','Seoul, South Korea','Busan, South Korea','Jeju, South Korea','Incheon, South Korea','Shanghai, China','Beijing, China','Hangzhou, China','Shenzhen, China','Guangzhou, China','Chengdu, China','Xian, China','Hong Kong','Macau','Taipei, Taiwan','Kaohsiung, Taiwan','Hualien, Taiwan','Tainan, Taiwan','Manila, Philippines','Cebu, Philippines','Boracay, Philippines','El Nido, Philippines','Coron, Philippines','Siargao, Philippines','Palawan, Philippines','Malapascua, Philippines','Hanoi, Vietnam','Ho Chi Minh City, Vietnam','Da Nang, Vietnam','Hoi An, Vietnam','Nha Trang, Vietnam','Phu Quoc, Vietnam','Sapa, Vietnam','Siem Reap, Cambodia','Phnom Penh, Cambodia','Luang Prabang, Laos','Vientiane, Laos','Yangon, Myanmar','Bagan, Myanmar','Colombo, Sri Lanka','Kandy, Sri Lanka','Ella, Sri Lanka','Galle, Sri Lanka','New Delhi, India','Mumbai, India','Goa, India','Jaipur, India','Agra, India','Varanasi, India','Kerala, India','Kathmandu, Nepal','Pokhara, Nepal','Male, Maldives','Maldives','Dubai, UAE','Abu Dhabi, UAE','Doha, Qatar','Muscat, Oman','Istanbul, Turkey','Cappadocia, Turkey','Antalya, Turkey','Bodrum, Turkey','Tel Aviv, Israel','Jerusalem, Israel','Amman, Jordan','Petra, Jordan','Tbilisi, Georgia','Baku, Azerbaijan','London, UK','Edinburgh, UK','Manchester, UK','Paris, France','Nice, France','Lyon, France','Marseille, France','Amsterdam, Netherlands','Rotterdam, Netherlands','Berlin, Germany','Munich, Germany','Frankfurt, Germany','Hamburg, Germany','Zurich, Switzerland','Geneva, Switzerland','Interlaken, Switzerland','Rome, Italy','Venice, Italy','Florence, Italy','Milan, Italy','Amalfi, Italy','Barcelona, Spain','Madrid, Spain','Seville, Spain','Mallorca, Spain','Ibiza, Spain','Lisbon, Portugal','Porto, Portugal','Athens, Greece','Santorini, Greece','Mykonos, Greece','Crete, Greece','Prague, Czech Republic','Vienna, Austria','Budapest, Hungary','Warsaw, Poland','Krakow, Poland','Dublin, Ireland','Copenhagen, Denmark','Stockholm, Sweden','Oslo, Norway','Bergen, Norway','Helsinki, Finland','Reykjavik, Iceland','Brussels, Belgium','Bruges, Belgium','Dubrovnik, Croatia','Split, Croatia','Bucharest, Romania','Sofia, Bulgaria','Tallinn, Estonia','Riga, Latvia','Vilnius, Lithuania','Moscow, Russia','St Petersburg, Russia','Sydney, Australia','Melbourne, Australia','Brisbane, Australia','Gold Coast, Australia','Perth, Australia','Adelaide, Australia','Cairns, Australia','Auckland, New Zealand','Queenstown, New Zealand','Wellington, New Zealand','Fiji','Bora Bora, French Polynesia','Tahiti, French Polynesia','New York, USA','Los Angeles, USA','San Francisco, USA','Las Vegas, USA','Miami, USA','Chicago, USA','Seattle, USA','Boston, USA','Washington DC, USA','Honolulu, USA','Toronto, Canada','Vancouver, Canada','Montreal, Canada','Banff, Canada','Mexico City, Mexico','Cancun, Mexico','Tulum, Mexico','Lima, Peru','Cusco, Peru','Machu Picchu, Peru','Bogota, Colombia','Cartagena, Colombia','Buenos Aires, Argentina','Rio de Janeiro, Brazil','Sao Paulo, Brazil','Santiago, Chile','Cape Town, South Africa','Johannesburg, South Africa','Nairobi, Kenya','Dar es Salaam, Tanzania','Zanzibar, Tanzania','Kilimanjaro, Tanzania','Cairo, Egypt','Luxor, Egypt','Marrakech, Morocco','Fez, Morocco','Addis Ababa, Ethiopia','Accra, Ghana','Lagos, Nigeria','Mauritius','Seychelles'];
 const CURRENCY_SYMBOLS={'rp':'IDR','idr':'IDR','rm':'MYR','myr':'MYR','₱':'PHP','php':'PHP','¥':'CNY','cny':'CNY','jpy':'JPY','฿':'THB','thb':'THB','₫':'VND','vnd':'VND','$':'USD','usd':'USD','sgd':'SGD','s$':'SGD','a$':'AUD','aud':'AUD','€':'EUR','eur':'EUR','£':'GBP','gbp':'GBP','kr':'SEK','₹':'INR','inr':'INR','egp':'EGP','mvr':'MVR','twd':'TWD','krw':'KRW'};
 
@@ -4519,12 +4652,10 @@ function fFlight(ev,f){
   setTimeout(()=>{
     const m=document.querySelector('.modal');if(!m)return;
     const dep=m.querySelector('[name="dep"]'),arr=m.querySelector('[name="arr"]'),dur=m.querySelector('[name="duration"]');
-    const calcDur=()=>{
+    const calcDur=()=>{// across time zones when both airports are known (times are local to each airport)
       if(!dep.value||!arr.value)return;
-      const ms=new Date(arr.value)-new Date(dep.value);
-      if(ms<=0)return;
-      const h=Math.floor(ms/3600000),mn=Math.round((ms%3600000)/60000);
-      dur.value=h+'h '+(mn<10?'0':'')+mn+'m';
+      const d=flightDuration(dep.value,arr.value,tzForPlace(m.querySelector('[name="from"]').value),tzForPlace(m.querySelector('[name="to"]').value));
+      if(d)dur.value=d;
     };
     dep.addEventListener('change',calcDur);
     arr.addEventListener('change',calcDur);
@@ -4647,6 +4778,8 @@ document.addEventListener('click',e=>{
     case 'add-event':fEvent();break;
     case 'apple-attach':showAttachApple(el.dataset.id);break;
     case 'apple-detach':if(ev)detachAppleEntry(ev,el.dataset.eid);break;
+    case 'dup-merge':if(ev)showMergeEntries(ev,el.dataset.arr,el.dataset.a,el.dataset.b);break;
+    case 'dup-ignore':{if(ev){const a=(ev[el.dataset.arr]||[]).find(x=>x.id===el.dataset.a);if(a){a._notDup=[...(a._notDup||[]),el.dataset.b];saveS();render();}}break;}
     case 'export-event':showExportModal(el.dataset.id);break;
     case 'edit-event':{const t=S.events.find(x=>x.id===el.dataset.id);if(t)fEvent(t);break;}
     case 'del-event':{const delId=el.dataset.id;const delEv=S.events.find(t=>t.id===delId);if(delEv){const bc=(delEv.flights||[]).length+(delEv.hotels||[]).length+(delEv.activities||[]).length+(delEv.transport||[]).length;modal('Delete Event',`<div class="confirm-modal-body"><div class="cm-icon">⚠️</div><div class="cm-title">Delete "${esc(delEv.name)}"?</div><div class="cm-sub">${bc?'This will remove <strong>'+bc+' booking'+(bc>1?'s':'')+'</strong> (flights, hotels, activities, transport).':'This trip has no bookings.'}<br>This action cannot be undone.</div></div>`,()=>{const idx=S.events.indexOf(delEv);S.events.splice(idx,1);saveS();nav('events');toast('Event deleted');},{saveLabel:'Delete',danger:true});}}break;
