@@ -287,6 +287,16 @@ textarea.fc{resize:vertical;min-height:50px}
 .su-field .v.detected{color:var(--green)}.su-field .v.empty{color:var(--text3);font-style:italic;font-weight:400}
 .su-raw-toggle{font-size:11px;color:var(--primary);cursor:pointer;border:none;background:none;padding:4px 0;margin-top:6px}
 .su-raw-toggle:hover{text-decoration:underline}
+.su-leg{border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px;background:var(--bg)}
+.su-leg-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.su-leg-n{font-size:11px;font-weight:600;color:var(--primary)}
+.su-leg-rm{font-size:10px;color:var(--accent);padding:2px 6px}
+.su-leg-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.su-lf{display:flex;flex-direction:column;gap:2px;min-width:0}
+.su-lf span{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
+.su-lf .fc{font-size:12px;padding:6px 8px;min-width:0;width:100%}
+.su-hint{font-size:11px;color:var(--text2);background:var(--bg2);border-radius:6px;padding:6px 10px;margin-top:8px}
+@media(max-width:560px){.su-leg-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .dz-tabs{display:flex;gap:0;margin-bottom:10px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
 .dz-tab{flex:1;padding:8px 12px;font-size:12px;text-align:center;cursor:pointer;background:var(--bg2);color:var(--text2);border:none;transition:all .15s;font-weight:500}
 .dz-tab:not(:last-child){border-right:1px solid var(--border)}
@@ -2956,121 +2966,224 @@ function suParsedHtml(parsed){
   if(parsed.rawText)h+=`<button class="su-raw-toggle" onclick="const el=this.nextElementSibling;el.style.display=el.style.display==='none'?'block':'none';this.textContent=el.style.display==='none'?'Show raw text ▸':'Hide raw text ▾'">Show raw text ▸</button><div class="ocr-out" style="display:none;margin-top:4px">${esc(parsed.rawText)}</div>`;
   return h;
 }
+// Normalise "2:30 pm" / "9:05" / "14:30" → "HH:MM" (24h); '' if unparseable
+function suTime24(t){
+  const m=String(t||'').trim().match(/^(\d{1,2}):(\d{2})\s*(am|pm)?$/i);if(!m)return '';
+  let h=parseInt(m[1]);const ap=(m[3]||'').toLowerCase();
+  if(ap==='pm'&&h<12)h+=12;if(ap==='am'&&h===12)h=0;
+  return h>23?'':String(h).padStart(2,'0')+':'+m[2];
+}
+// Flights detected in a parsed document → editable leg rows
+function suLegsFromParsed(p){
+  if(p.multiLeg&&p.legs&&p.legs.length)return p.legs.map(l=>({airline:l.airline||p.airline||'',fn:l.flightNumber||'',from:l.from||'',to:l.to||'',date:l.date||'',time:suTime24(l.departureTime),adate:l.arrivalDate||l.date||'',atime:suTime24(l.arrivalTime),seat:l.seat||''}));
+  return [{airline:p.airline||'',fn:p.flightNumber||'',from:p.from||'',to:p.to||'',date:p.date||'',time:suTime24(p.departureTime),adate:p.dateTo||p.date||'',atime:suTime24(p.arrivalTime),seat:p.seat||''}];
+}
+// Suggested event name/locations: for round trips, the destination is where the longest stay happens
+function suTripInfo(legs){
+  const L=legs.filter(l=>l.from||l.to);if(!L.length)return{name:'',locations:[]};
+  const home=L[0].from,round=L.length>=2&&home&&L[L.length-1].to===home;
+  let dest=L[L.length-1].to||L[0].to;
+  if(round){
+    const ts=(d,t)=>d?new Date(d+'T'+(t||'00:00')).getTime():NaN;
+    let best=-1;
+    for(let i=0;i<L.length-1;i++){const gap=ts(L[i+1].date,L[i+1].time)-ts(L[i].adate||L[i].date,L[i].atime);if(gap>best){best=gap;dest=L[i].to;}}
+  }
+  const locs=[...new Set(L.flatMap(l=>[l.from,l.to]).filter(c=>c&&c!==home))];
+  return{name:dest?dest+' Trip':'',locations:locs.length?locs:[dest].filter(Boolean)};
+}
+function suLegRowHtml(l){
+  l=l||{};
+  const f=(n,v,ph,type)=>`<label class="su-lf"><span>${ph}</span><input class="fc" ${type?`type="${type}"`:''} data-k="${n}" value="${esc(v||'')}"${n==='from'||n==='to'?' list="location-list" autocomplete="off"':''}></label>`;
+  return `<div class="su-leg" data-airline="${esc(l.airline||'')}">
+    <div class="su-leg-head"><span class="su-leg-n"></span><button type="button" class="btn btn-ghost su-leg-rm" title="Remove this flight">Remove</button></div>
+    <div class="su-leg-grid">
+      ${f('fn',l.fn,'Flight #')}${f('from',l.from,'From')}${f('to',l.to,'To')}${f('seat',l.seat,'Seat')}
+      ${f('date',l.date,'Depart date','date')}${f('time',l.time,'Depart time','time')}${f('adate',l.adate,'Arrive date','date')}${f('atime',l.atime,'Arrive time','time')}
+    </div>
+  </div>`;
+}
+function suReadLegs(){
+  return [...document.querySelectorAll('#su-legs .su-leg')].map(r=>{const o={airline:r.dataset.airline||''};r.querySelectorAll('[data-k]').forEach(i=>o[i.dataset.k]=i.value.trim());return o;}).filter(l=>l.fn||l.from||l.to);
+}
+// Date span covered by the legs (or by a non-flight booking)
+function suSpan(type,parsed){
+  if(type==='flight'){
+    const legs=suReadLegs(),ds=legs.map(l=>l.date).filter(Boolean).sort(),es=legs.map(l=>l.adate||l.date).filter(Boolean).sort();
+    return{start:ds[0]||'',end:es[es.length-1]||ds[ds.length-1]||''};
+  }
+  return{start:parsed.date||'',end:parsed.dateTo||parsed.date||''};
+}
+// Pick the existing event whose dates best cover the booking (±3 days for positioning flights)
+function suMatchEvent(start,end){
+  if(!start)return null;
+  const day=d=>new Date(d+'T00:00:00').getTime(),buf=3*864e5,bs=day(start),be=day(end||start);
+  let best=null,bestScore=-Infinity;
+  for(const ev of S.events){
+    if(ev.source==='apple'||!ev.startDate)continue;
+    const es=day(ev.startDate),ee=day(ev.endDate||ev.startDate);
+    if(be<es-buf||bs>ee+buf)continue;
+    const overlap=Math.min(be,ee)-Math.max(bs,es);// >0 = real overlap; negative = gap within buffer
+    if(overlap>bestScore){bestScore=overlap;best=ev;}
+  }
+  return best;
+}
+function suRefresh(parsed,opts){
+  opts=opts||{};
+  const type=document.getElementById('su-type').value;
+  const evSel=document.getElementById('su-event');
+  const span=suSpan(type,parsed);
+  if(opts.rematch){const mt=suMatchEvent(span.start,span.end);evSel.value=mt?mt.id:'__new__';}
+  const isNew=evSel.value==='__new__';
+  document.getElementById('su-new-ev').style.display=isNew?'':'none';
+  const hint=document.getElementById('su-match-hint');
+  const mev=!isNew&&S.events.find(t=>t.id===evSel.value);
+  hint.innerHTML=mev?`Dates match <b>${esc(mev.name)}</b> (${fmtS(mev.startDate)} – ${fmtS(mev.endDate)}). Choose “Create New Event” to keep it separate.`:'';
+  hint.style.display=mev?'':'none';
+  // Keep suggested name/dates in sync until the user edits them
+  const nm=document.getElementById('su-ev-name'),sd=document.getElementById('su-ev-sd'),ed=document.getElementById('su-ev-ed');
+  if(!sd.dataset.touched)sd.value=span.start;
+  if(!ed.dataset.touched)ed.value=span.end;
+  if(!nm.dataset.touched)nm.value=type==='flight'?(suTripInfo(suReadLegs()).name||parsed.name||'New Event'):(parsed.name||'New Event');
+  const n=document.querySelectorAll('#su-legs .su-leg').length;
+  document.querySelectorAll('#su-legs .su-leg-n').forEach((el,i)=>el.textContent=n>1?'Flight '+(i+1):'Flight');
+  const cnt=document.getElementById('su-leg-count');if(cnt)cnt.textContent=n===1?'1 flight':n+' flights';
+}
+function suShowResult(parsed){
+  window._suParsed=parsed;
+  const typeEl=document.getElementById('su-type');
+  if(parsed.type)typeEl.value=parsed.type;
+  suRenderBody(parsed);
+  document.getElementById('su-result').style.display='block';
+  suRefresh(parsed,{rematch:true});
+}
+function suRenderBody(parsed){
+  const type=document.getElementById('su-type').value;
+  const box=document.getElementById('su-parsed');
+  if(type!=='flight'){box.innerHTML=suParsedHtml(parsed);return;}
+  const legs=suLegsFromParsed(parsed);
+  const legCost=legs.length&&parsed.multiLeg?(parsed.legs||[]).reduce((s,l)=>s+(parseFloat(l.cost)||0),0):0;
+  const cost=parsed.cost||(legCost?String(legCost):'');
+  box.innerHTML=`<h4><span style="color:var(--green)">✓</span> <span id="su-leg-count"></span> found${parsed.pnr?` · PNR <span style="font-family:monospace">${esc(parsed.pnr)}</span>`:''}</h4>
+    <p style="font-size:11px;color:var(--text3);margin:-2px 0 10px">Check each flight below. Fix anything misread, remove extras, or add any flight that wasn't picked up. All of them are saved together.</p>
+    <div id="su-legs">${legs.map(suLegRowHtml).join('')}</div>
+    <button type="button" class="btn btn-s" id="su-add-leg" style="width:100%;margin-top:6px">+ Add another flight</button>
+    <div class="fg" style="margin-top:12px">
+      <div class="fi"><label>Booking total</label><input class="fc" type="number" step="0.01" id="su-cost" value="${esc(cost)}"></div>
+      <div class="fi"><label>Currency</label>${curSel(parsed.currency||'SGD','su-cost-cur')}</div>
+    </div>
+    <div style="font-size:10px;color:var(--text3);margin-top:4px">The total is recorded on the first flight so it's only counted once.</div>
+    ${parsed.rawText?`<button class="su-raw-toggle" onclick="const el=this.nextElementSibling;el.style.display=el.style.display==='none'?'block':'none';this.textContent=el.style.display==='none'?'Show raw text ▸':'Hide raw text ▾'">Show raw text ▸</button><div class="ocr-out" style="display:none;margin-top:4px">${esc(parsed.rawText)}</div>`:''}`;
+}
 function showSmartUpload(){
   const dzid='su-'+uid();
-  modal('Smart Upload','<p style="font-size:12px;color:var(--text2);margin-bottom:14px">Upload a booking confirmation, paste a screenshot, or paste email text. The app will extract details and match to an existing event.</p>'+dzHtml(dzid,true)+`
+  window._suParsed=null;
+  modal('Smart Upload','<p style="font-size:12px;color:var(--text2);margin-bottom:14px">Upload a booking confirmation, paste a screenshot, or paste email text. Every flight in the document is added to one event.</p>'+dzHtml(dzid,true)+`
     <div id="su-result" style="display:none;margin-top:14px">
       <div class="su-match" id="su-parsed"></div>
-      <div style="margin-top:12px">
-        <div class="fi"><label>Match to Event</label>
+      <div style="margin-top:12px" class="fg">
+        <div class="fi"><label>Add to</label>
           <select class="fc" id="su-event">
             <option value="__new__">— Create New Event —</option>
-            ${S.events.sort((a,b)=>b.startDate.localeCompare(a.startDate)).map(t=>`<option value="${t.id}">${esc(t.name)} (${fmtS(t.startDate)})</option>`).join('')}
+            ${[...S.events].filter(t=>t.source!=='apple').sort((a,b)=>b.startDate.localeCompare(a.startDate)).map(t=>`<option value="${t.id}">${esc(t.name)} (${fmtS(t.startDate)})</option>`).join('')}
           </select>
         </div>
-        <div class="fi" style="margin-top:8px"><label>Type</label>
+        <div class="fi"><label>Type</label>
           <select class="fc" id="su-type"><option value="flight">Flight</option><option value="hotel">Hotel</option><option value="activity">Activity</option><option value="transport">Transport</option></select>
         </div>
       </div>
+      <div id="su-match-hint" class="su-hint" style="display:none"></div>
+      <div id="su-new-ev" class="fg" style="margin-top:10px">
+        <div class="fi full"><label>New event name</label><input class="fc" id="su-ev-name"></div>
+        <div class="fi"><label>Start date</label><input class="fc" type="date" id="su-ev-sd"></div>
+        <div class="fi"><label>End date</label><input class="fc" type="date" id="su-ev-ed"></div>
+      </div>
     </div>`,()=>{
-      // Save smart upload result
       const parsed=window._suParsed;
-      if(!parsed){toast('No data extracted');return;}
-      const evId=document.getElementById('su-event').value;
+      if(!parsed){toast('Upload or paste a booking first');return false;}
       const type=document.getElementById('su-type').value;
+      const evId=document.getElementById('su-event').value;
+      const legs=type==='flight'?suReadLegs():[];
+      if(type==='flight'&&!legs.length){toast('Add at least one flight');return false;}
+      const cost=type==='flight'?document.getElementById('su-cost').value:'',cur=type==='flight'?document.querySelector('[name="su-cost-cur"]').value:'';
       let ev;
       if(evId==='__new__'){
-        ev={id:uid(),name:parsed.name||'New Event',category:'trip',requiresLeave:true,startDate:parsed.date||new Date().toISOString().slice(0,10),endDate:parsed.dateTo||parsed.date||new Date().toISOString().slice(0,10),locations:parsed.locations||[],sharedLink:'',notes:'Auto-created from upload',year:parseInt((parsed.date||'2026').slice(0,4)),hotels:[],flights:[],activities:[],transport:[]};
+        const name=document.getElementById('su-ev-name').value.trim()||'New Event';
+        const span=suSpan(type,parsed),td=new Date().toISOString().slice(0,10);
+        const sd=document.getElementById('su-ev-sd').value||span.start||td;
+        let ed=document.getElementById('su-ev-ed').value||span.end||sd;if(ed<sd)ed=sd;
+        const locs=type==='flight'?suTripInfo(legs).locations:(parsed.locations||[]);
+        ev={id:uid(),name,category:'trip',requiresLeave:true,startDate:sd,endDate:ed,locations:locs,sharedLink:'',notes:'Auto-created from upload',year:parseInt(sd.slice(0,4)),hotels:[],flights:[],activities:[],transport:[]};
         S.events.push(ev);
       }else{ev=S.events.find(t=>t.id===evId);}
-      if(!ev)return;
-      const entry={id:uid(),cost:parsed.cost||'',currency:parsed.currency||'SGD',notes:parsed.rawText?'[Auto-extracted]':'',ocrText:parsed.rawText||''};
-      if(type==='flight'&&parsed.multiLeg&&parsed.legs){
-        // Multi-segment: create one flight entry per leg
-        for(const leg of parsed.legs){
-          const legEntry={id:uid(),cost:leg.cost||'',currency:leg.currency||'SGD',notes:leg.duration?'Duration: '+leg.duration:'',ocrText:'',
-            airline:leg.airline||parsed.airline||'',flightNumber:leg.flightNumber||'',pnr:leg.pnr||parsed.pnr||'',seat:leg.seat||'',
-            departureTime:(leg.date?leg.date+' ':'')+(leg.departureTime||''),
-            arrivalTime:((leg.arrivalDate||leg.date)?((leg.arrivalDate||leg.date)+' '):'')+(leg.arrivalTime||''),
-            from:leg.from||'',to:leg.to||''};
-          ev.flights.push(legEntry);
-        }
-      }else if(type==='flight'){Object.assign(entry,{airline:parsed.airline||'',flightNumber:parsed.flightNumber||'',pnr:parsed.pnr||'',seat:parsed.seat||'',departureTime:(parsed.date?parsed.date+' ':'')+(parsed.departureTime||''),arrivalTime:(parsed.dateTo||parsed.date?(parsed.dateTo||parsed.date)+' ':'')+(parsed.arrivalTime||''),from:parsed.from||'',to:parsed.to||''});ev.flights.push(entry);}
-      else if(type==='hotel'){Object.assign(entry,{name:parsed.hotelName||parsed.name||'',bookingNumber:parsed.bookingNumber||parsed.pnr||'',website:'',checkIn:parsed.date||'',checkOut:parsed.dateTo||''});ev.hotels.push(entry);}
-      else if(type==='activity'){Object.assign(entry,{name:parsed.name||'',location:parsed.locations?parsed.locations[0]:'',date:parsed.date||'',time:'',duration:'',bookingDetails:parsed.pnr||''});ev.activities.push(entry);}
-      else{Object.assign(entry,{type:'Other',name:parsed.name||'',location:parsed.locations?parsed.locations[0]:'',date:parsed.date||'',time:'',duration:'',bookingDetails:parsed.pnr||''});ev.transport.push(entry);}
-      saveS();render();toast('Added to '+ev.name);
+      if(!ev)return false;
+      ['hotels','flights','activities','transport'].forEach(k=>{if(!ev[k])ev[k]=[];});
+      if(type==='flight'){
+        const dt=(d,t)=>d?(t?d+'T'+t:d+'T00:00'):'';
+        legs.forEach((l,i)=>{
+          const dep=dt(l.date,l.time),arr=dt(l.adate||l.date,l.atime);
+          let duration='';
+          if(l.time&&l.atime&&dep&&arr){const ms=new Date(arr)-new Date(dep);if(ms>0){const h=Math.floor(ms/36e5),mn=Math.round((ms%36e5)/6e4);duration=h+'h '+(mn<10?'0':'')+mn+'m';}}
+          const code=(l.fn.match(/^[A-Z0-9]{2}/i)||[''])[0].toUpperCase();
+          ev.flights.push({id:uid(),airline:AIRLINE_MAP[code]||l.airline||parsed.airline||'',flightNumber:l.fn.replace(/\s+/g,'').toUpperCase(),pnr:parsed.pnr||'',seat:l.seat,from:l.from,to:l.to,departureTime:dep,arrivalTime:arr,duration,
+            cost:i===0?cost:'',currency:cur,rateToSGD:snapRate(cur),notes:i===0&&cost&&legs.length>1?`Booking total for ${legs.length} flights`:'',ocrText:i===0?(parsed.rawText||''):''});
+        });
+      }else{
+        const entry={id:uid(),cost:parsed.cost||'',currency:parsed.currency||'SGD',rateToSGD:snapRate(parsed.currency||'SGD'),notes:parsed.rawText?'[Auto-extracted]':'',ocrText:parsed.rawText||''};
+        if(type==='hotel'){Object.assign(entry,{name:parsed.hotelName||parsed.name||'',bookingNumber:parsed.bookingNumber||parsed.pnr||'',website:'',checkIn:parsed.date||'',checkOut:parsed.dateTo||''});ev.hotels.push(entry);}
+        else if(type==='activity'){Object.assign(entry,{name:parsed.name||'',location:parsed.locations?parsed.locations[0]:'',date:parsed.date||'',time:'',duration:'',bookingDetails:parsed.pnr||''});ev.activities.push(entry);}
+        else{Object.assign(entry,{type:'Other',name:parsed.name||'',location:parsed.locations?parsed.locations[0]:'',date:parsed.date||'',time:'',duration:'',bookingDetails:parsed.pnr||''});ev.transport.push(entry);}
+      }
+      const tab=type==='flight'?'flights':type==='hotel'?'hotels':type==='activity'?'activities':'transport';
+      toast(type==='flight'?`${legs.length} flight${legs.length>1?'s':''} added to ${ev.name}`:'Added to '+ev.name);
+      window._suParsed=null;window._suTextHook=null;
+      nav('detail',{tid:ev.id,tab});
   });
-  // Hook into OCR completion to parse
-  const origRunOCR=runOCR;
   const dz=document.querySelector(`[data-dz="${dzid}"]`);
   if(!dz)return;
+  // Wire up the review controls (delegated, so re-rendered rows keep working)
+  const res=document.getElementById('su-result');
+  res.addEventListener('click',e=>{
+    const p=window._suParsed;if(!p)return;
+    if(e.target.closest('#su-add-leg')){
+      const legs=suReadLegs(),last=legs[legs.length-1]||{};
+      document.getElementById('su-legs').insertAdjacentHTML('beforeend',suLegRowHtml({airline:last.airline,from:last.to,date:last.adate||last.date}));
+      suRefresh(p);
+      const rows=document.querySelectorAll('#su-legs .su-leg');rows[rows.length-1].querySelector('[data-k="fn"]').focus();
+    }else if(e.target.closest('.su-leg-rm')){
+      e.target.closest('.su-leg').remove();suRefresh(p,{rematch:true});
+    }
+  });
+  res.addEventListener('change',e=>{
+    const p=window._suParsed;if(!p)return;
+    if(e.target.id==='su-type'){suRenderBody(p);suRefresh(p,{rematch:true});}
+    else if(e.target.id==='su-event')suRefresh(p);
+    else if(e.target.closest('.su-leg'))suRefresh(p,{rematch:true});
+  });
+  res.addEventListener('input',e=>{
+    if(['su-ev-name','su-ev-sd','su-ev-ed'].includes(e.target.id))e.target.dataset.touched='1';
+    else if(e.target.closest('.su-leg')&&window._suParsed)suRefresh(window._suParsed);
+  });
   const inp=dz.querySelector(`[data-fi="${dzid}"]`);
   const hookOCR=async(file)=>{
-    await origRunOCR(file,dzid);
+    await runOCR(file,dzid);
     const orEl=document.getElementById('or-'+dzid);
     if(orEl&&orEl.style.display!=='none'){
       const txt=orEl.textContent;
-      const parsed=parseBookingText(txt);
+      const parsed=parseBookingText(txt);if(!parsed)return;
       parsed.rawText=txt;
-      window._suParsed=parsed;
-      // Auto-detect type
-      const typeEl=document.getElementById('su-type');
-      if(parsed.type)typeEl.value=parsed.type;
-      // Auto-match event (allow ±3 day buffer around event dates for positioning flights)
-      const evSel=document.getElementById('su-event');
-      if(parsed.date){
-        const pd=new Date(parsed.date+'T00:00:00').getTime();
-        let bestMatch=null,bestDist=Infinity;
-        for(const tr of S.events){
-          const ts=new Date(tr.startDate+'T00:00:00').getTime(),te=new Date(tr.endDate+'T00:00:00').getTime();
-          const buf=3*864e5;// 3 day buffer
-          if(pd>=(ts-buf)&&pd<=(te+buf)){
-            const dist=Math.min(Math.abs(pd-ts),Math.abs(pd-te));
-            if(dist<bestDist){bestDist=dist;bestMatch=tr;}
-          }
-        }
-        // Also check locations overlap
-        if(!bestMatch&&parsed.locations&&parsed.locations.length){
-          bestMatch=S.events.find(tr=>tr.locations.some(l=>parsed.locations.some(pl=>l.toUpperCase().includes(pl.toUpperCase())||pl.toUpperCase().includes(l.toUpperCase()))));
-        }
-        if(bestMatch)evSel.value=bestMatch.id;
-      }
-      // Show results
-      document.getElementById('su-result').style.display='block';
-      document.getElementById('su-parsed').innerHTML=suParsedHtml(parsed);
+      suShowResult(parsed);
     }
   };
   dz.onclick=()=>inp.click();
   dz.ondrop=e=>{e.preventDefault();dz.classList.remove('over');if(e.dataTransfer.files.length)hookOCR(e.dataTransfer.files[0]);};
   inp.onchange=e=>{if(e.target.files.length)hookOCR(e.target.files[0]);};
-  // Hook for text paste (from Ctrl+V or textarea) to feed into Smart Upload result display
+  // Text paste (Ctrl+V or the "Paste text" tab) feeds the same review
   window._suTextHook=(txt,parsed)=>{
+    if(!document.getElementById('su-result'))return;
     if(!parsed)parsed=parseBookingText(txt);
     if(!parsed)return;
     parsed.rawText=txt;
-    window._suParsed=parsed;
-    const typeEl=document.getElementById('su-type');
-    if(parsed.type&&typeEl)typeEl.value=parsed.type;
-    const evSel=document.getElementById('su-event');
-    if(parsed.date&&tripSel){
-      const pd=new Date(parsed.date+'T00:00:00').getTime();
-      let bestMatch=null,bestDist=Infinity;
-      for(const tr of S.events){
-        const ts=new Date(tr.startDate+'T00:00:00').getTime(),te=new Date(tr.endDate+'T00:00:00').getTime();
-        const buf=3*864e5;
-        if(pd>=(ts-buf)&&pd<=(te+buf)){
-          const dist=Math.min(Math.abs(pd-ts),Math.abs(pd-te));
-          if(dist<bestDist){bestDist=dist;bestMatch=tr;}
-        }
-      }
-      if(!bestMatch&&parsed.locations&&parsed.locations.length){
-        bestMatch=S.events.find(tr=>tr.locations.some(l=>parsed.locations.some(pl=>l.toUpperCase().includes(pl.toUpperCase())||pl.toUpperCase().includes(l.toUpperCase()))));
-      }
-      if(bestMatch)evSel.value=bestMatch.id;
-    }
-    document.getElementById('su-result').style.display='block';
-    document.getElementById('su-parsed').innerHTML=suParsedHtml(parsed);
+    suShowResult(parsed);
   };
 }
 
@@ -3420,6 +3533,37 @@ function dedupeLines(txt){
   return out.join('\n');
 }
 
+// Booking total + currency (sets r.cost / r.currency)
+function _extractCost(txt,r){
+  const costPats=[
+    // "Grand total: IDR 2,320,000"
+    /(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare)?|TOTAL)\s*[:#]?\s*(SGD|USD|MYR|IDR|EUR|GBP|THB|PHP|AUD|CNY|MVR|EGP|TWD|KRW)\s*([\d,]+\.?\d*)/i,
+    // "Total S$ 79.10" or "Total Rp 3,106,856"
+    /(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare)?|TOTAL)\s*[:#]?\s*(?:Rp\.?|RM|S\$|A\$|₱|¥|฿|€|£|\$)\s*([\d,]+\.?\d*)/i,
+    // "SGD235.20" (no space)
+    /(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare)?|TOTAL)\s*[:#]?\s*(SGD|USD|MYR|IDR|EUR|GBP|THB|PHP|AUD|CNY)([\d,]+\.?\d*)/i,
+    // "Total 3,106,856" (amount only)
+    /(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare)?)\s*[:#]?\s*[\$]?\s*([\d,]+\.?\d{0,2})\b/i,
+  ];
+  for(const pat of costPats){const m=txt.match(pat);if(m){
+    if(m[2]){
+      if(/^[A-Z]{3}$/.test(m[1])){r.currency=m[1].toUpperCase();r.cost=m[2].replace(/,/g,'');}
+      else{r.cost=m[1].replace(/,/g,'');if(/^[A-Z]{3}$/.test(m[2]))r.currency=m[2].toUpperCase();}
+    }else{r.cost=m[1].replace(/,/g,'');}
+    break;
+  }}
+  // Detect currency from context near total
+  if(r.cost&&!r.currency){
+    const totalCtx=txt.match(/(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare)?)\s*[:#]?\s*(.{0,30})/i);
+    if(totalCtx){const ctx=totalCtx[1].toLowerCase();
+      for(const[sym,iso]of Object.entries(CURRENCY_SYMBOLS)){if(ctx.includes(sym)){r.currency=iso;break;}}}
+  }
+  // Fallback: any "MYR 95.04" or "IDR 2,320,000" pattern
+  if(!r.cost){const cm=txt.match(/(SGD|USD|MYR|IDR|EUR|GBP|THB|PHP|AUD)\s*([\d,]+\.?\d*)/i);if(cm){r.currency=cm[1].toUpperCase();r.cost=cm[2].replace(/,/g,'');}}
+  if(!r.cost){const symCost=txt.match(/\b(Rp\.?|RM|S\$|A\$)\s*([\d,]+\.?\d*)/i);
+    if(symCost){r.cost=symCost[2].replace(/,/g,'');const sym=symCost[1].toLowerCase().replace(/\.$/,'');r.currency=CURRENCY_SYMBOLS[sym]||'SGD';}}
+}
+
 function parseBookingText(rawTxt){
   const txt=dedupeLines(rawTxt);
   const r={};const t=txt.toUpperCase();
@@ -3445,6 +3589,7 @@ function parseBookingText(rawTxt){
     r.seat=multiLegs[0].seat||'';
     r.duration=multiLegs[0].duration||'';
     r.name=`${r.airline} ${r.from} → ${r.to} (${multiLegs.length} legs)`;
+    _extractCost(txt,r);
     return r;
   }
 
@@ -3608,33 +3753,7 @@ function parseBookingText(rawTxt){
   }
 
   // ===== 10. Cost — with currency symbol mapping =====
-  const costPats=[
-    // "Grand total: IDR 2,320,000"
-    /(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare)?|TOTAL)\s*[:#]?\s*(SGD|USD|MYR|IDR|EUR|GBP|THB|PHP|AUD|CNY|MVR|EGP|TWD|KRW)\s*([\d,]+\.?\d*)/i,
-    // "Total S$ 79.10" or "Total Rp 3,106,856"
-    /(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare)?|TOTAL)\s*[:#]?\s*(?:Rp\.?|RM|S\$|A\$|₱|¥|฿|€|£|\$)\s*([\d,]+\.?\d*)/i,
-    // "SGD235.20" (no space)
-    /(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare)?|TOTAL)\s*[:#]?\s*(SGD|USD|MYR|IDR|EUR|GBP|THB|PHP|AUD|CNY)([\d,]+\.?\d*)/i,
-    // "Total 3,106,856" (amount only)
-    /(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare)?)\s*[:#]?\s*[\$]?\s*([\d,]+\.?\d{0,2})\b/i,
-  ];
-  for(const pat of costPats){const m=txt.match(pat);if(m){
-    if(m[2]){
-      if(/^[A-Z]{3}$/.test(m[1])){r.currency=m[1].toUpperCase();r.cost=m[2].replace(/,/g,'');}
-      else{r.cost=m[1].replace(/,/g,'');if(/^[A-Z]{3}$/.test(m[2]))r.currency=m[2].toUpperCase();}
-    }else{r.cost=m[1].replace(/,/g,'');}
-    break;
-  }}
-  // Detect currency from context near total
-  if(r.cost&&!r.currency){
-    const totalCtx=txt.match(/(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare)?)\s*[:#]?\s*(.{0,30})/i);
-    if(totalCtx){const ctx=totalCtx[1].toLowerCase();
-      for(const[sym,iso]of Object.entries(CURRENCY_SYMBOLS)){if(ctx.includes(sym)){r.currency=iso;break;}}}
-  }
-  // Fallback: any "MYR 95.04" or "IDR 2,320,000" pattern
-  if(!r.cost){const cm=txt.match(/(SGD|USD|MYR|IDR|EUR|GBP|THB|PHP|AUD)\s*([\d,]+\.?\d*)/i);if(cm){r.currency=cm[1].toUpperCase();r.cost=cm[2].replace(/,/g,'');}}
-  if(!r.cost){const symCost=txt.match(/\b(Rp\.?|RM|S\$|A\$)\s*([\d,]+\.?\d*)/i);
-    if(symCost){r.cost=symCost[2].replace(/,/g,'');const sym=symCost[1].toLowerCase().replace(/\.$/,'');r.currency=CURRENCY_SYMBOLS[sym]||'SGD';}}
+  _extractCost(txt,r);
 
   // ===== 11. Hotel extras: room type, nights =====
   if(r.type==='hotel'){
@@ -3799,6 +3918,8 @@ function fHotel(ev,h){
   },50);
 }
 function fFlight(ev,f){
+  window._pendingFlightLegs=null;
+  const dtl=v=>{v=(v||'').trim().replace(' ','T');return /^\d{4}-\d{2}-\d{2}$/.test(v)?v+'T00:00':v;};
   const e=!!f;f=f||{airline:'',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',duration:'',from:'',to:'',cost:'',currency:eventCur(ev),notes:'',ocrText:''};
   const dz='f-'+uid();
   const hasDetails=!!(f.pnr||f.seat||f.duration||f.cost||f.notes||f.attachUrl);
@@ -3807,8 +3928,8 @@ function fFlight(ev,f){
     <div class="fi"><label>Flight #</label><input class="fc" name="fn" value="${esc(f.flightNumber||'')}"></div>
     <div class="fi"><label>From</label><input class="fc" name="from" list="location-list" value="${esc(f.from||'')}" autocomplete="off"></div>
     <div class="fi"><label>To</label><input class="fc" name="to" list="location-list" value="${esc(f.to||'')}" autocomplete="off"></div>
-    <div class="fi"><label>Departure</label><input class="fc" type="datetime-local" name="dep" value="${f.departureTime||''}"></div>
-    <div class="fi"><label>Arrival</label><input class="fc" type="datetime-local" name="arr" value="${f.arrivalTime||''}"></div>
+    <div class="fi"><label>Departure</label><input class="fc" type="datetime-local" name="dep" value="${dtl(f.departureTime)}"></div>
+    <div class="fi"><label>Arrival</label><input class="fc" type="datetime-local" name="arr" value="${dtl(f.arrivalTime)}"></div>
     <button type="button" class="form-details-toggle${hasDetails?' open':''}" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="fdt-arrow">▶</span> More details</button>
     <div class="form-details${hasDetails?' open':''}" style="grid-column:1/-1"><div class="fg">
       <div class="fi"><label>PNR</label><input class="fc" name="pnr" value="${esc(f.pnr||'')}" style="font-family:monospace"></div>
@@ -3830,7 +3951,7 @@ function fFlight(ev,f){
     if(window._pendingFlightLegs&&window._pendingFlightLegs.length){
       const extra=window._pendingFlightLegs;
       window._pendingFlightLegs=null;
-      extra.forEach(leg=>ev.flights.push({id:uid(),...leg}));
+      extra.forEach(leg=>ev.flights.push({id:uid(),...leg,rateToSGD:snapRate(leg.currency)}));
       saveS();render();toast((1+extra.length)+' flights added from scan');
     }else{saveS();render();toast(e?'Flight updated':'Flight added');}
   });
