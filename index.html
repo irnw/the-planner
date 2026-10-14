@@ -2071,6 +2071,7 @@ function buildICSCal(evts,stable){
     // Activity events
     (t.activities||[]).forEach(a=>{
       if(!a.date)return;
+      if(stable&&a.appleUid)return;// attached Apple event: the original already shows in Apple Calendar — don't duplicate it
       events.push([
         'BEGIN:VEVENT','DTSTART;VALUE=DATE:'+icsDate(a.date),
         'DTEND;VALUE=DATE:'+icsNextDay(a.endDate||a.date),
@@ -2185,7 +2186,7 @@ function showAttachApple(appleEvId){
   const gap=t=>Math.max(0,day(t.startDate)-day(ap.endDate),day(ap.startDate)-day(t.endDate));
   const opts=S.events.filter(t=>t.source!=='apple').sort((a,b)=>gap(a)-gap(b)||a.startDate.localeCompare(b.startDate));
   if(!opts.length){toast('Create a tracker event first');return;}
-  modal('Add to event',`<p style="font-size:12px;color:var(--text2);margin-bottom:12px">Add <b>${esc(ap.name)}</b> (${fmt(ap.startDate)}${ap.startTime?' '+ap.startTime:''}) to one of your events as an activity. It stays in sync with Apple Calendar. Tip: on a computer you can also drag the Apple card onto an event card.</p>
+  modal('Add to event',`<p style="font-size:12px;color:var(--text2);margin-bottom:12px">Add <b>${esc(ap.name)}</b> (${fmt(ap.startDate)}${ap.startTime?' '+ap.startTime:''}) to one of your events as an activity. The original stays in Apple Calendar and keeps the activity in sync — changes there update it, and deleting it there removes the activity. Tip: on a computer you can also drag the Apple card onto an event card.</p>
     <div class="fi"><label>Event</label><select class="fc" id="attach-target">${opts.map(t=>`<option value="${t.id}">${esc(t.name)} (${fmtS(t.startDate)} – ${fmtS(t.endDate)})${gap(t)===0?' ✓ dates overlap':''}</option>`).join('')}</select></div>`,
     ()=>{attachAppleEvent(ap.id,document.getElementById('attach-target').value);},{saveLabel:'Add'});
 }
@@ -2212,22 +2213,25 @@ function importAppleCalendar(icsText){
   }
   const byUid=new Map(incoming.map(e=>[e.appleUid,e]));
   let changed=0;
+  // An empty feed is almost certainly a fetch glitch, not "everything deleted" — remove nothing
+  const allowDeletes=incoming.length>0;
   // Apple events attached to tracker events: update their activity, never re-create them standalone
   const attached=attachedAppleUids();
   for(const ev of S.events||[])for(const a of ev.activities||[]){
     if(!a.appleUid)continue;
     const inc=byUid.get(a.appleUid);
-    if(!inc){delete a.appleUid;delete a.appleSrc;changed++;continue;}// deleted in Apple: keep it as a normal activity
+    if(!inc){if(allowDeletes){a._appleDeleted=true;changed++;}continue;}// deleted in Apple Calendar → removed from the trip below
     const src=_appleSrcOf(inc);
     if(JSON.stringify(src)!==JSON.stringify(a.appleSrc||{})){_applyAppleToActivity(a,src);changed++;}
     byUid.delete(a.appleUid);
   }
+  for(const ev of S.events||[])if((ev.activities||[]).some(a=>a._appleDeleted))ev.activities=ev.activities.filter(a=>!a._appleDeleted);
   // Update or delete existing apple-sourced events (never touches tracker-native events)
   S.events=(S.events||[]).filter(ev=>{
     if(ev.source!=='apple')return true;
     if(attached.has(ev.appleUid)){changed++;return false;}// standalone copy of an attached event (e.g. synced from another device)
     const inc=byUid.get(ev.appleUid);
-    if(!inc){changed++;return false;} // deleted in Apple Calendar
+    if(!inc){if(!allowDeletes)return true;changed++;return false;} // deleted in Apple Calendar
     const fields=['name','startDate','endDate','startTime','endTime','notes'];
     const diff=fields.some(f=>(ev[f]||'')!==(inc[f]||''))||JSON.stringify(ev.locations||[])!==JSON.stringify(inc.locations);
     if(diff){Object.assign(ev,inc);ev.year=parseInt(inc.startDate)||ev.year;changed++;}
