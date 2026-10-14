@@ -1672,7 +1672,8 @@ function rHotels(t){
         ${h.checkIn?`<div class="eg"><span class="ek">Check-in</span><span class="ev">${fmt(h.checkIn)}</span></div>`:''}
         ${h.checkOut?`<div class="eg"><span class="ek">Check-out</span><span class="ev">${fmt(h.checkOut)}</span></div>`:''}
         ${h.checkIn&&h.checkOut?`<div class="eg"><span class="ek">Nights</span><span class="ev">${nights(h.checkIn,h.checkOut)}</span></div>`:''}
-        ${h.cost?`<div class="eg"><span class="ek">Cost</span><span class="ev">${esc(h.currency)} ${parseFloat(h.cost).toLocaleString()}</span></div>`:''}
+        ${h.cost&&!h.fullPaymentAmount?`<div class="eg"><span class="ek">Cost</span><span class="ev">${esc(h.currency)} ${parseFloat(h.cost).toLocaleString()}</span></div>`:''}
+        ${paymentRowsHtml(h)}
         ${h.website?`<div class="eg"><span class="ek">Website</span><span class="ev"><a href="${esc(h.website)}" target="_blank">${esc(h.website).slice(0,35)}…</a></span></div>`:''}
       </div>
       ${h.notes?`<div style="margin-top:6px;font-size:11px;color:var(--text2)">${esc(h.notes)}</div>`:''}
@@ -1692,9 +1693,7 @@ function rActs(t){
         ${a.duration?`<div class="eg"><span class="ek">Duration</span><span class="ev">${esc(a.duration)}</span></div>`:''}
         ${a.cost&&!a.fullPaymentAmount?`<div class="eg"><span class="ek">Cost</span><span class="ev">${esc(a.currency)} ${parseFloat(a.cost).toLocaleString()}</span></div>`:''}
         ${a.bookingDetails?`<div class="eg"><span class="ek">Booking</span><span class="ev">${esc(a.bookingDetails)}</span></div>`:''}
-        ${a.fullPaymentAmount?`<div class="eg"><span class="ek">Full Payment</span><span class="ev">${esc(a.fullPaymentCurrency||a.currency)} ${parseFloat(a.fullPaymentAmount).toLocaleString()}</span></div>`:''}
-        ${a.depositAmount?`<div class="eg"><span class="ek">Deposit</span><span class="ev">${esc(a.depositCurrency||a.currency)} ${parseFloat(a.depositAmount).toLocaleString()}${a.depositPaid==='yes'?' (paid)':''}</span></div>`:''}
-        ${a.fullPaymentAmount&&a.depositAmount&&(a.fullPaymentCurrency||a.currency)===(a.depositCurrency||a.currency)?`<div class="eg"><span class="ek">Balance</span><span class="ev">${esc(a.fullPaymentCurrency||a.currency)} ${(parseFloat(a.fullPaymentAmount)-parseFloat(a.depositAmount)).toLocaleString()}</span></div>`:''}
+        ${paymentRowsHtml(a)}
       </div>
       ${a.notes?`<div style="margin-top:6px;font-size:11px;color:var(--text2)">${esc(a.notes)}</div>`:''}
       ${a.ocrText?`<details style="margin-top:6px"><summary style="font-size:11px;color:var(--primary);cursor:pointer">OCR Text</summary><div class="ocr-out">${esc(a.ocrText)}</div></details>`:''}
@@ -1711,8 +1710,9 @@ function rTrans(t){
         ${x.date?`<div class="eg"><span class="ek">Date</span><span class="ev">${fmt(x.date)}</span></div>`:''}
         ${x.time?`<div class="eg"><span class="ek">Time</span><span class="ev">${esc(x.time)}</span></div>`:''}
         ${x.duration?`<div class="eg"><span class="ek">Duration</span><span class="ev">${esc(x.duration)}</span></div>`:''}
-        ${x.cost?`<div class="eg"><span class="ek">Cost</span><span class="ev">${esc(x.currency)} ${parseFloat(x.cost).toLocaleString()}</span></div>`:''}
+        ${x.cost&&!x.fullPaymentAmount?`<div class="eg"><span class="ek">Cost</span><span class="ev">${esc(x.currency)} ${parseFloat(x.cost).toLocaleString()}</span></div>`:''}
         ${x.bookingDetails?`<div class="eg"><span class="ek">Booking</span><span class="ev">${esc(x.bookingDetails)}</span></div>`:''}
+        ${paymentRowsHtml(x)}
       </div>
       ${x.notes?`<div style="margin-top:6px;font-size:11px;color:var(--text2)">${esc(x.notes)}</div>`:''}
       ${x.ocrText?`<details style="margin-top:6px"><summary style="font-size:11px;color:var(--primary);cursor:pointer">OCR Text</summary><div class="ocr-out">${esc(x.ocrText)}</div></details>`:''}
@@ -2757,14 +2757,16 @@ function setupDZ(dz){
   dz.ondragleave=()=>dz.classList.remove('over');
   dz.ondrop=e=>{e.preventDefault();dz.classList.remove('over');if(e.dataTransfer.files.length)runOCR(e.dataTransfer.files[0],id);};
   inp.onchange=e=>{if(e.target.files.length)runOCR(e.target.files[0],id);};
-  // Clipboard paste support — images (screenshots) and text
-  const pasteTarget=dz.closest('.modal')||dz.closest('.fi')||document;
-  if(!pasteTarget._dzPasteSet){
-    pasteTarget._dzPasteSet=true;
-    pasteTarget.addEventListener('paste',e=>{
-      // Find the active/visible drop zone in this context
-      const activeDZ=pasteTarget.querySelector('.dz[data-dz]');
-      const activeId=activeDZ?activeDZ.dataset.dz:id;
+  // Clipboard paste (screenshots and text) is handled by one document-level listener, so it works
+  // wherever focus is — a paste event goes to the focused element, which is often outside the modal
+  if(!document._dzPasteSet){
+    document._dzPasteSet=true;
+    document.addEventListener('paste',e=>{
+      // Route to the drop zone in the open modal
+      const bg=document.getElementById('mbg');
+      const activeDZ=bg&&bg.classList.contains('open')?bg.querySelector('.dz[data-dz]'):null;
+      if(!activeDZ)return;
+      const activeId=activeDZ.dataset.dz;
       const items=e.clipboardData&&e.clipboardData.items;
       if(!items)return;
       // Check for image data first (screenshot paste)
@@ -3141,7 +3143,7 @@ function showSmartUpload(){
         <div class="fi"><label>Add to</label>
           <select class="fc" id="su-event">
             <option value="__new__">— Create New Event —</option>
-            ${[...S.events].filter(t=>t.source!=='apple').sort((a,b)=>b.startDate.localeCompare(a.startDate)).map(t=>`<option value="${t.id}">${esc(t.name)} (${fmtS(t.startDate)})</option>`).join('')}
+            ${[...(S.events||[])].filter(t=>t.source!=='apple').sort((a,b)=>b.startDate.localeCompare(a.startDate)).map(t=>`<option value="${t.id}">${esc(t.name)} (${fmtS(t.startDate)})</option>`).join('')}
           </select>
         </div>
         <div class="fi"><label>Type</label>
@@ -4109,6 +4111,23 @@ function gatherPayment(g){
   return r;
 }
 
+// Full payment (incl. deposit) replaces the entry's cost (activities, hotels)
+function applyFullPayment(d){if(d.fullPaymentAmount){d.cost=d.fullPaymentAmount;d.currency=d.fullPaymentCurrency;d.rateToSGD=snapRate(d.currency);}return d;}
+// In the form, Cost mirrors the full payment and locks while one is entered
+function wireFullPayment(m){
+  const fpA=m.querySelector('[name="fullPaymentAmount"]'),fpC=m.querySelector('[name="fullPaymentCurrency"]'),cA=m.querySelector('[name="cost"]'),cC=m.querySelector('[name="currency"]');
+  if(!fpA||!cA)return;
+  const syncCost=()=>{const on=!!fpA.value;if(on){cA.value=fpA.value;cC.value=fpC.value;}cA.readOnly=on;cC.style.pointerEvents=on?'none':'';cA.style.opacity=cC.style.opacity=on?'.6':'';cA.title=cC.title=on?'Set by Full Payment Amount':'';};
+  fpA.addEventListener('input',syncCost);fpC.addEventListener('change',syncCost);syncCost();
+}
+// Card rows: full payment, deposit and remaining balance
+function paymentRowsHtml(e){
+  const fc=e.fullPaymentCurrency||e.currency,dc=e.depositCurrency||e.currency;
+  return `${e.fullPaymentAmount?`<div class="eg"><span class="ek">Full Payment</span><span class="ev">${esc(fc)} ${parseFloat(e.fullPaymentAmount).toLocaleString()}</span></div>`:''}
+        ${e.depositAmount?`<div class="eg"><span class="ek">Deposit</span><span class="ev">${esc(dc)} ${parseFloat(e.depositAmount).toLocaleString()}${e.depositPaid==='yes'?' (paid)':''}</span></div>`:''}
+        ${e.fullPaymentAmount&&e.depositAmount&&fc===dc?`<div class="eg"><span class="ek">Balance</span><span class="ev">${esc(fc)} ${(parseFloat(e.fullPaymentAmount)-parseFloat(e.depositAmount)).toLocaleString()}</span></div>`:''}`;
+}
+
 // ===== FORM MODALS =====
 function fEvent(t){
   const e=!!t;t=t||{name:'',startDate:'',endDate:'',locations:[],sharedLink:'',notes:''};
@@ -4209,12 +4228,13 @@ function fHotel(ev,h){
       <div class="fi"><label>Currency</label>${curSel(h.currency)}</div>
       <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(h.notes||'')}</textarea></div>
     </div></div>
-    ${paymentHtml(h)}
+    ${paymentHtml(h,{fullPayment:true})}
     ${dzHtml(dz)}
   </div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
     const oE=document.getElementById('or-'+dz);
     const d={name:g('name'),bookingNumber:g('bn'),website:g('web'),checkIn:g('ci'),checkOut:g('co'),cost:g('cost'),currency:g('currency'),rateToSGD:snapRate(g('currency')),notes:g('notes'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:h.ocrText)||'',...gatherPayment(g)};
+    applyFullPayment(d);
     if(e)Object.assign(h,d);else ev.hotels.push({id:uid(),...d});
     saveS();render();toast(e?'Hotel updated':'Hotel added');
   });
@@ -4222,6 +4242,7 @@ function fHotel(ev,h){
   setTimeout(()=>{
     const m=document.querySelector('.modal');if(!m)return;
     const ci=m.querySelector('[name="ci"]'),co=m.querySelector('[name="co"]'),ni=m.querySelector('[name="nights"]');
+    wireFullPayment(m);
     const syncNights=()=>{if(ci.value&&co.value){const n=calcNights(ci.value,co.value);if(n)ni.value=n;}};
     const syncCo=()=>{if(ci.value&&ni.value&&parseInt(ni.value)>0){const d=new Date(ci.value+'T00:00:00');d.setDate(d.getDate()+parseInt(ni.value));co.value=d.toISOString().slice(0,10);}};
     ci.addEventListener('change',()=>{if(ni.value&&!co.value)syncCo();else syncNights();});
@@ -4308,8 +4329,7 @@ function fAct(ev,a){
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
     const oE=document.getElementById('or-'+dz);
     const d={name:g('name'),location:g('loc'),date:g('date'),endDate:g('endDate'),time:g('time'),duration:g('dur'),cost:g('cost'),currency:g('currency'),rateToSGD:snapRate(g('currency')),bookingDetails:g('bd'),notes:g('notes'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:a.ocrText)||'',...gatherPayment(g)};
-    // Full payment (incl. deposit) replaces the activity's cost
-    if(d.fullPaymentAmount){d.cost=d.fullPaymentAmount;d.currency=d.fullPaymentCurrency;d.rateToSGD=snapRate(d.currency);}
+    applyFullPayment(d);
     if(e)Object.assign(a,d);else ev.activities.push({id:uid(),...d});
     saveS();render();toast(e?'Activity updated':'Activity added');
   });
@@ -4317,10 +4337,7 @@ function fAct(ev,a){
   setTimeout(()=>{
     const m=document.querySelector('.modal');if(!m)return;
     const sd=m.querySelector('[name="date"]'),ed=m.querySelector('[name="endDate"]'),dy=m.querySelector('[name="days"]');
-    // Full payment (incl. deposit) drives Cost: mirror it and lock the Cost fields while set
-    const fpA=m.querySelector('[name="fullPaymentAmount"]'),fpC=m.querySelector('[name="fullPaymentCurrency"]'),cA=m.querySelector('[name="cost"]'),cC=m.querySelector('[name="currency"]');
-    const syncCost=()=>{const on=!!fpA.value;if(on){cA.value=fpA.value;cC.value=fpC.value;}cA.readOnly=on;cC.style.pointerEvents=on?'none':'';cA.style.opacity=cC.style.opacity=on?'.6':'';cA.title=cC.title=on?'Set by Full Payment Amount':'';};
-    fpA.addEventListener('input',syncCost);fpC.addEventListener('change',syncCost);syncCost();
+    wireFullPayment(m);
     const syncDays=()=>{if(sd.value&&ed.value){const n=calcNights(sd.value,ed.value);if(n)dy.value=n;}};
     const syncEnd=()=>{if(sd.value&&dy.value&&parseInt(dy.value)>0){const d=new Date(sd.value+'T00:00:00');d.setDate(d.getDate()+parseInt(dy.value));ed.value=d.toISOString().slice(0,10);}};
     sd.addEventListener('change',()=>{if(dy.value&&!ed.value)syncEnd();else syncDays();});
@@ -4347,15 +4364,17 @@ function fTrans(ev,x){
       <div class="fi full"><label>Booking Details</label><input class="fc" name="bd" value="${esc(x.bookingDetails||'')}"></div>
       <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(x.notes||'')}</textarea></div>
     </div></div>
-    ${paymentHtml(x)}
+    ${paymentHtml(x,{fullPayment:true})}
     ${dzHtml(dz)}
   </div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
     const oE=document.getElementById('or-'+dz);
     const d={type:g('type'),name:g('name'),location:g('loc'),date:g('date'),time:g('time'),duration:g('dur'),cost:g('cost'),currency:g('currency'),rateToSGD:snapRate(g('currency')),bookingDetails:g('bd'),notes:g('notes'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:x.ocrText)||'',...gatherPayment(g)};
+    applyFullPayment(d);
     if(e)Object.assign(x,d);else ev.transport.push({id:uid(),...d});
     saveS();render();toast(e?'Transport updated':'Transport added');
   });
+  setTimeout(()=>{const m=document.querySelector('.modal');if(m)wireFullPayment(m);},50);
 }
 
 // ===== EVENTS =====
