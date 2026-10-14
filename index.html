@@ -2924,7 +2924,7 @@ function autoFillForm(txt,dzId){
     // Hotel form
     s('name',parsed.hotelName||parsed.name);s('bn',parsed.bookingNumber||parsed.pnr);
     s('ci',parsed.date);s('co',parsed.dateTo);s('cost',parsed.cost);
-    if(parsed.roomType||parsed.nights){const notesParts=[];if(parsed.roomType)notesParts.push(parsed.roomType);if(parsed.nights)notesParts.push(parsed.nights+' nights');s('notes',notesParts.join(' · '));}
+    if(parsed.roomType||parsed.nights){const notesParts=[];if(parsed.roomType)notesParts.push(parsed.roomType);if(parsed.nights)notesParts.push(parsed.nights+' night'+(parsed.nights>1?'s':''));s('notes',notesParts.join(' · '));}
     if(parsed.currency){const cEl=m.querySelector('[name="currency"]');if(cEl)cEl.value=parsed.currency;}
     // Auto-calc nights after fill
     setTimeout(()=>{const ci=m.querySelector('[name="ci"]'),co=m.querySelector('[name="co"]'),ni=m.querySelector('[name="nights"]');if(ci&&co&&ni&&ci.value&&co.value&&!ni.value){const n=calcNights(ci.value,co.value);if(n)ni.value=n;}},100);
@@ -3190,7 +3190,7 @@ function showSmartUpload(){
         });
       }else{
         const entry={id:uid(),cost:parsed.cost||'',currency:parsed.currency||'SGD',rateToSGD:snapRate(parsed.currency||'SGD'),notes:parsed.rawText?'[Auto-extracted]':'',ocrText:parsed.rawText||''};
-        if(type==='hotel'){Object.assign(entry,{name:parsed.hotelName||parsed.name||'',bookingNumber:parsed.bookingNumber||parsed.pnr||'',website:'',checkIn:parsed.date||'',checkOut:parsed.dateTo||''});ev.hotels.push(entry);}
+        if(type==='hotel'){Object.assign(entry,{name:parsed.hotelName||parsed.name||'',bookingNumber:parsed.bookingNumber||parsed.pnr||'',website:'',checkIn:parsed.date||'',checkOut:parsed.dateTo||'',notes:[parsed.roomType,parsed.nights?parsed.nights+' night'+(parsed.nights>1?'s':''):''].filter(Boolean).join(' · ')||entry.notes});ev.hotels.push(entry);}
         else if(type==='activity'){Object.assign(entry,{name:parsed.title||parsed.name||'',location:parsed.locations?parsed.locations[0]:'',date:parsed.date||'',time:suTime24(parsed.departureTime),duration:'',bookingDetails:parsed.pnr||''});ev.activities.push(entry);}
         else{Object.assign(entry,{type:parsed.transportType||'Other',name:parsed.provider||parsed.name||'',location:parsed.locations?parsed.locations[0]:'',date:parsed.date||'',time:suTime24(parsed.departureTime),duration:'',bookingDetails:parsed.pnr||'',notes:parsed.title&&parsed.title!==parsed.provider?parsed.title:entry.notes});ev.transport.push(entry);}
       }
@@ -3913,7 +3913,8 @@ function parseBookingText(rawTxt){
   const hotelKw=/\b(BOOKING\.COM|AGODA|EXPEDIA|HOTELS\.COM|HOSTELWORLD|AIRBNB|VRBO)\b/i.test(txt)||
     /\b(HOTEL|RESORT|HOSTEL|VILLA|INN|GUESTHOUSE|BUNGALOW|HOMESTAY|LODGE|APARTMENT|ACCOMMODATION)\b/i.test(txt)||
     (/\bcheck.?in\b/i.test(txt)&&/\bcheck.?out\b/i.test(txt)&&/\b\d+\s*nights?\b/i.test(txt))||
-    /\byour\s+booking\s+in\b/i.test(txt)||/\bexpecting\s+you\b/i.test(txt);
+    /\byour\s+booking\s+in\b/i.test(txt)||/\bexpecting\s+you\b/i.test(txt)||
+    /\b(?:hotel\s+voucher|check-?in\s+voucher|accommodation\s+voucher)\b/i.test(txt)||(/\bcheck.?in\b/i.test(txt)&&/\bcheck.?out\b/i.test(txt));
   // Booking/order references ("KL88231") aren't flight numbers
   const txtNoRefs=txt.replace(/(?:[Bb]ooking|BOOKING|[Oo]rder|ORDER|[Rr]eference|REFERENCE|[Rr]ef\.?|[Cc]onfirmation|CONFIRMATION|[Vv]oucher|PNR)(?:[ \t]+(?:[Rr]eference|REFERENCE|[Rr]ef\.?|[Nn]o\.?|NO\.?|[Nn]umber|NUMBER|ID|[Cc]ode|CODE|#))?[ \t]*[:：#]?[ \t]*[A-Z0-9-]{4,20}\b/g,' ');
   const strongFlightKw=/\b(FLIGHT|BOARDING\s*PASS|AIRLINE|AIRWAYS|GATE\s*\d|TERMINAL\s*\d|BAGGAGE\s*ALLOW|FLIGHT\s*DURATION|FLIGHT\s*SUMMARY)\b/i.test(txt);
@@ -3956,6 +3957,7 @@ function parseBookingText(rawTxt){
     /(?:E-?Ticket\s*(?:number|#)?)\s*[:#]?\s*([\d-]{10,20})/i,
   ];
   for(const pat of pnrPats){const m=txt.match(pat);if(m){r.pnr=m[1];r.bookingNumber=m[1];break;}}
+  if(r.type==='hotel'){const cm=txt.match(/Confirmation\s*(?:no\.?|number|#|code)\s*[:#]?\s*([A-Z0-9-]{4,24})/i);if(cm){r.pnr=cm[1];r.bookingNumber=cm[1];}}
 
   // ===== 4. Hotel name extraction (platform-aware) =====
   if(r.type==='hotel'){
@@ -3964,6 +3966,9 @@ function parseBookingText(rawTxt){
       /(?:Hotel|Resort|Property|Accommodation|Stay\s*at)\s*[:#]?\s*([A-Za-z][A-Za-z\s&'\-,]{2,60})(?:\n|$)/i,
       /your\s+stay\s+at\s+([A-Z][A-Za-z\s&'\-]{2,50})/i,
     ];
+    // Vouchers print the property name on the line above its address
+    const aboveAddr=txt.match(/(?:^|\n)[ \t]*([^\n:]{2,60}?)[ \t]*\n[ \t]*(?:Address|Hotel\s+address)\s*[:：]/i);
+    if(aboveAddr&&!/\b(?:booking|confirmation|voucher|pin|phone|nights?|rooms?|guests?|adults?|check)\b/i.test(aboveAddr[1]))hotelPats.push(new RegExp('('+aboveAddr[1].trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')'));
     for(const pat of hotelPats){const m=txt.match(pat);if(m){r.hotelName=m[1].trim().replace(/\s+/g,' ').slice(0,60);break;}}
   }
 
@@ -4014,6 +4019,13 @@ function parseBookingText(rawTxt){
   if(addrM)locSet.add(addrM[1].trim());
   if(r.from)locSet.add(r.from);if(r.to)locSet.add(r.to);
   r.locations=[...locSet];
+  // Hotel address: the first known town in it is the most specific location ("…, Sanur, Denpasar, Bali")
+  const addrLine=txt.match(/Address\s*[:：]\s*([^\n]+(?:\n[^\n:]+)?)/i);
+  if(addrLine){
+    const A=addrLine[1].toUpperCase();let best=null;
+    for(const c of CITIES){const city=c.split(',')[0].trim();const m=new RegExp('\\b'+city.toUpperCase().replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b').exec(A);if(m&&(!best||m.index<best.pos))best={city,pos:m.index};}
+    if(best)r.locations=[best.city,...r.locations.filter(l=>l!==best.city&&l.split(',')[0]!==best.city)];
+  }
 
   // ===== 7. Seat (flights only) =====
   if(r.type==='flight'){const seat=txt.match(/(?:Seat|SEAT)\s*[:#]?\s*(\d{1,3}[A-HJ-K])/i);if(seat)r.seat=seat[1];}
@@ -4026,6 +4038,19 @@ function parseBookingText(rawTxt){
     const coM=txt.match(/check.?out\s*[:\n]*\s*(?:\w+day,?\s*)?(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{4})/i);
     if(ciM){const d=parseDate(ciM[1]);if(d)r.date=d;}
     if(coM){const d=parseDate(coM[1]);if(d)r.dateTo=d;}
+    if(!r.date||!r.dateTo){
+      const ciL=txt.search(/\bcheck.?in\b(?!\s*voucher)/i),coL=txt.search(/\bcheck.?out\b/i);
+      if(ciL>=0&&coL>=0){
+        const after=txt.substring(ciL,ciL+260),ds=_findDates(after);
+        const coRel=coL-ciL;
+        if(ds.length>=2&&coRel>0&&coRel<ds[0].pos){r.date=r.date||ds[0].date;r.dateTo=r.dateTo||ds[1].date;}// labels side by side, dates below
+        else{
+          if(!r.date&&ds[0])r.date=ds[0].date;
+          const dco=_findDates(txt.substring(coL,coL+160));if(!r.dateTo&&dco[0])r.dateTo=dco[0].date;
+        }
+        if(r.date&&r.dateTo&&r.dateTo<=r.date)r.dateTo='';
+      }
+    }
   }
   // For flights, try structured "Depart: Day, DD Mon YYYY" patterns
   if(r.type==='flight'&&!r.date){
@@ -4107,6 +4132,8 @@ function parseBookingText(rawTxt){
   if(r.type==='hotel'){
     const nightsM=txt.match(/(\d+)\s*nights?\b/i);if(nightsM)r.nights=parseInt(nightsM[1]);
     const roomM=txt.match(/\d+\s*nights?,\s*(.+?)(?:\n|$)/i);if(roomM)r.roomType=roomM[1].trim().slice(0,60);
+    if(!r.roomType){const rt=txt.match(/\b((?:Deluxe|Superior|Standard|Classic|Premier|Executive|Family|Double|Twin|Single|Triple|Quad|King|Queen|Budget|Economy|Garden|Pool|Ocean|Sea)(?:[ \t]+[A-Z][a-z]+){0,3}[ \t]+(?:Room|Suite|Villa|Bungalow|Studio|Cabin|Dorm))\b/);if(rt)r.roomType=rt[1];}
+    if(!r.nights&&r.date&&r.dateTo)r.nights=Math.round((new Date(r.dateTo)-new Date(r.date))/864e5);
   }
 
   // ===== 12. Flight duration =====
