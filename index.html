@@ -167,20 +167,21 @@ textarea.fc{resize:vertical;min-height:50px}
 .ocr-out{margin-top:8px;padding:8px 10px;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;font-size:11px;max-height:120px;overflow-y:auto;white-space:pre-wrap;color:var(--text2);font-family:'SF Mono',Monaco,monospace}
 
 /* ========== CALENDAR ========== */
-.cal-nav{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.cal-nav{display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;margin-bottom:16px}
+@media(max-width:480px){.cal-nav{gap:8px}.cal-nav h3{flex:1 1 100%;order:-1}}
 .cal-nav h3{font-family:var(--serif);font-size:17px;font-weight:500;min-width:180px;letter-spacing:-.1px}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:var(--radius);overflow:hidden;border:1px solid var(--glass-border)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--border);border-radius:var(--radius);overflow:hidden;border:1px solid var(--glass-border)}
 .cal-head{background:var(--bg2);padding:8px;text-align:center;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
-.cal-day{background:var(--bg);min-height:80px;padding:4px 6px;font-size:11px;position:relative;cursor:pointer;transition:background .15s}
+.cal-day{background:var(--bg);min-height:80px;min-width:0;padding:4px 6px;font-size:11px;position:relative;cursor:pointer;transition:background .15s;overflow-wrap:break-word}
 .cal-day:hover{background:var(--card-hover)}
 .cal-day.today{box-shadow:inset 0 0 0 2px var(--primary)}
 .cal-day.other{opacity:.2}
 .cal-day .d-num{font-weight:600;margin-bottom:2px;font-size:12px}
 .cal-day .d-num.weekend{color:var(--accent)}
-.cal-day .d-ph{font-size:8px;font-weight:600;margin-bottom:1px;padding:1px 4px;border-radius:3px;display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-day .d-ph{font-size:8px;font-weight:600;margin-bottom:1px;padding:1px 4px;border-radius:3px;display:inline-block;max-width:100%;line-height:1.25;white-space:normal;overflow-wrap:break-word}
 .cal-day .d-ph.ph-sg{background:var(--sg-dim);color:var(--sg)}
 .cal-day .d-ph.ph-my{background:var(--my-dim);color:var(--my)}
-.cal-trip{font-size:9px;padding:1px 4px;border-radius:3px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;font-weight:500;color:#fff}
+.cal-trip{font-size:9px;padding:1px 4px;border-radius:3px;margin-bottom:1px;line-height:1.3;white-space:normal;overflow-wrap:break-word;hyphens:manual;cursor:pointer;font-weight:500;color:#fff}
 
 /* ========== LEAVE ========== */
 .leave-boxes{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:24px}
@@ -426,10 +427,10 @@ textarea.fc{resize:vertical;min-height:50px}
 .tp-date{width:auto;padding:5px 8px;font-size:11px;border-radius:6px;background:var(--input-bg);border:1px solid var(--border);color:var(--text)}
 
 @media(max-width:960px){
-  .cal-day{min-height:60px;padding:3px 4px;font-size:10px}
+  .cal-day{min-height:60px;padding:3px 2px;font-size:10px}
   .cal-day .d-num{font-size:11px}
   .cal-day .d-ph{font-size:7px}
-  .cal-trip{font-size:8px;padding:1px 3px}
+  .cal-trip{font-size:8px;padding:1px 2px;letter-spacing:-.1px}
   .cal-head{padding:6px 4px;font-size:9px}
   .cal-head .ch-full{display:none}
   .cal-head .ch-short{display:inline}
@@ -1793,7 +1794,7 @@ function vCal(){
     cells+=`<div class="cal-day${isToday?' today':''}" style="position:relative" data-date="${ds}">
       ${dayHasClash?'<div class="cal-clash" title="Time clash on this day"></div>':''}
       <div class="d-num${isWknd?' weekend':''}">${d}</div>
-      ${phs.map(ph=>`<div class="d-ph ph-${ph.country.toLowerCase()}" title="${esc(ph.n)}${ph.country==='MY'?' ('+fmtStates(ph.states)+')':''}">${esc(ph.n.length>14?ph.n.slice(0,12)+'…':ph.n)}</div>`).join('')}
+      ${phs.map(ph=>`<div class="d-ph ph-${ph.country.toLowerCase()}" title="${esc(ph.n)}${ph.country==='MY'?' ('+fmtStates(ph.states)+')':''}">${esc(ph.n)}</div>`).join('')}
       ${leaveDays.has(ds)&&!phs.some(p=>p.country==='SG')?`<div class="d-leave" style="font-size:8px;color:var(--purple);font-weight:500">${isApplied?'Applied':'Leave'}</div>`:''}
       ${eventsOn.slice(0,2).map(t=>`<div class="cal-trip" style="background:${eColor(t)}" data-action="view" data-id="${t.id}" title="${esc(t.name)}">${esc(t.name)}</div>`).join('')}
       ${eventsOn.length>2?`<div style="font-size:8px;color:var(--text3)">+${eventsOn.length-2}</div>`:''}
