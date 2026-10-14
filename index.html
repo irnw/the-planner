@@ -295,6 +295,11 @@ textarea.fc{resize:vertical;min-height:50px}
 .su-lf{display:flex;flex-direction:column;gap:2px;min-width:0}
 .su-lf span{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
 .su-lf .fc{font-size:12px;padding:6px 8px;min-width:0;width:100%}
+.su-docs-h{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.su-doc{display:inline-flex;align-items:center;gap:4px;font-size:11px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:3px 4px 3px 10px;margin:0 6px 6px 0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.su-doc-x{border:none;background:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;padding:0 4px}
+.su-doc-x:hover{color:var(--accent)}
+.su-docs-tip{font-size:10px;color:var(--text3);margin:2px 0 10px}
 .su-hint{font-size:11px;color:var(--text2);background:var(--bg2);border-radius:6px;padding:6px 10px;margin-top:8px}
 @media(max-width:560px){.su-leg-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .dz-tabs{display:flex;gap:0;margin-bottom:10px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
@@ -2870,11 +2875,12 @@ async function runOCR(file,id){
     window._lastOCRText=txt.trim();
     // Auto-fill form fields if inside a modal
     if(txt.trim())autoFillForm(txt.trim(),id);
+    if(txt.trim()&&window._suDocHook)window._suDocHook(id,txt.trim(),file.name||'Pasted screenshot');
   }catch(e){p.innerHTML='Error: '+e.message;console.error('OCR error:',e);r.style.display='none';}
 }
 
 function autoFillForm(txt,dzId){
-  const m=document.querySelector('.modal');if(!m)return;
+  const m=document.querySelector('.modal');if(!m||m.querySelector('#su-result'))return;// Smart Upload has its own review
   const parsed=parseBookingText(txt);if(!parsed)return;
   window._lastParsed=parsed;console.log('OCR parsed:',JSON.stringify(parsed,null,2));
   const s=(n,v)=>{const el=m.querySelector(`[name="${n}"]`);if(el&&!el.value&&v)el.value=v;};
@@ -3074,11 +3080,62 @@ function suRenderBody(parsed){
     <div style="font-size:10px;color:var(--text3);margin-top:4px">The total is recorded on the first flight so it's only counted once.</div>
     ${parsed.rawText?`<button class="su-raw-toggle" onclick="const el=this.nextElementSibling;el.style.display=el.style.display==='none'?'block':'none';this.textContent=el.style.display==='none'?'Show raw text ▸':'Hide raw text ▾'">Show raw text ▸</button><div class="ocr-out" style="display:none;margin-top:4px">${esc(parsed.rawText)}</div>`:''}`;
 }
+// Several documents for one booking (e.g. OTA receipt + e-ticket) → one parsed result.
+// Flights are matched by flight number; each document fills in what the others lack.
+function suMergeDocs(docs){
+  const ps=docs.map(d=>d.parsed).filter(Boolean);
+  if(!ps.length)return null;
+  const rawText=docs.map(d=>docs.length>1?`----- ${d.name} -----\n${d.txt}`:d.txt).join('\n\n');
+  const flights=ps.filter(p=>p.type==='flight');
+  if(!flights.length)return{...ps[ps.length-1],rawText};
+  const asLegs=p=>p.multiLeg&&p.legs?p.legs:[{airline:p.airline,flightNumber:p.flightNumber,from:p.from,to:p.to,date:p.date,departureTime:p.departureTime,arrivalDate:p.dateTo,arrivalTime:p.arrivalTime,seat:p.seat}];
+  const key=l=>{const fn=(l.flightNumber||'').replace(/\s+/g,'').toUpperCase().replace(/^([A-Z0-9]{2})0+(?=\d)/,'$1');return fn||((l.from||'')+'>'+(l.to||'')+'@'+(l.date||''));};
+  const byKey=new Map();
+  for(const p of flights)for(const l of asLegs(p)){
+    if(!l.flightNumber&&!l.from&&!l.to)continue;
+    const k=key(l),cur=byKey.get(k);
+    if(!cur){byKey.set(k,{...l});continue;}
+    // A document with times is the more detailed schedule: take its date/time group together
+    if(!cur.departureTime&&l.departureTime)Object.assign(cur,{date:l.date||cur.date,departureTime:l.departureTime,arrivalDate:l.arrivalDate||cur.arrivalDate,arrivalTime:l.arrivalTime||cur.arrivalTime});
+    for(const f of ['airline','flightNumber','from','to','date','arrivalDate','arrivalTime','seat','duration'])if(!cur[f]&&l[f])cur[f]=l[f];
+  }
+  const legs=[...byKey.values()].sort((a,b)=>((a.date||'9')+(a.departureTime||'')).localeCompare((b.date||'9')+(b.departureTime||'')));
+  // Airline PNR (letters+digits) beats an OTA's numeric booking number; the largest amount is the booking total
+  const pnrs=ps.map(p=>p.pnr).filter(Boolean);
+  const pnr=pnrs.find(x=>/^[A-Z0-9]{5,8}$/.test(x)&&/[A-Z]/.test(x))||pnrs[0]||'';
+  const costed=ps.filter(p=>p.cost&&!isNaN(parseFloat(p.cost)));
+  const best=costed.sort((a,b)=>parseFloat(b.cost)-parseFloat(a.cost))[0];
+  const ds=legs.map(l=>l.date).filter(Boolean).sort(),es=legs.map(l=>l.arrivalDate||l.date).filter(Boolean).sort();
+  const first=legs[0]||{},last=legs[legs.length-1]||{};
+  return{type:'flight',multiLeg:true,legs,pnr,airline:first.airline||flights[0].airline||'',cost:best?best.cost:'',currency:best?best.currency:(flights[0].currency||''),
+    date:ds[0]||'',dateTo:es[es.length-1]||'',from:first.from||'',to:last.to||'',locations:[...new Set(legs.flatMap(l=>[l.from,l.to]).filter(Boolean))],name:flights[0].name||'',rawText};
+}
+function suRenderDocs(){
+  const box=document.getElementById('su-docs');if(!box)return;
+  const docs=window._suDocs||[];
+  box.innerHTML=docs.length?`<div class="su-docs-h">${docs.length} document${docs.length>1?'s':''} combined</div>`+docs.map((d,i)=>`<span class="su-doc">📄 ${esc(d.name)}<button type="button" class="su-doc-x" data-doc="${i}" title="Remove this document">×</button></span>`).join('')+`<div class="su-docs-tip">Booked through an agent? Add the e-ticket and the receipt — they're merged into one booking.</div>`:'';
+}
+function suAddDoc(name,txt){
+  const parsed=parseBookingText(txt);if(!parsed)return;
+  parsed.rawText=txt;
+  (window._suDocs=window._suDocs||[]).push({name,txt,parsed});
+  suRefreshDocs();
+}
+function suRefreshDocs(){
+  const docs=window._suDocs||[];
+  suRenderDocs();
+  const dzP=document.querySelector('#su-result')?.closest('.modal')?.querySelector('.dz p');
+  if(dzP)dzP.textContent=docs.length?'Drop another document for this booking':'Drop files or paste a screenshot here';
+  if(!docs.length){document.getElementById('su-result').style.display='none';window._suParsed=null;return;}
+  suShowResult(suMergeDocs(docs));
+}
 function showSmartUpload(){
   const dzid='su-'+uid();
   window._suParsed=null;
-  modal('Smart Upload','<p style="font-size:12px;color:var(--text2);margin-bottom:14px">Upload a booking confirmation, paste a screenshot, or paste email text. Every flight in the document is added to one event.</p>'+dzHtml(dzid,true)+`
+  window._suDocs=[];
+  modal('Smart Upload','<p style="font-size:12px;color:var(--text2);margin-bottom:14px">Upload booking confirmations, paste screenshots, or paste email text. You can add several documents for the same booking (e.g. e-ticket + receipt) — every flight goes into one event.</p>'+dzHtml(dzid,true)+`
     <div id="su-result" style="display:none;margin-top:14px">
+      <div id="su-docs"></div>
       <div class="su-match" id="su-parsed"></div>
       <div style="margin-top:12px" class="fg">
         <div class="fi"><label>Add to</label>
@@ -3135,7 +3192,7 @@ function showSmartUpload(){
       }
       const tab=type==='flight'?'flights':type==='hotel'?'hotels':type==='activity'?'activities':'transport';
       toast(type==='flight'?`${legs.length} flight${legs.length>1?'s':''} added to ${ev.name}`:'Added to '+ev.name);
-      window._suParsed=null;window._suTextHook=null;
+      window._suParsed=null;window._suTextHook=null;window._suDocHook=null;window._suDocs=[];
       nav('detail',{tid:ev.id,tab});
   });
   const dz=document.querySelector(`[data-dz="${dzid}"]`);
@@ -3143,6 +3200,8 @@ function showSmartUpload(){
   // Wire up the review controls (delegated, so re-rendered rows keep working)
   const res=document.getElementById('su-result');
   res.addEventListener('click',e=>{
+    const x=e.target.closest('.su-doc-x');
+    if(x){window._suDocs.splice(parseInt(x.dataset.doc),1);suRefreshDocs();return;}
     const p=window._suParsed;if(!p)return;
     if(e.target.closest('#su-add-leg')){
       const legs=suReadLegs(),last=legs[legs.length-1]||{};
@@ -3164,26 +3223,19 @@ function showSmartUpload(){
     else if(e.target.closest('.su-leg')&&window._suParsed)suRefresh(window._suParsed);
   });
   const inp=dz.querySelector(`[data-fi="${dzid}"]`);
-  const hookOCR=async(file)=>{
-    await runOCR(file,dzid);
-    const orEl=document.getElementById('or-'+dzid);
-    if(orEl&&orEl.style.display!=='none'){
-      const txt=orEl.textContent;
-      const parsed=parseBookingText(txt);if(!parsed)return;
-      parsed.rawText=txt;
-      suShowResult(parsed);
-    }
-  };
+  inp.multiple=true;
+  dz.querySelector('p').textContent='Drop files or paste a screenshot here';
+  const runAll=async files=>{for(const f of files)await runOCR(f,dzid);};
   dz.onclick=()=>inp.click();
-  dz.ondrop=e=>{e.preventDefault();dz.classList.remove('over');if(e.dataTransfer.files.length)hookOCR(e.dataTransfer.files[0]);};
-  inp.onchange=e=>{if(e.target.files.length)hookOCR(e.target.files[0]);};
-  // Text paste (Ctrl+V or the "Paste text" tab) feeds the same review
-  window._suTextHook=(txt,parsed)=>{
+  dz.ondrop=e=>{e.preventDefault();dz.classList.remove('over');if(e.dataTransfer.files.length)runAll([...e.dataTransfer.files]);};
+  inp.onchange=e=>{if(e.target.files.length)runAll([...e.target.files]);e.target.value='';};
+  // Every extracted document (picked, dropped or pasted screenshot) is added to the combined booking
+  const hideRaw=()=>{const o=document.getElementById('or-'+dzid);if(o)o.style.display='none';};// raw text lives under "Show raw text"
+  window._suDocHook=(id,txt,name)=>{if(id===dzid&&document.getElementById('su-result')){hideRaw();suAddDoc(name,txt);}};
+  // Text paste (Ctrl+V or the "Paste text" tab)
+  window._suTextHook=(txt)=>{
     if(!document.getElementById('su-result'))return;
-    if(!parsed)parsed=parseBookingText(txt);
-    if(!parsed)return;
-    parsed.rawText=txt;
-    suShowResult(parsed);
+    hideRaw();suAddDoc('Pasted text',txt);
   };
 }
 
@@ -3397,12 +3449,13 @@ function _finishLeg(leg,fn){
   leg.name=`${leg.airline||''} ${leg.flightNumber||''}`.trim()+(leg.fromCode&&leg.toCode?` (${leg.fromCode} → ${leg.toCode})`:'');
   return leg;
 }
-const _hhmm=t=>{const m=String(t).match(/(\d{1,2}):(\d{2})/);return m?m[1].padStart(2,'0')+':'+m[2]:'';};
+// "9:30PM" / "09:30 p.m." / "21:30" → "21:30"
+const _hhmm=t=>{const m=String(t).match(/(\d{1,2}):(\d{2})(?:\s*([AaPp])\.?[Mm]\b)?/);if(!m)return '';let h=parseInt(m[1]);const ap=(m[3]||'').toLowerCase();if(ap==='p'&&h<12)h+=12;if(ap==='a'&&h===12)h=0;return String(h).padStart(2,'0')+':'+m[2];};
 const _isAp=c=>!!AIRPORTS[c];
 
 // A. Trip.com-style blocks (Batik Air, Citilink, Lion group…)
 function _layoutTripBlocks(txt){
-  const re=/([A-Z][A-Za-z .'()]{1,45}?)\s+-\s+([A-Z][A-Za-z .'()]{1,30}?)\s+Departure\s+(\d{1,2}:\d{2}),\s*([A-Za-z]+\s+\d{1,2},\s*\d{4}),\s*([\s\S]*?)\s+Arrival\s+(\d{1,2}:\d{2}),\s*([A-Za-z]+\s+\d{1,2},\s*\d{4}),\s*([\s\S]*?)\s+(?:\d\s+)?Airline\s+([A-Za-z .]+?)\s+([A-Z0-9]{2})\s?(\d{1,4})\b/g;
+  const re=/([A-Z][A-Za-z .'()]{1,45}?)\s+-\s+([A-Z][A-Za-z .'()]{1,30}?)\s+Departure\s+(\d{1,2}:\d{2}(?:\s*[AaPp]\.?[Mm]\b\.?)?),\s*([A-Za-z]+\s+\d{1,2},\s*\d{4}),\s*([\s\S]*?)\s+Arrival\s+(\d{1,2}:\d{2}(?:\s*[AaPp]\.?[Mm]\b\.?)?),\s*([A-Za-z]+\s+\d{1,2},\s*\d{4}),\s*([\s\S]*?)\s+(?:\d\s+)?Airline\s+([A-Za-z .]+?)\s+([A-Z0-9]{2})\s?(\d{1,4})\b/g;
   const legs=[];let m;
   while((m=re.exec(txt))!==null){
     const leg={fromCode:_cityCode(m[5])||_cityCode(m[1]),toCode:_cityCode(m[8])||_cityCode(m[2]),departureTime:_hhmm(m[3]),arrivalTime:_hhmm(m[6])};
@@ -3417,7 +3470,7 @@ function _layoutTripBlocks(txt){
 }
 // B. "SIN 07:50 > SUB 09:10" route lines (Singapore Airlines e-ticket / PDF / email)
 function _layoutCodeTime(txt){
-  const re=/\b([A-Z]{3})\s+(\d{1,2}:\d{2})\s*(?:>|→|-|–|—)?\s*(?:[A-Z][a-z]+\s+){0,3}([A-Z]{3})\s+(\d{1,2}:\d{2})/g;
+  const re=/\b([A-Z]{3})\s+(\d{1,2}:\d{2}(?:\s*[AaPp]\.?[Mm]\b\.?)?)\s*(?:>|→|-|–|—)?\s*(?:[A-Z][a-z]+\s+){0,3}([A-Z]{3})\s+(\d{1,2}:\d{2}(?:\s*[AaPp]\.?[Mm]\b\.?)?)/g;
   const hits=[];let m;
   while((m=re.exec(txt))!==null)if(_isAp(m[1])&&_isAp(m[3])&&m[1]!==m[3])hits.push({m,pos:m.index,end:m.index+m[0].length});
   const al=_docAirlineCode(txt),legs=[];
@@ -3446,7 +3499,7 @@ function _layoutCodeTime(txt){
 }
 // C. Scoot app/email card: "SIN CGK" / "18:15 > 19:15" / "Wed, 1 Jul Wed, 1 Jul"
 function _layoutScootCard(txt){
-  const re=/\b([A-Z]{3})\s+([A-Z]{3})[ \t]*\n[^\n]*?(\d{1,2}:\d{2})[^\n]*?(\d{1,2}:\d{2})/g;
+  const re=/\b([A-Z]{3})\s+([A-Z]{3})[ \t]*\n[^\n]*?(\d{1,2}:\d{2}(?:\s*[AaPp]\.?[Mm]\b\.?)?)[^\n]*?(\d{1,2}:\d{2}(?:\s*[AaPp]\.?[Mm]\b\.?)?)/g;
   const legs=[];let m;
   while((m=re.exec(txt))!==null){
     if(!_isAp(m[1])||!_isAp(m[2]))continue;
@@ -3460,7 +3513,7 @@ function _layoutScootCard(txt){
 }
 // D. Time-then-code (Malaysia Airlines, Firefly, AirAsia): "14:35 KUL (T1) Non-Stop 2h 55min 17:30 TWU"
 function _layoutTimeCode(txt){
-  const re=/(\d{1,2}:\d{2})\s*=?\s*([A-Z]{3})\b([\s\S]{0,220}?)(\d{1,2}:\d{2})\s*=?\s*([A-Z]{3})\b/g;
+  const re=/(\d{1,2}:\d{2}(?:\s*[AaPp]\.?[Mm]\b\.?)?)\s*=?\s*([A-Z]{3})\b([\s\S]{0,220}?)(\d{1,2}:\d{2}(?:\s*[AaPp]\.?[Mm]\b\.?)?)\s*=?\s*([A-Z]{3})\b/g;
   const hits=[];let m;
   while((m=re.exec(txt))!==null)if(_isAp(m[2])&&_isAp(m[5])&&m[2]!==m[5])hits.push({m,pos:m.index,end:m.index+m[0].length});
   const legs=[];
@@ -3482,7 +3535,7 @@ function _layoutTimeCode(txt){
 }
 // E. GDS e-ticket table (Garuda and most full-service e-tickets): "GA0426 Y 08Jul 18:30 21:30"
 function _layoutGdsTable(txt){
-  const re=new RegExp('\\b('+_FNCODES+')\\s?(\\d{1,4})\\s+[A-Z]\\s+(\\d{1,2})\\s?('+_MON+')(?:\\s?(\\d{2,4}))?\\s+(\\d{1,2}:\\d{2})\\s+(\\d{1,2}:\\d{2})','gi');
+  const re=new RegExp('\\b('+_FNCODES+')\\s?(\\d{1,4})\\s+[A-Z]\\s+(\\d{1,2})\\s?('+_MON+')(?:\\s?(\\d{2,4}))?\\s+(\\d{1,2}:\\d{2}(?:\\s*[AaPp]\\.?[Mm]\\b\\.?)?)\\s+(\\d{1,2}:\\d{2}(?:\\s*[AaPp]\\.?[Mm]\\b\\.?)?)','gi');
   const legs=[];let m,prevEnd=0;
   while((m=re.exec(txt))!==null){
     const before=txt.substring(Math.max(prevEnd,m.index-300),m.index);prevEnd=m.index+m[0].length;
@@ -3518,10 +3571,27 @@ function _layoutBracketCodes(txt){
       else{depZone=win.substring(0,a2);arrZone=win.substring(a2);}// both on one line: info follows each airport
       if(!/\d{1,2}:\d{2}/.test(win.substring(a1,a2))&&l1s===l2s){depZone=win.substring(a2);arrZone=win.substring(a2).replace(/^[\s\S]*?\d{1,2}:\d{2}/,'');}
     }
-    const t1=depZone.match(/(\d{1,2}:\d{2})/),t2=arrZone.match(/(\d{1,2}:\d{2})/);
+    const t1=depZone.match(/(\d{1,2}:\d{2}(?:\s*[AaPp]\.?[Mm]\b\.?)?)/),t2=arrZone.match(/(\d{1,2}:\d{2}(?:\s*[AaPp]\.?[Mm]\b\.?)?)/);
     leg.departureTime=t1?_hhmm(t1[1]):'';leg.arrivalTime=t2?_hhmm(t2[1]):'';
     const d1=_findDates(depZone),d2=_findDates(arrZone);
     if(d1.length)leg.date=d1[0].date;if(d2.length)leg.arrivalDate=d2[0].date;
+    legs.push(_finishLeg(leg,f));
+  });
+  return legs;
+}
+// H. Endpoint cards (Agoda/Trip.com e-tickets): "SQ 948 … SIN 09:30PM Fri, Feb 12, 2027 … DPS 12:25AM Sat, Feb 13, 2027"
+function _layoutEndpoints(txt){
+  const fnRe=new RegExp('\\b('+_FNCODES+')\\s?(\\d{1,4})\\b','g');
+  const fns=[];let m;
+  while((m=fnRe.exec(txt))!==null)fns.push({code:m[1],num:m[2],pos:m.index,end:m.index+m[0].length});
+  const legs=[];
+  fns.forEach((f,i)=>{
+    const win=txt.substring(f.end,Math.min(i+1<fns.length?fns[i+1].pos:txt.length,f.end+500));
+    const eps=[...win.matchAll(/\b([A-Z]{3})\s+(\d{1,2}:\d{2}(?:\s*[AaPp]\.?[Mm]\b\.?)?)/g)].filter(x=>_isAp(x[1]));
+    if(eps.length<2||eps[0][1]===eps[1][1])return;
+    const leg={fromCode:eps[0][1],toCode:eps[1][1],departureTime:_hhmm(eps[0][2]),arrivalTime:_hhmm(eps[1][2])};
+    const d1=_findDates(win.substring(eps[0].index,eps[1].index)),d2=_findDates(win.substring(eps[1].index,eps[1].index+90));
+    if(d1[0])leg.date=d1[0].date;if(d2[0])leg.arrivalDate=d2[0].date;
     legs.push(_finishLeg(leg,f));
   });
   return legs;
@@ -3540,7 +3610,7 @@ function _layoutAirportNames(txt){
     const leg={fromCode:_cityCode(left),toCode:_cityCode(right)};
     if(!leg.fromCode||!leg.toCode||leg.fromCode===leg.toCode)return;
     if(d)leg.date=d.date;
-    const ts=[...win.matchAll(/\b(\d{1,2}:\d{2})\b/g)];if(ts[0])leg.departureTime=_hhmm(ts[0][1]);if(ts[1])leg.arrivalTime=_hhmm(ts[1][1]);
+    const ts=[...win.matchAll(/\b(\d{1,2}:\d{2}(?:\s*[AaPp]\.?[Mm]\b\.?)?)\b/g)];if(ts[0])leg.departureTime=_hhmm(ts[0][1]);if(ts[1])leg.arrivalTime=_hhmm(ts[1][1]);
     // Airline booking reference printed just before the flight number
     const ref=txt.substring(Math.max(0,f.pos-30),f.pos).match(/\b([A-Z0-9]{6})\s*$/);
     if(ref&&/[A-Z]/.test(ref[1])&&/^[A-Z0-9]+$/.test(ref[1]))leg.pnr=ref[1];
@@ -3550,7 +3620,7 @@ function _layoutAirportNames(txt){
 }
 function _parseKnownLayouts(txt){
   const routed=l=>l.fromCode&&l.toCode;
-  for(const fn of [_layoutTripBlocks,_layoutGdsTable,_layoutScootCard,_layoutCodeTime,_layoutTimeCode,_layoutAirportNames,_layoutBracketCodes]){
+  for(const fn of [_layoutTripBlocks,_layoutGdsTable,_layoutScootCard,_layoutCodeTime,_layoutTimeCode,_layoutEndpoints,_layoutAirportNames,_layoutBracketCodes]){
     let legs;try{legs=fn(txt);}catch(e){console.warn('layout parser failed',fn.name,e);continue;}
     // Drop repeats of the same flight (e.g. itinerary + passenger sections)
     legs=legs.filter((l,i)=>legs.findIndex(x=>x.fromCode===l.fromCode&&x.toCode===l.toCode&&x.date===l.date&&x.departureTime===l.departureTime)===i);
