@@ -3526,9 +3526,31 @@ function _layoutBracketCodes(txt){
   });
   return legs;
 }
+// G. OTA receipts with airport names (Agoda…): "EQEO68 SQ 948 Singapore Changi Airport - Ngurah Rai International Airport Fri, Feb 12, 2027"
+function _layoutAirportNames(txt){
+  const fnRe=new RegExp('\\b('+_FNCODES+')\\s?(\\d{1,4})\\b','g');
+  const fns=[];let m;
+  while((m=fnRe.exec(txt))!==null)fns.push({code:m[1],num:m[2],pos:m.index,end:m.index+m[0].length});
+  const legs=[];
+  fns.forEach((f,i)=>{
+    const win=txt.substring(f.end,Math.min(i+1<fns.length?fns[i+1].pos:txt.length,f.end+300));
+    const dash=win.search(/\s[-–—]\s/);if(dash<0)return;
+    const ds=_findDates(win);const d=ds.find(x=>x.pos>dash);
+    const left=win.substring(0,dash),right=win.substring(dash+3,d?d.pos:Math.min(win.length,dash+90));
+    const leg={fromCode:_cityCode(left),toCode:_cityCode(right)};
+    if(!leg.fromCode||!leg.toCode||leg.fromCode===leg.toCode)return;
+    if(d)leg.date=d.date;
+    const ts=[...win.matchAll(/\b(\d{1,2}:\d{2})\b/g)];if(ts[0])leg.departureTime=_hhmm(ts[0][1]);if(ts[1])leg.arrivalTime=_hhmm(ts[1][1]);
+    // Airline booking reference printed just before the flight number
+    const ref=txt.substring(Math.max(0,f.pos-30),f.pos).match(/\b([A-Z0-9]{6})\s*$/);
+    if(ref&&/[A-Z]/.test(ref[1])&&/^[A-Z0-9]+$/.test(ref[1]))leg.pnr=ref[1];
+    legs.push(_finishLeg(leg,f));
+  });
+  return legs;
+}
 function _parseKnownLayouts(txt){
   const routed=l=>l.fromCode&&l.toCode;
-  for(const fn of [_layoutTripBlocks,_layoutGdsTable,_layoutScootCard,_layoutCodeTime,_layoutTimeCode,_layoutBracketCodes]){
+  for(const fn of [_layoutTripBlocks,_layoutGdsTable,_layoutScootCard,_layoutCodeTime,_layoutTimeCode,_layoutAirportNames,_layoutBracketCodes]){
     let legs;try{legs=fn(txt);}catch(e){console.warn('layout parser failed',fn.name,e);continue;}
     // Drop repeats of the same flight (e.g. itinerary + passenger sections)
     legs=legs.filter((l,i)=>legs.findIndex(x=>x.fromCode===l.fromCode&&x.toCode===l.toCode&&x.date===l.date&&x.departureTime===l.departureTime)===i);
@@ -3757,13 +3779,13 @@ function dedupeLines(txt){
 function _extractCost(txt,r){
   const costPats=[
     // "Grand total: IDR 2,320,000"
-    /(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare)?|TOTAL)\s*[:#]?\s*(SGD|USD|MYR|IDR|EUR|GBP|THB|PHP|AUD|CNY|MVR|EGP|TWD|KRW)\s*([\d,]+\.?\d*)/i,
+    /(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare|Charge[ds]?|Paid|Due|Payable)?|TOTAL)\s*[:#]?\s*(SGD|USD|MYR|IDR|EUR|GBP|THB|PHP|AUD|CNY|MVR|EGP|TWD|KRW)\s*([\d,]+\.?\d*)/i,
     // "Total S$ 79.10" or "Total Rp 3,106,856"
-    /(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare)?|TOTAL)\s*[:#]?\s*(?:Rp\.?|RM|S\$|A\$|₱|¥|฿|€|£|\$)\s*([\d,]+\.?\d*)/i,
+    /(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare|Charge[ds]?|Paid|Due|Payable)?|TOTAL)\s*[:#]?\s*(?:Rp\.?|RM|S\$|A\$|₱|¥|฿|€|£|\$)\s*([\d,]+\.?\d*)/i,
     // "SGD235.20" (no space)
-    /(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare)?|TOTAL)\s*[:#]?\s*(SGD|USD|MYR|IDR|EUR|GBP|THB|PHP|AUD|CNY)([\d,]+\.?\d*)/i,
+    /(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare|Charge[ds]?|Paid|Due|Payable)?|TOTAL)\s*[:#]?\s*(SGD|USD|MYR|IDR|EUR|GBP|THB|PHP|AUD|CNY)([\d,]+\.?\d*)/i,
     // "Total 3,106,856" (amount only)
-    /(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare)?)\s*[:#]?\s*[\$]?\s*([\d,]+\.?\d{0,2})\b/i,
+    /(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare|Charge[ds]?|Paid|Due|Payable)?)\s*[:#]?\s*[\$]?\s*([\d,]+\.?\d{0,2})\b/i,
   ];
   for(const pat of costPats){const m=txt.match(pat);if(m){
     if(m[2]){
@@ -3774,7 +3796,7 @@ function _extractCost(txt,r){
   }}
   // Detect currency from context near total
   if(r.cost&&!r.currency){
-    const totalCtx=txt.match(/(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare)?)\s*[:#]?\s*(.{0,30})/i);
+    const totalCtx=txt.match(/(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare|Charge[ds]?|Paid|Due|Payable)?)\s*[:#]?\s*(.{0,30})/i);
     if(totalCtx){const ctx=totalCtx[1].toLowerCase();
       for(const[sym,iso]of Object.entries(CURRENCY_SYMBOLS)){if(ctx.includes(sym)){r.currency=iso;break;}}}
   }
