@@ -3966,8 +3966,8 @@ function parseBookingText(rawTxt){
       /(?:Hotel|Resort|Property|Accommodation|Stay\s*at)\s*[:#]?\s*([A-Za-z][A-Za-z\s&'\-,]{2,60})(?:\n|$)/i,
       /your\s+stay\s+at\s+([A-Z][A-Za-z\s&'\-]{2,50})/i,
     ];
-    // Vouchers print the property name on the line above its address
-    const aboveAddr=txt.match(/(?:^|\n)[ \t]*([^\n:]{2,60}?)[ \t]*\n[ \t]*(?:Address|Hotel\s+address)\s*[:：]/i);
+    // Vouchers print the property name on the line above its address (label OCR'd as "Adress"/"Addres" too)
+    const aboveAddr=txt.match(/(?:^|\n)[ \t]*([^\n:]{2,60}?)[ \t]*\n[ \t]*(?:Hotel\s+)?(?:Ad{1,2}re?s{1,2}|Addr\.?|Alamat)\s*[:：.]/i);
     if(aboveAddr&&!/\b(?:booking|confirmation|voucher|pin|phone|nights?|rooms?|guests?|adults?|check)\b/i.test(aboveAddr[1]))hotelPats.push(new RegExp('('+aboveAddr[1].trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')'));
     for(const pat of hotelPats){const m=txt.match(pat);if(m){r.hotelName=m[1].trim().replace(/\s+/g,' ').slice(0,60);break;}}
   }
@@ -4020,7 +4020,7 @@ function parseBookingText(rawTxt){
   if(r.from)locSet.add(r.from);if(r.to)locSet.add(r.to);
   r.locations=[...locSet];
   // Hotel address: the first known town in it is the most specific location ("…, Sanur, Denpasar, Bali")
-  const addrLine=txt.match(/Address\s*[:：]\s*([^\n]+(?:\n[^\n:]+)?)/i);
+  const addrLine=txt.match(/\b(?:Ad{1,2}re?s{1,2}|Addr\.?|Alamat)\s*[:：.]\s*([^\n]+(?:\n[^\n:]+)?)/i);
   if(addrLine){
     const A=addrLine[1].toUpperCase();let best=null;
     for(const c of CITIES){const city=c.split(',')[0].trim();const m=new RegExp('\\b'+city.toUpperCase().replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b').exec(A);if(m&&(!best||m.index<best.pos))best={city,pos:m.index};}
