@@ -3950,18 +3950,22 @@ function parseBookingText(rawTxt){
 
   // ===== 3. PNR / Booking reference =====
   const pnrPats=[
-    /(?:Booking\s*(?:Ref(?:erence)?|No\.?|Number|ID|Code))\s*[:#]?\s*([A-Z0-9]{4,20})/i,
-    /(?:Confirmation\s*(?:Number|Code|#)?)\s*[:#]?\s*([A-Z0-9]{4,20})/i,
-    /(?:PNR|RESERVATION\s*CODE|Reference\s*(?:Number|Code|#)?)\s*[:#]?\s*([A-Z0-9]{4,15})/i,
-    /(?:Booking\s*reference)\s*[:#]?\s*([A-Z0-9]{4,15})/i,
-    /(?:E-?Ticket\s*(?:number|#)?)\s*[:#]?\s*([\d-]{10,20})/i,
+    /(?:Booking\s*(?:Ref(?:erence)?|No\.?|Number|ID|Code))(?:\s+(?:number|no\.?|is))*\s*[:#]?\s*([A-Z0-9]{4,20})\b/gi,
+    /(?:Confirmation\s*(?:Number|Code|#)?)\s*[:#]?\s*([A-Z0-9]{4,20})\b/gi,
+    /(?:PNR|RESERVATION\s*CODE|Reference\s*(?:Number|Code|#)?)\s*[:#]?\s*([A-Z0-9]{4,15})\b/gi,
+    /(?:E-?Ticket\s*(?:number|#)?)\s*[:#]?\s*([\d-]{10,20})/gi,
   ];
-  for(const pat of pnrPats){const m=txt.match(pat);if(m){r.pnr=m[1];r.bookingNumber=m[1];break;}}
+  // A reference has a digit or is all capitals ("EUPESS") — never an ordinary word like "number"
+  const isRef=c=>/\d/.test(c)||/^[A-Z]{5,}$/.test(c);
+  for(const pat of pnrPats){const c=[...txt.matchAll(pat)].map(m=>m[1]).find(isRef);if(c){r.pnr=c;r.bookingNumber=c;break;}}
   if(r.type==='hotel'){const cm=txt.match(/Confirmation\s*(?:no\.?|number|#|code)\s*[:#]?\s*([A-Z0-9-]{4,24})/i);if(cm){r.pnr=cm[1];r.bookingNumber=cm[1];}}
 
   // ===== 4. Hotel name extraction (platform-aware) =====
   if(r.type==='hotel'){
     const hotelPats=[
+      /([A-Z][\w&'’-]*(?: [\w&'’-]+){0,6})\s+\d(?:\.\d)?\s*stars?\s*rating/,// Agoda: "Bobo Bungalow 3.5 stars rating"
+      /We\s+notified\s+([A-Z][^()\n]{1,50}?)\s*(?:\(|of\s+your)/,// "We notified Bobo Bungalow (…) of your upcoming booking"
+      /Pay\s+at\s+([A-Z][^\n]{1,50}?)\s+check-?in\b/,
       /([A-Z][A-Za-z\s&'\-]{2,50})\s+is\s+expecting\s+you/,
       /(?:Hotel|Resort|Property|Accommodation|Stay\s*at)\s*[:#]?\s*([A-Za-z][A-Za-z\s&'\-,]{2,60})(?:\n|$)/i,
       /your\s+stay\s+at\s+([A-Z][A-Za-z\s&'\-]{2,50})/i,
@@ -4000,10 +4004,10 @@ function parseBookingText(rawTxt){
   if(distinctAps.length>=1){r.from=distinctAps[0].city;r.fromCode=distinctAps[0].code;}
   if(distinctAps.length>=2){r.to=distinctAps[1].city;r.toCode=distinctAps[1].code;}
   // Also try "From X to Y" pattern
-  if(!r.from||!r.to){const routeM=txt.match(/\bFrom[ \t]+([A-Z][a-z]+(?:[ \t][A-Z][a-z]+)*)[ \t]+to[ \t]+([A-Z][a-z]+(?:[ \t][A-Z][a-z]+)*)\b/);
+  if(r.type!=='hotel'&&(!r.from||!r.to)){const routeM=txt.match(/\bFrom[ \t]+([A-Z][a-z]+(?:[ \t][A-Z][a-z]+)*)[ \t]+to[ \t]+([A-Z][a-z]+(?:[ \t][A-Z][a-z]+)*)\b/);
     if(routeM){if(!r.from)r.from=routeM[1];if(!r.to)r.to=routeM[2];}}
   // Also try "City → City" or "City to City" from route headers
-  if(!r.from||!r.to){const arrowM=txt.match(/([A-Z][a-z]+(?:[ \t][A-Z][a-z]+)*)[ \t]*(?:→|->|\bto\b)[ \t]*([A-Z][a-z]+(?:[ \t][A-Z][a-z]+)*)/);
+  if(r.type!=='hotel'&&(!r.from||!r.to)){const arrowM=txt.match(/([A-Z][a-z]+(?:[ \t][A-Z][a-z]+)*)[ \t]*(?:→|->|\bto\b)[ \t]*([A-Z][a-z]+(?:[ \t][A-Z][a-z]+)*)/);
     if(arrowM){if(!r.from)r.from=arrowM[1];if(!r.to)r.to=arrowM[2];}}
   const locSet=new Set(distinctAps.map(a=>a.city));
   CITIES.forEach(c=>{
@@ -4020,7 +4024,8 @@ function parseBookingText(rawTxt){
   if(r.from)locSet.add(r.from);if(r.to)locSet.add(r.to);
   r.locations=[...locSet];
   // Hotel address: the first known town in it is the most specific location ("…, Sanur, Denpasar, Bali")
-  const addrLine=txt.match(/\b(?:Ad{1,2}re?s{1,2}|Addr\.?|Alamat)\s*[:：.]\s*([^\n]+(?:\n[^\n:]+)?)/i);
+  let addrLine=txt.match(/\b(?:Ad{1,2}re?s{1,2}|Addr\.?|Alamat)\s*[:：.]\s*([^\n]+(?:\n[^\n:]+)?)/i);
+  if(!addrLine&&r.type==='hotel'&&r.hotelName){const i=txt.indexOf(r.hotelName);if(i>=0)addrLine=[0,txt.substring(i+r.hotelName.length,i+r.hotelName.length+200)];}
   if(addrLine){
     const A=addrLine[1].toUpperCase();let best=null;
     for(const c of CITIES){const city=c.split(',')[0].trim();const m=new RegExp('\\b'+city.toUpperCase().replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b').exec(A);if(m&&(!best||m.index<best.pos))best={city,pos:m.index};}
@@ -4132,6 +4137,7 @@ function parseBookingText(rawTxt){
   if(r.type==='hotel'){
     const nightsM=txt.match(/(\d+)\s*nights?\b/i);if(nightsM)r.nights=parseInt(nightsM[1]);
     const roomM=txt.match(/\d+\s*nights?,\s*(.+?)(?:\n|$)/i);if(roomM)r.roomType=roomM[1].trim().slice(0,60);
+    if(!r.roomType){const lt=txt.match(/(?:^|\n|\s{2,})Room\s*[Tt]ype\s*[:：]?\s+([A-Z][^\n]{2,60}?)(?:\s{2,}|\n|$)/);if(lt)r.roomType=lt[1].trim();}
     if(!r.roomType){const rt=txt.match(/\b((?:Deluxe|Superior|Standard|Classic|Premier|Executive|Family|Double|Twin|Single|Triple|Quad|King|Queen|Budget|Economy|Garden|Pool|Ocean|Sea)(?:[ \t]+[A-Z][a-z]+){0,3}[ \t]+(?:Room|Suite|Villa|Bungalow|Studio|Cabin|Dorm))\b/);if(rt)r.roomType=rt[1];}
     if(!r.nights&&r.date&&r.dateTo)r.nights=Math.round((new Date(r.dateTo)-new Date(r.date))/864e5);
   }
