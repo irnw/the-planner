@@ -5,7 +5,9 @@ name: Import Apple Calendar
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    # Every 15 min, off the :00/:30 marks where GitHub's scheduler is most congested
+    # (scheduled runs are best-effort and often delayed or dropped at busy times)
+    - cron: '4,19,34,49 * * * *'
   workflow_dispatch:
 
 permissions: {}
