@@ -27,7 +27,7 @@ jobs:
           GIST_JSON=$(curl -sf -H "$AUTH" "https://api.github.com/gists/$GIST_ID")
           # Read the Apple calendar URL from the synced settings
           URL=$(echo "$GIST_JSON" | jq -r '.files["holiday-tracker-data.json"].content | fromjson | .appleCalUrl // empty')
-          if [ -z "$URL" ]; then echo "No appleCalUrl configured in tracker settings"; exit 0; fi
+          if [ -z "$URL" ]; then echo "::warning::No appleCalUrl configured in tracker settings"; exit 0; fi
           URL="${URL/webcal:\/\//https:\/\/}"
           curl -sfL --max-time 60 "$URL" -o cal.ics
           if ! grep -q "BEGIN:VCALENDAR" cal.ics; then echo "Fetched content is not a valid ICS calendar"; exit 1; fi

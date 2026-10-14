@@ -1,0 +1,26 @@
+name: Keepalive
+# GitHub disables scheduled workflows after 60 days without repo activity.
+# Re-enabling each workflow via the API resets that timer (including for this
+# workflow itself), so the scheduled jobs keep running without dummy commits.
+
+on:
+  schedule:
+    - cron: '17 3 * * 1'  # Weekly, Monday 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Re-enable all workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          for id in $(gh api "repos/${{ github.repository }}/actions/workflows" --jq '.workflows[] | select(.path | startswith(".github/workflows/")) | .id'); do
+            gh api -X PUT "repos/${{ github.repository }}/actions/workflows/$id/enable"
+            echo "Enabled workflow $id"
+          done

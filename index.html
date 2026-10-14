@@ -940,8 +940,20 @@ async function gistAPI(path,opts={}){
 
 function syncData(){
   // Extract only the data fields worth syncing (not UI state like current view)
-  const {events,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified,visitedCountries,appleCalUrl}=S;const trips=events;
-  return {events,trips,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified,visitedCountries:visitedCountries||[],appleCalUrl:appleCalUrl||''};
+  const {events,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified,visitedCountries,appleCalUrl,appleCalUrlAt}=S;const trips=events;
+  return {events,trips,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified,visitedCountries:visitedCountries||[],appleCalUrl:appleCalUrl||'',appleCalUrlAt:appleCalUrlAt||0};
+}
+
+// Apple Calendar URL is merged by its own timestamp (not lastModified), so a device
+// that never received the URL can't wipe it by pushing newer unrelated edits.
+function mergeAppleCalUrl(r){
+  if(!r)return false;
+  const lt=S.appleCalUrlAt||0,rt=r.appleCalUrlAt||0,rUrl=r.appleCalUrl||'';
+  if(rt>lt||(!lt&&!rt&&rUrl&&!S.appleCalUrl)){
+    const changed=rUrl!==(S.appleCalUrl||'');
+    S.appleCalUrl=rUrl;S.appleCalUrlAt=rt;return changed;
+  }
+  return false;
 }
 
 async function findExistingGist(){
@@ -956,7 +968,7 @@ async function pushToGist(retried){
   if((S.events||[]).length===0){console.warn('Push blocked: empty events array');return;}
   document.querySelectorAll('.sync-dot').forEach(d=>d.classList.add('syncing'));
   // Before pushing, merge remote visitedCountries so we never overwrite with fewer
-  try{if(c.gistId){const g=await gistAPI('/gists/'+c.gistId);if(g&&g.files&&g.files[GIST_FILE]){const r=JSON.parse(g.files[GIST_FILE].content);if(r.visitedCountries&&r.visitedCountries.length){const local=new Set(S.visitedCountries||[]);r.visitedCountries.forEach(x=>local.add(x));S.visitedCountries=[...local];}}}}catch(e){/* non-fatal */}
+  try{if(c.gistId){const g=await gistAPI('/gists/'+c.gistId);if(g&&g.files&&g.files[GIST_FILE]){const r=JSON.parse(g.files[GIST_FILE].content);if(r.visitedCountries&&r.visitedCountries.length){const local=new Set(S.visitedCountries||[]);r.visitedCountries.forEach(x=>local.add(x));S.visitedCountries=[...local];}mergeAppleCalUrl(r);}}}catch(e){/* non-fatal */}
   const payload={description:GIST_DESC,files:{[GIST_FILE]:{content:JSON.stringify(syncData(),null,2)},[ICS_FILE]:{content:buildICSFeed()}}};
   try{
     let resp;
@@ -1009,7 +1021,7 @@ async function pullFromGist(retried){
     if(gist.public===true&&!window._gistMigrating){window._gistMigrating=true;ensureGistSecret(c.gistId).finally(()=>{window._gistMigrating=false;});}
     const remote=JSON.parse(gist.files[GIST_FILE].content);
     // Always merge visitedCountries via union regardless of lastModified
-    let vcChanged=false;
+    let vcChanged=mergeAppleCalUrl(remote);
     if(remote.visitedCountries&&remote.visitedCountries.length){const local=new Set(S.visitedCountries||[]);const before=local.size;remote.visitedCountries.forEach(c=>local.add(c));if(local.size>before){S.visitedCountries=[...local];vcChanged=true;}}
     if(remote.lastModified&&(!S.lastModified||remote.lastModified>S.lastModified)){
       backupBeforeSync();
@@ -1019,7 +1031,6 @@ async function pullFromGist(retried){
       S.rates=remote.rates||S.rates;
       S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
       S.theme=remote.theme||S.theme;
-      if(remote.appleCalUrl!==undefined&&remote.appleCalUrl!==S.appleCalUrl)S.appleCalUrl=remote.appleCalUrl;
       S.lastModified=remote.lastModified;
       try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
       importAppleCalendar(gist.files[APPLE_ICS_FILE]?gist.files[APPLE_ICS_FILE].content:'');
@@ -3968,7 +3979,7 @@ document.addEventListener('click',e=>{
       if(!inp)break;
       const url=inp.value.trim();
       if(url&&!/^(webcal|https):\/\//.test(url)){toast('URL should start with webcal:// or https://');break;}
-      S.appleCalUrl=url;
+      S.appleCalUrl=url;S.appleCalUrlAt=Date.now();
       saveS();render();
       toast(url?'Apple Calendar URL saved — first import within ~30 min':'Apple Calendar import disabled');
       break;
