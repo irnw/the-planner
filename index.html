@@ -300,6 +300,12 @@ textarea.fc{resize:vertical;min-height:50px}
 [data-apple-drag]:active{cursor:grabbing}
 body.apple-dragging [data-drop-ev]{outline:2px dashed var(--primary);outline-offset:-2px}
 [data-drop-ev].drop-over{outline:2px solid var(--primary)!important;background:var(--card-hover)}
+.kind-pick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.kind-opt{position:relative;cursor:pointer}
+.kind-opt input{position:absolute;opacity:0;pointer-events:none}
+.kind-opt span{display:block;text-align:center;font-size:12px;padding:8px 4px;border:1px solid var(--border);border-radius:8px;color:var(--text2)}
+.kind-opt input:checked+span{border-color:var(--primary);background:var(--primary);color:#fff;font-weight:600}
+.kind-opt input:focus-visible+span{outline:2px solid var(--primary);outline-offset:2px}
 .apple-attach-btn{margin-left:auto;font-size:10px;padding:3px 8px;white-space:nowrap;border:1px dashed var(--border)}
 .trip-card .trip-foot{flex-wrap:wrap;row-gap:6px}
 .su-docs-h{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px}
@@ -1656,7 +1662,7 @@ function rFlights(t){
   return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><h3 style="font-size:14px">Flights</h3><div style="display:flex;gap:8px;align-items:center">${sortCtrlHtml('entry',sortKey,sortDir)}<button class="btn btn-p" data-action="add-flight">+ Add Flight</button></div></div>
   ${sorted.length?sorted.map(f=>`
     <div class="entry">
-      <div class="entry-top"><h4>${esc(f.airline||'')} ${esc(f.flightNumber||'')}</h4><div style="display:flex;gap:4px"><button class="btn btn-ghost" data-action="dup-flight" data-eid="${f.id}" title="Duplicate (return flight)">Dup</button><button class="btn btn-ghost" data-action="edit-flight" data-eid="${f.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-flight" data-eid="${f.id}">Del</button></div></div>
+      <div class="entry-top"><h4>${esc(f.airline||'')} ${esc(f.flightNumber||'')}${f.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div style="display:flex;gap:4px">${f.appleUid?`<button class="btn btn-ghost" data-action="apple-detach" data-eid="${f.id}" title="Make it a separate Apple event again">Detach</button>`:''}<button class="btn btn-ghost" data-action="dup-flight" data-eid="${f.id}" title="Duplicate (return flight)">Dup</button><button class="btn btn-ghost" data-action="edit-flight" data-eid="${f.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-flight" data-eid="${f.id}">Del</button></div></div>
       <div class="entry-grid">
         ${f.from||f.to?`<div class="eg"><span class="ek">Route</span><span class="ev">${esc(f.from||'?')} → ${esc(f.to||'?')}</span></div>`:''}
         ${f.pnr?`<div class="eg"><span class="ek">PNR</span><span class="ev" style="font-family:monospace">${esc(f.pnr)}</span></div>`:''}
@@ -1676,7 +1682,7 @@ function rHotels(t){
   return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><h3 style="font-size:14px">Hotels</h3><div style="display:flex;gap:8px;align-items:center">${sortCtrlHtml('entry',sortKey,sortDir)}<button class="btn btn-p" data-action="add-hotel">+ Add Hotel</button></div></div>
   ${sorted.length?sorted.map(h=>`
     <div class="entry">
-      <div class="entry-top"><h4>${esc(h.name||'Hotel')}</h4><div style="display:flex;gap:4px"><button class="btn btn-ghost" data-action="edit-hotel" data-eid="${h.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-hotel" data-eid="${h.id}">Del</button></div></div>
+      <div class="entry-top"><h4>${esc(h.name||'Hotel')}${h.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div style="display:flex;gap:4px">${h.appleUid?`<button class="btn btn-ghost" data-action="apple-detach" data-eid="${h.id}" title="Make it a separate Apple event again">Detach</button>`:''}<button class="btn btn-ghost" data-action="edit-hotel" data-eid="${h.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-hotel" data-eid="${h.id}">Del</button></div></div>
       <div class="entry-grid">
         ${h.bookingNumber?`<div class="eg"><span class="ek">Booking #</span><span class="ev">${esc(h.bookingNumber)}</span></div>`:''}
         ${h.checkIn?`<div class="eg"><span class="ek">Check-in</span><span class="ev">${fmt(h.checkIn)}</span></div>`:''}
@@ -1714,7 +1720,7 @@ function rTrans(t){
   return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><h3 style="font-size:14px">Transport</h3><div style="display:flex;gap:8px;align-items:center">${sortCtrlHtml('entry',sortKey,sortDir)}<button class="btn btn-p" data-action="add-trans">+ Add Transport</button></div></div>
   ${sorted.length?sorted.map(x=>`
     <div class="entry">
-      <div class="entry-top"><h4>${esc(x.type||'')} ${esc(x.name||'Transport')}</h4><div style="display:flex;gap:4px"><button class="btn btn-ghost" data-action="edit-trans" data-eid="${x.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-trans" data-eid="${x.id}">Del</button></div></div>
+      <div class="entry-top"><h4>${esc(x.type||'')} ${esc(x.name||'Transport')}${x.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div style="display:flex;gap:4px">${x.appleUid?`<button class="btn btn-ghost" data-action="apple-detach" data-eid="${x.id}" title="Make it a separate Apple event again">Detach</button>`:''}<button class="btn btn-ghost" data-action="edit-trans" data-eid="${x.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-trans" data-eid="${x.id}">Del</button></div></div>
       <div class="entry-grid">
         ${x.location?`<div class="eg"><span class="ek">Location</span><span class="ev">${esc(x.location)}</span></div>`:''}
         ${x.date?`<div class="eg"><span class="ek">Date</span><span class="ev">${fmt(x.date)}</span></div>`:''}
@@ -2037,6 +2043,7 @@ function buildICSCal(evts,stable){
     ].join('\r\n'));
     // Flight events
     (t.flights||[]).forEach(f=>{
+      if(stable&&f.appleUid)return;// attached Apple event: the original already shows in Apple Calendar
       const dt=f.departureTime||t.startDate;const label=(f.airline?f.airline+' ':'')+(f.flightNumber||'');
       const summary='✈️ '+label+': '+f.from+' → '+f.to;
       const startD=dt.length>10?icsDateTime(dt):(icsDate(dt));
@@ -2055,6 +2062,7 @@ function buildICSCal(evts,stable){
     });
     // Hotel events
     (t.hotels||[]).forEach(h=>{
+      if(stable&&h.appleUid)return;
       if(!h.checkIn)return;
       events.push([
         'BEGIN:VEVENT','DTSTART;VALUE=DATE:'+icsDate(h.checkIn),
@@ -2149,46 +2157,94 @@ function parseICSFeed(text){
 }
 function appleId(u){let h=0;for(let i=0;i<u.length;i++){h=(h*31+u.charCodeAt(i))|0;}return 'ap-'+(h>>>0).toString(36);}
 // ===== APPLE EVENTS ATTACHED TO TRACKER EVENTS =====
-// An Apple event dragged onto a tracker event becomes one of its activities, linked by appleUid.
-// The import then keeps that activity in step with Apple instead of re-creating the standalone event.
-function attachedAppleUids(){const u=new Set();for(const ev of S.events||[])for(const a of ev.activities||[])if(a.appleUid)u.add(a.appleUid);return u;}
+// An Apple event dropped onto a tracker event becomes one of its entries (flight, hotel, activity or
+// transport), linked by appleUid. The import keeps that entry in step with Apple Calendar instead of
+// re-creating the standalone event, and removes it when the Apple event is deleted.
+const APPLE_KINDS={flight:'flights',hotel:'hotels',activity:'activities',transport:'transport'};
+const APPLE_KIND_LABELS={flight:'Flight',hotel:'Hotel',activity:'Activity',transport:'Transport'};
+function _appleEntries(){const out=[];for(const ev of S.events||[])for(const[kind,arr]of Object.entries(APPLE_KINDS))for(const e of ev[arr]||[])if(e.appleUid)out.push({ev,kind,arr,e});return out;}
+function attachedAppleUids(){return new Set(_appleEntries().map(x=>x.e.appleUid));}
 const _appleSrcOf=ap=>({name:ap.name||'',startDate:ap.startDate||'',endDate:ap.endDate||'',startTime:ap.startTime||'',endTime:ap.endTime||'',locations:ap.locations||[],notes:ap.notes||''});
-function _appleDuration(st,et){if(!st||!et)return '';const[a,b]=[st,et].map(t=>{const[h,m]=t.split(':').map(Number);return h*60+m;});const d=b-a;return d>0?(d>=60?Math.floor(d/60)+'h'+(d%60?' '+String(d%60).padStart(2,'0')+'m':''):d+'m'):'';}
-function _applyAppleToActivity(a,src){
-  Object.assign(a,{name:src.name,location:src.locations[0]||'',date:src.startDate,endDate:src.endDate&&src.endDate!==src.startDate?src.endDate:'',time:src.startTime,duration:_appleDuration(src.startTime,src.endTime),notes:src.notes});
-  a.appleSrc=src;
+function _appleDuration(st,et,sd,ed){
+  if(!st||!et)return '';
+  const t=(d,x)=>new Date((d||'2000-01-01')+'T'+x).getTime();
+  let mins=Math.round((t(ed||sd,et)-t(sd,st))/6e4);if(mins<=0&&!ed)mins+=1440;
+  return mins>0?(mins>=60?Math.floor(mins/60)+'h'+(mins%60?' '+String(mins%60).padStart(2,'0')+'m':''):mins+'m'):'';
 }
-function attachAppleEvent(appleEvId,targetId){
+// Suggested entry type from the Apple event's title/notes
+function guessAppleKind(ap){
+  const t=(ap.name||'')+' '+(ap.notes||'');
+  const fn=new RegExp('\\b('+_FNCODES+')\\s?\\d{2,4}\\b').test(ap.name||'');
+  const codes=((ap.name||'').match(/\b[A-Z]{3}\b/g)||[]).filter(c=>AIRPORTS[c]).length;
+  if(fn&&(codes>=1||/flight|depart|arriv/i.test(t))||/\bflight\b/i.test(ap.name||''))return 'flight';
+  if(/\b(hotel|resort|villa|hostel|bungalow|homestay|guesthouse|lodge|check-?in|airbnb|stay)\b/i.test(ap.name||''))return 'hotel';
+  if(/\b(ferry|fast\s*boat|speed\s*boat|boat\s+transfer|train|bus|coach|shuttle|transfer|taxi|grab\s+(?:ride|car|taxi|to)|car\s*(?:rental|hire))\b/i.test(ap.name||''))return 'transport';
+  return 'activity';
+}
+// Fill an entry of the given kind from the Apple event (only Apple-derived fields; cost etc. untouched)
+function _applyAppleToEntry(kind,e,src){
+  const dur=_appleDuration(src.startTime,src.endTime,src.startDate,src.endDate);
+  const loc=src.locations[0]||'';
+  if(kind==='flight'){
+    const fm=(src.name||'').match(new RegExp('\\b('+_FNCODES+')\\s?(\\d{1,4})\\b'));
+    const codes=((src.name||'').match(/\b[A-Z]{3}\b/g)||[]).filter(c=>AIRPORTS[c]);
+    const pnr=(src.notes.match(/(?:Booking\s*Ref(?:erence)?|PNR|Reservation\s*code)\s*[:#]?\s*([A-Z0-9]{5,8})\b/i)||[])[1]||e.pnr||'';
+    Object.assign(e,{flightNumber:fm?fm[1]+fm[2]:(e.flightNumber||''),airline:fm&&AIRLINE_MAP[fm[1]]?AIRLINE_MAP[fm[1]]:(e.airline||''),
+      from:codes[0]?AIRPORTS[codes[0]]:(e.from||''),to:codes[1]?AIRPORTS[codes[1]]:(e.to||''),pnr,
+      departureTime:src.startDate+(src.startTime?'T'+src.startTime:'T00:00'),arrivalTime:(src.endDate||src.startDate)+(src.endTime?'T'+src.endTime:(src.startTime?'T'+src.startTime:'T00:00')),
+      duration:dur,notes:src.notes});
+  }else if(kind==='hotel'){
+    let co=src.endDate||src.startDate;if(co<=src.startDate)co=_addDays(src.startDate,1);
+    Object.assign(e,{name:src.name,checkIn:src.startDate,checkOut:co,notes:[loc,src.notes].filter(Boolean).join('\n')});
+  }else if(kind==='transport'){
+    const tt=src.name||'';
+    const type=/ferry/i.test(tt)?'Ferry':/boat/i.test(tt)?'Boat':/train|rail/i.test(tt)?'Train':/bus|coach|shuttle/i.test(tt)?'Bus':/car\s*(?:rental|hire)/i.test(tt)?'Car Rental':/taxi|grab|transfer/i.test(tt)?'Taxi/Grab':(e.type||'Other');
+    Object.assign(e,{type,name:src.name,location:loc,date:src.startDate,time:src.startTime,duration:dur,notes:src.notes});
+  }else{
+    Object.assign(e,{name:src.name,location:loc,date:src.startDate,endDate:src.endDate&&src.endDate!==src.startDate?src.endDate:'',time:src.startTime,duration:dur,notes:src.notes});
+  }
+  e.appleSrc=src;
+}
+function attachAppleEvent(appleEvId,targetId,kind){
   const ap=S.events.find(e=>e.id===appleEvId&&e.source==='apple'),target=S.events.find(e=>e.id===targetId);
   if(!ap||!target||target.source==='apple')return;
-  if(!target.activities)target.activities=[];
-  const act={id:uid(),appleUid:ap.appleUid,cost:'',currency:eventCur(target),bookingDetails:'',ocrText:''};
-  _applyAppleToActivity(act,_appleSrcOf(ap));
+  kind=APPLE_KINDS[kind]?kind:'activity';const arr=APPLE_KINDS[kind];
+  if(!target[arr])target[arr]=[];
+  const entry={id:uid(),appleUid:ap.appleUid,cost:'',currency:eventCur(target),ocrText:''};
+  if(kind==='activity'||kind==='transport')entry.bookingDetails='';
+  _applyAppleToEntry(kind,entry,_appleSrcOf(ap));
   const apIdx=S.events.indexOf(ap);
-  S.events.splice(apIdx,1);target.activities.push(act);
+  S.events.splice(apIdx,1);target[arr].push(entry);
   saveS();render();
   const outside=ap.endDate<target.startDate||ap.startDate>target.endDate;
-  toastUndo(`Added “${ap.name}” to ${target.name}${outside?' (outside its dates)':''}`,()=>{
-    target.activities=target.activities.filter(x=>x!==act);S.events.splice(apIdx,0,ap);saveS();render();
+  toastUndo(`Added “${ap.name}” to ${target.name} as ${APPLE_KIND_LABELS[kind].toLowerCase()}${outside?' (outside its dates)':''}`,()=>{
+    target[arr]=target[arr].filter(x=>x!==entry);S.events.splice(apIdx,0,ap);saveS();render();
   });
 }
-function detachAppleActivity(ev,actId){
-  const a=(ev.activities||[]).find(x=>x.id===actId);if(!a||!a.appleUid)return;
-  const src=a.appleSrc||{name:a.name,startDate:a.date,endDate:a.endDate||a.date,startTime:a.time||'',endTime:'',locations:a.location?[a.location]:[],notes:a.notes||''};
-  ev.activities=ev.activities.filter(x=>x!==a);
-  S.events.push({id:appleId(a.appleUid),source:'apple',appleUid:a.appleUid,category:'personal',requiresLeave:false,hotels:[],flights:[],activities:[],transport:[],sharedLink:'',year:parseInt(src.startDate)||new Date().getFullYear(),...src});
-  saveS();render();toast(`“${src.name}” is a separate Apple event again`);
+function detachAppleEntry(ev,entryId){
+  for(const arr of Object.values(APPLE_KINDS)){
+    const e=(ev[arr]||[]).find(x=>x.id===entryId);if(!e||!e.appleUid)continue;
+    const src=e.appleSrc||{name:e.name||e.flightNumber||'',startDate:e.date||e.checkIn||(e.departureTime||'').slice(0,10),endDate:e.endDate||e.checkOut||e.date||'',startTime:e.time||'',endTime:'',locations:e.location?[e.location]:[],notes:e.notes||''};
+    ev[arr]=ev[arr].filter(x=>x!==e);
+    S.events.push({id:appleId(e.appleUid),source:'apple',appleUid:e.appleUid,category:'personal',requiresLeave:false,hotels:[],flights:[],activities:[],transport:[],sharedLink:'',year:parseInt(src.startDate)||new Date().getFullYear(),...src});
+    saveS();render();toast(`“${src.name}” is a separate Apple event again`);return;
+  }
 }
-function showAttachApple(appleEvId){
+// Pick the event (unless dropped on one) and the entry type
+function showAttachApple(appleEvId,targetId){
   const ap=S.events.find(e=>e.id===appleEvId);if(!ap)return;
-  // Tracker events, closest in time first (overlapping ones on top)
   const day=d=>new Date(d+'T00:00:00').getTime();
   const gap=t=>Math.max(0,day(t.startDate)-day(ap.endDate),day(ap.startDate)-day(t.endDate));
   const opts=S.events.filter(t=>t.source!=='apple').sort((a,b)=>gap(a)-gap(b)||a.startDate.localeCompare(b.startDate));
   if(!opts.length){toast('Create a tracker event first');return;}
-  modal('Add to event',`<p style="font-size:12px;color:var(--text2);margin-bottom:12px">Add <b>${esc(ap.name)}</b> (${fmt(ap.startDate)}${ap.startTime?' '+ap.startTime:''}) to one of your events as an activity. The original stays in Apple Calendar and keeps the activity in sync — changes there update it, and deleting it there removes the activity. Tip: on a computer you can also drag the Apple card onto an event card.</p>
-    <div class="fi"><label>Event</label><select class="fc" id="attach-target">${opts.map(t=>`<option value="${t.id}">${esc(t.name)} (${fmtS(t.startDate)} – ${fmtS(t.endDate)})${gap(t)===0?' ✓ dates overlap':''}</option>`).join('')}</select></div>`,
-    ()=>{attachAppleEvent(ap.id,document.getElementById('attach-target').value);},{saveLabel:'Add'});
+  const target=targetId&&S.events.find(t=>t.id===targetId);
+  const guess=guessAppleKind(ap);
+  modal('Add Apple event',`<p style="font-size:12px;color:var(--text2);margin-bottom:12px"><b>${esc(ap.name)}</b> · ${fmt(ap.startDate)}${ap.startTime?' '+ap.startTime+(ap.endTime?'–'+ap.endTime:''):''}<br><span style="color:var(--text3)">The original stays in Apple Calendar and keeps this entry in sync — changes there update it, deleting it there removes it.</span></p>
+    <div class="fi"><label>Add as</label><div class="kind-pick">${Object.entries(APPLE_KIND_LABELS).map(([k,l])=>`<label class="kind-opt"><input type="radio" name="apple-kind" value="${k}"${k===guess?' checked':''}><span>${l}</span></label>`).join('')}</div></div>
+    ${target?`<div class="fi" style="margin-top:10px"><label>To event</label><div style="font-size:13px;font-weight:600">${esc(target.name)} <span style="font-weight:400;color:var(--text3);font-size:11px">(${fmtS(target.startDate)} – ${fmtS(target.endDate)})</span></div></div>`
+      :`<div class="fi" style="margin-top:10px"><label>To event</label><select class="fc" id="attach-target">${opts.map(t=>`<option value="${t.id}">${esc(t.name)} (${fmtS(t.startDate)} – ${fmtS(t.endDate)})${gap(t)===0?' ✓ dates overlap':''}</option>`).join('')}</select></div>
+      <div style="font-size:10px;color:var(--text3);margin-top:6px">Tip: on a computer you can also drag the Apple card onto an event card.</div>`}`,
+    ()=>{const kind=(document.querySelector('input[name="apple-kind"]:checked')||{}).value||'activity';attachAppleEvent(ap.id,target?target.id:document.getElementById('attach-target').value,kind);},{saveLabel:'Add'});
 }
 
 function importAppleCalendar(icsText){
@@ -2217,15 +2273,13 @@ function importAppleCalendar(icsText){
   const allowDeletes=incoming.length>0;
   // Apple events attached to tracker events: update their activity, never re-create them standalone
   const attached=attachedAppleUids();
-  for(const ev of S.events||[])for(const a of ev.activities||[]){
-    if(!a.appleUid)continue;
-    const inc=byUid.get(a.appleUid);
-    if(!inc){if(allowDeletes){a._appleDeleted=true;changed++;}continue;}// deleted in Apple Calendar → removed from the trip below
+  for(const{ev,kind,arr,e}of _appleEntries()){
+    const inc=byUid.get(e.appleUid);
+    if(!inc){if(allowDeletes){ev[arr]=ev[arr].filter(x=>x!==e);changed++;}continue;}// deleted in Apple Calendar → removed from the trip
     const src=_appleSrcOf(inc);
-    if(JSON.stringify(src)!==JSON.stringify(a.appleSrc||{})){_applyAppleToActivity(a,src);changed++;}
-    byUid.delete(a.appleUid);
+    if(JSON.stringify(src)!==JSON.stringify(e.appleSrc||{})){_applyAppleToEntry(kind,e,src);changed++;}
+    byUid.delete(e.appleUid);
   }
-  for(const ev of S.events||[])if((ev.activities||[]).some(a=>a._appleDeleted))ev.activities=ev.activities.filter(a=>!a._appleDeleted);
   // Update or delete existing apple-sourced events (never touches tracker-native events)
   S.events=(S.events||[]).filter(ev=>{
     if(ev.source!=='apple')return true;
@@ -4581,7 +4635,7 @@ document.addEventListener('drop',e=>{
   const t=e.target.closest&&e.target.closest('[data-drop-ev]');const id=e.dataTransfer&&e.dataTransfer.getData('text/x-apple-ev');
   if(!t||!id)return;
   e.preventDefault();document.body.classList.remove('apple-dragging');t.classList.remove('drop-over');
-  attachAppleEvent(id,t.dataset.dropEv);
+  showAttachApple(id,t.dataset.dropEv);
 });
 
 document.addEventListener('click',e=>{
@@ -4592,7 +4646,7 @@ document.addEventListener('click',e=>{
     case 'view':nav('detail',{tid:el.dataset.id,tab:'timeline'});break;
     case 'add-event':fEvent();break;
     case 'apple-attach':showAttachApple(el.dataset.id);break;
-    case 'apple-detach':if(ev)detachAppleActivity(ev,el.dataset.eid);break;
+    case 'apple-detach':if(ev)detachAppleEntry(ev,el.dataset.eid);break;
     case 'export-event':showExportModal(el.dataset.id);break;
     case 'edit-event':{const t=S.events.find(x=>x.id===el.dataset.id);if(t)fEvent(t);break;}
     case 'del-event':{const delId=el.dataset.id;const delEv=S.events.find(t=>t.id===delId);if(delEv){const bc=(delEv.flights||[]).length+(delEv.hotels||[]).length+(delEv.activities||[]).length+(delEv.transport||[]).length;modal('Delete Event',`<div class="confirm-modal-body"><div class="cm-icon">⚠️</div><div class="cm-title">Delete "${esc(delEv.name)}"?</div><div class="cm-sub">${bc?'This will remove <strong>'+bc+' booking'+(bc>1?'s':'')+'</strong> (flights, hotels, activities, transport).':'This trip has no bookings.'}<br>This action cannot be undone.</div></div>`,()=>{const idx=S.events.indexOf(delEv);S.events.splice(idx,1);saveS();nav('events');toast('Event deleted');},{saveLabel:'Delete',danger:true});}}break;
