@@ -296,6 +296,12 @@ textarea.fc{resize:vertical;min-height:50px}
 .su-lf{display:flex;flex-direction:column;gap:2px;min-width:0}
 .su-lf span{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
 .su-lf .fc{font-size:12px;padding:6px 8px;min-width:0;width:100%}
+[data-apple-drag]{cursor:grab}
+[data-apple-drag]:active{cursor:grabbing}
+body.apple-dragging [data-drop-ev]{outline:2px dashed var(--primary);outline-offset:-2px}
+[data-drop-ev].drop-over{outline:2px solid var(--primary)!important;background:var(--card-hover)}
+.apple-attach-btn{margin-left:auto;font-size:10px;padding:3px 8px;white-space:nowrap;border:1px dashed var(--border)}
+.trip-card .trip-foot{flex-wrap:wrap;row-gap:6px}
 .su-docs-h{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px}
 .su-doc{display:inline-flex;align-items:center;gap:4px;font-size:11px;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:3px 4px 3px 10px;margin:0 6px 6px 0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .su-doc-x{border:none;background:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;padding:0 4px}
@@ -1533,7 +1539,7 @@ function vDash(){
       <div class="card-header"><h3>All Events <span style="font-size:12px;font-weight:400;color:var(--text3)">(${dashEvents.length})</span></h3><button class="btn btn-p" data-action="add-event">+ New Event</button></div>
       <div class="card-body" style="padding:12px">
       ${dashEvents.length?dashEvents.map(t=>{const st=eventStatus(t);const dl=daysUntil(t.startDate);const cc=catColor(t.category||'trip');const countTxt=st==='active'?'In progress':st==='completed'?(Math.abs(daysUntil(t.endDate))+' days ago'):(dl===0?'Today':(dl+' day'+(dl!==1?'s':'')+' away'));return`
-        <div class="entry" style="cursor:pointer;border-left:3px solid ${eColor(t)}${st==='completed'?';opacity:.6':''}" data-action="view" data-id="${t.id}">
+        <div class="entry" style="cursor:pointer;border-left:3px solid ${eColor(t)}${st==='completed'?';opacity:.6':''}" data-action="view" data-id="${t.id}" ${t.source==='apple'?`draggable="true" data-apple-drag="${t.id}" title="Drag onto an event to add it there"`:`data-drop-ev="${t.id}"`}>
           <div class="entry-top"><h4>${esc(t.name)}</h4><div style="display:flex;gap:6px;align-items:center">${clashBadgeHtml(t,true)}${t.source==='apple'?'<span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border)">&#63743; Apple</span>':''}<span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span><span class="tag tag-b">${days(t.startDate,t.endDate)}d ${nights(t.startDate,t.endDate)}n</span></div></div>
           <div class="entry-grid">
             <div class="eg"><span class="ek">Dates</span><span class="ev">${fmtS(t.startDate)}${t.startTime?' '+t.startTime:''} — ${fmtS(t.endDate)}${t.endTime?' '+t.endTime:''}</span></div>
@@ -1554,7 +1560,8 @@ function vDash(){
 function eventCardHtml(t){
   const st=eventStatus(t);
   const cc=catColor(t.category||'trip');
-  return`<div class="trip-card" data-action="view" data-id="${t.id}">
+  const isApple=t.source==='apple';
+  return`<div class="trip-card" data-action="view" data-id="${t.id}" ${isApple?`draggable="true" data-apple-drag="${t.id}" title="Drag onto an event to add it there"`:`data-drop-ev="${t.id}"`}>
     <div class="trip-accent" style="background:${cc}"></div>
     <div class="trip-body">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div class="trip-name">${esc(t.name)}</div><div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${clashBadgeHtml(t,true)}${t.source==='apple'?'<span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border)">&#63743; Apple</span>':''}<span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span></div></div>
@@ -1566,6 +1573,7 @@ function eventCardHtml(t){
         <span><b>${(t.flights||[]).length}</b> flights</span>
         <span><b>${(t.hotels||[]).length}</b> hotels</span>
         ${eCost(t)?`<span style="color:var(--green)"><b>${fmtM(eCost(t),'')}</b> SGD</span>`:''}
+        ${isApple?`<button class="btn btn-ghost apple-attach-btn" data-action="apple-attach" data-id="${t.id}">+ Add to event…</button>`:''}
       </div>
     </div>
   </div>`;
@@ -1620,6 +1628,7 @@ function vDetail(){
     </div>
     <div style="display:flex;gap:6px">
       <button class="btn btn-s" data-action="export-event" data-id="${t.id}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:3px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Export</button>
+      ${t.source==='apple'?`<button class="btn btn-p" data-action="apple-attach" data-id="${t.id}">+ Add to event…</button>`:''}
       <button class="btn btn-s" data-action="edit-event" data-id="${t.id}">Edit</button>
       <button class="btn btn-d" data-action="del-event" data-id="${t.id}">Delete</button>
     </div>
@@ -1686,7 +1695,7 @@ function rActs(t){
   return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><h3 style="font-size:14px">Activities</h3><div style="display:flex;gap:8px;align-items:center">${sortCtrlHtml('entry',sortKey,sortDir)}<button class="btn btn-p" data-action="add-act">+ Add Activity</button></div></div>
   ${sorted.length?sorted.map(a=>`
     <div class="entry">
-      <div class="entry-top"><h4>${esc(a.name||'Activity')}</h4><div style="display:flex;gap:4px"><button class="btn btn-ghost" data-action="edit-act" data-eid="${a.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-act" data-eid="${a.id}">Del</button></div></div>
+      <div class="entry-top"><h4>${esc(a.name||'Activity')}${a.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div style="display:flex;gap:4px">${a.appleUid?`<button class="btn btn-ghost" data-action="apple-detach" data-eid="${a.id}" title="Make it a separate Apple event again">Detach</button>`:''}<button class="btn btn-ghost" data-action="edit-act" data-eid="${a.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-act" data-eid="${a.id}">Del</button></div></div>
       <div class="entry-grid">
         ${a.location?`<div class="eg"><span class="ek">Location</span><span class="ev">${esc(a.location)}</span></div>`:''}
         ${a.date&&a.endDate?`<div class="eg"><span class="ek">Dates</span><span class="ev">${fmt(a.date)} — ${fmt(a.endDate)} (${calcNights(a.date,a.endDate)||'?'}d)</span></div>`:a.date?`<div class="eg"><span class="ek">Date</span><span class="ev">${fmt(a.date)}</span></div>`:''}
@@ -2138,6 +2147,49 @@ function parseICSFeed(text){
   return evts;
 }
 function appleId(u){let h=0;for(let i=0;i<u.length;i++){h=(h*31+u.charCodeAt(i))|0;}return 'ap-'+(h>>>0).toString(36);}
+// ===== APPLE EVENTS ATTACHED TO TRACKER EVENTS =====
+// An Apple event dragged onto a tracker event becomes one of its activities, linked by appleUid.
+// The import then keeps that activity in step with Apple instead of re-creating the standalone event.
+function attachedAppleUids(){const u=new Set();for(const ev of S.events||[])for(const a of ev.activities||[])if(a.appleUid)u.add(a.appleUid);return u;}
+const _appleSrcOf=ap=>({name:ap.name||'',startDate:ap.startDate||'',endDate:ap.endDate||'',startTime:ap.startTime||'',endTime:ap.endTime||'',locations:ap.locations||[],notes:ap.notes||''});
+function _appleDuration(st,et){if(!st||!et)return '';const[a,b]=[st,et].map(t=>{const[h,m]=t.split(':').map(Number);return h*60+m;});const d=b-a;return d>0?(d>=60?Math.floor(d/60)+'h'+(d%60?' '+String(d%60).padStart(2,'0')+'m':''):d+'m'):'';}
+function _applyAppleToActivity(a,src){
+  Object.assign(a,{name:src.name,location:src.locations[0]||'',date:src.startDate,endDate:src.endDate&&src.endDate!==src.startDate?src.endDate:'',time:src.startTime,duration:_appleDuration(src.startTime,src.endTime),notes:src.notes});
+  a.appleSrc=src;
+}
+function attachAppleEvent(appleEvId,targetId){
+  const ap=S.events.find(e=>e.id===appleEvId&&e.source==='apple'),target=S.events.find(e=>e.id===targetId);
+  if(!ap||!target||target.source==='apple')return;
+  if(!target.activities)target.activities=[];
+  const act={id:uid(),appleUid:ap.appleUid,cost:'',currency:eventCur(target),bookingDetails:'',ocrText:''};
+  _applyAppleToActivity(act,_appleSrcOf(ap));
+  const apIdx=S.events.indexOf(ap);
+  S.events.splice(apIdx,1);target.activities.push(act);
+  saveS();render();
+  const outside=ap.endDate<target.startDate||ap.startDate>target.endDate;
+  toastUndo(`Added “${ap.name}” to ${target.name}${outside?' (outside its dates)':''}`,()=>{
+    target.activities=target.activities.filter(x=>x!==act);S.events.splice(apIdx,0,ap);saveS();render();
+  });
+}
+function detachAppleActivity(ev,actId){
+  const a=(ev.activities||[]).find(x=>x.id===actId);if(!a||!a.appleUid)return;
+  const src=a.appleSrc||{name:a.name,startDate:a.date,endDate:a.endDate||a.date,startTime:a.time||'',endTime:'',locations:a.location?[a.location]:[],notes:a.notes||''};
+  ev.activities=ev.activities.filter(x=>x!==a);
+  S.events.push({id:appleId(a.appleUid),source:'apple',appleUid:a.appleUid,category:'personal',requiresLeave:false,hotels:[],flights:[],activities:[],transport:[],sharedLink:'',year:parseInt(src.startDate)||new Date().getFullYear(),...src});
+  saveS();render();toast(`“${src.name}” is a separate Apple event again`);
+}
+function showAttachApple(appleEvId){
+  const ap=S.events.find(e=>e.id===appleEvId);if(!ap)return;
+  // Tracker events, closest in time first (overlapping ones on top)
+  const day=d=>new Date(d+'T00:00:00').getTime();
+  const gap=t=>Math.max(0,day(t.startDate)-day(ap.endDate),day(ap.startDate)-day(t.endDate));
+  const opts=S.events.filter(t=>t.source!=='apple').sort((a,b)=>gap(a)-gap(b)||a.startDate.localeCompare(b.startDate));
+  if(!opts.length){toast('Create a tracker event first');return;}
+  modal('Add to event',`<p style="font-size:12px;color:var(--text2);margin-bottom:12px">Add <b>${esc(ap.name)}</b> (${fmt(ap.startDate)}${ap.startTime?' '+ap.startTime:''}) to one of your events as an activity. It stays in sync with Apple Calendar. Tip: on a computer you can also drag the Apple card onto an event card.</p>
+    <div class="fi"><label>Event</label><select class="fc" id="attach-target">${opts.map(t=>`<option value="${t.id}">${esc(t.name)} (${fmtS(t.startDate)} – ${fmtS(t.endDate)})${gap(t)===0?' ✓ dates overlap':''}</option>`).join('')}</select></div>`,
+    ()=>{attachAppleEvent(ap.id,document.getElementById('attach-target').value);},{saveLabel:'Add'});
+}
+
 function importAppleCalendar(icsText){
   if(!icsText||!icsText.includes('BEGIN:VCALENDAR'))return 0;
   let parsed;
@@ -2160,9 +2212,20 @@ function importAppleCalendar(icsText){
   }
   const byUid=new Map(incoming.map(e=>[e.appleUid,e]));
   let changed=0;
+  // Apple events attached to tracker events: update their activity, never re-create them standalone
+  const attached=attachedAppleUids();
+  for(const ev of S.events||[])for(const a of ev.activities||[]){
+    if(!a.appleUid)continue;
+    const inc=byUid.get(a.appleUid);
+    if(!inc){delete a.appleUid;delete a.appleSrc;changed++;continue;}// deleted in Apple: keep it as a normal activity
+    const src=_appleSrcOf(inc);
+    if(JSON.stringify(src)!==JSON.stringify(a.appleSrc||{})){_applyAppleToActivity(a,src);changed++;}
+    byUid.delete(a.appleUid);
+  }
   // Update or delete existing apple-sourced events (never touches tracker-native events)
   S.events=(S.events||[]).filter(ev=>{
     if(ev.source!=='apple')return true;
+    if(attached.has(ev.appleUid)){changed++;return false;}// standalone copy of an attached event (e.g. synced from another device)
     const inc=byUid.get(ev.appleUid);
     if(!inc){changed++;return false;} // deleted in Apple Calendar
     const fields=['name','startDate','endDate','startTime','endTime','notes'];
@@ -4496,6 +4559,27 @@ function bind(){
   document.querySelectorAll('[data-rc]').forEach(el=>el.onchange=()=>{S.rates[el.dataset.rc]=parseFloat(el.value)||0;saveS();});
 }
 
+// Drag an Apple event card onto a tracker event card to add it there
+document.addEventListener('dragstart',e=>{
+  const c=e.target.closest&&e.target.closest('[data-apple-drag]');if(!c)return;
+  e.dataTransfer.setData('text/x-apple-ev',c.dataset.appleDrag);e.dataTransfer.effectAllowed='move';
+  document.body.classList.add('apple-dragging');
+});
+document.addEventListener('dragend',()=>{document.body.classList.remove('apple-dragging');document.querySelectorAll('.drop-over').forEach(x=>x.classList.remove('drop-over'));});
+document.addEventListener('dragover',e=>{
+  const t=e.target.closest&&e.target.closest('[data-drop-ev]');
+  if(!t||!e.dataTransfer.types.includes('text/x-apple-ev'))return;
+  e.preventDefault();e.dataTransfer.dropEffect='move';
+  document.querySelectorAll('.drop-over').forEach(x=>{if(x!==t)x.classList.remove('drop-over');});t.classList.add('drop-over');
+});
+document.addEventListener('dragleave',e=>{const t=e.target.closest&&e.target.closest('[data-drop-ev]');if(t&&!t.contains(e.relatedTarget))t.classList.remove('drop-over');});
+document.addEventListener('drop',e=>{
+  const t=e.target.closest&&e.target.closest('[data-drop-ev]');const id=e.dataTransfer&&e.dataTransfer.getData('text/x-apple-ev');
+  if(!t||!id)return;
+  e.preventDefault();document.body.classList.remove('apple-dragging');t.classList.remove('drop-over');
+  attachAppleEvent(id,t.dataset.dropEv);
+});
+
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-action]');if(!el)return;
   const a=el.dataset.action,ev=S.events.find(t=>t.id===S.tid);
@@ -4503,6 +4587,8 @@ document.addEventListener('click',e=>{
     case 'nav':nav(el.dataset.to);break;
     case 'view':nav('detail',{tid:el.dataset.id,tab:'timeline'});break;
     case 'add-event':fEvent();break;
+    case 'apple-attach':showAttachApple(el.dataset.id);break;
+    case 'apple-detach':if(ev)detachAppleActivity(ev,el.dataset.eid);break;
     case 'export-event':showExportModal(el.dataset.id);break;
     case 'edit-event':{const t=S.events.find(x=>x.id===el.dataset.id);if(t)fEvent(t);break;}
     case 'del-event':{const delId=el.dataset.id;const delEv=S.events.find(t=>t.id===delId);if(delEv){const bc=(delEv.flights||[]).length+(delEv.hotels||[]).length+(delEv.activities||[]).length+(delEv.transport||[]).length;modal('Delete Event',`<div class="confirm-modal-body"><div class="cm-icon">⚠️</div><div class="cm-title">Delete "${esc(delEv.name)}"?</div><div class="cm-sub">${bc?'This will remove <strong>'+bc+' booking'+(bc>1?'s':'')+'</strong> (flights, hotels, activities, transport).':'This trip has no bookings.'}<br>This action cannot be undone.</div></div>`,()=>{const idx=S.events.indexOf(delEv);S.events.splice(idx,1);saveS();nav('events');toast('Event deleted');},{saveLabel:'Delete',danger:true});}}break;
