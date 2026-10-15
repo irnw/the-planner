@@ -2326,7 +2326,8 @@ function vGuidePage(){
 function signatureHtml(){return `<div class="sig">designed and created by <a href="https://www.instagram.com/irn.w" target="_blank" rel="noopener noreferrer">@irn.w</a></div>`;}
 
 function vGuideCard(){
-  const sec=(title,body,open)=>`<details class="guide-sec"${open?' open':''}><summary>${title}</summary><div class="guide-body">${body}</div></details>`;
+  // Accordion: opening one section closes the others (native 'name' grouping, plus a fallback below)
+  const sec=(title,body,open)=>`<details class="guide-sec" name="guide-acc"${open?' open':''}><summary>${title}</summary><div class="guide-body">${body}</div></details>`;
   const ol=items=>`<ol>${items.map(i=>`<li>${i}</li>`).join('')}</ol>`;
   const ul=items=>`<ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul>`;
   const firstTime=acctEnabled()&&!_acct,acc=acctEnabled();
@@ -6367,6 +6368,8 @@ document.addEventListener('change',e=>{
 });
 
 document.addEventListener('input',e=>{if(e.target&&e.target.id==='gsearch')renderSearchResults();});
+document.addEventListener('toggle',e=>{const d=e.target;if(!(d instanceof HTMLDetailsElement)||!d.open||!d.classList.contains('guide-sec'))return;
+  document.querySelectorAll('details.guide-sec[open]').forEach(o=>{if(o!==d)o.removeAttribute('open');});},true);
 document.addEventListener('keydown',e=>{
   const inp=document.getElementById('gsearch');if(!inp||e.target!==inp)return;
   const items=[...document.querySelectorAll('#gs-results .gs-item')],cur=items.findIndex(x=>x.classList.contains('sel'));
