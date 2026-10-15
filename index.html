@@ -1667,6 +1667,7 @@ function toastUndo(msg,undoFn,duration=5000){const el=document.createElement('di
 
 // ===== STATE =====
 let S=loadS();
+{const d=new Date();S.calY=d.getFullYear();S.calM=d.getMonth();}// the Calendar opens on the current month
 function loadS(){
   // Check multiple storage keys (htV4 was used when app first worked, htV3 was original)
   for(const key of ['htV5','htV4']){
@@ -2632,7 +2633,10 @@ function render(){
   initPdfJs();
 }
 // Changing page is view state: saved on this device, not counted as an edit to sync
-function nav(v,x){S.v=v;if(x)Object.assign(S,x);saveUI();render();window.scrollTo(0,0);}
+function nav(v,x){
+  // Coming back to the Calendar from another page always shows the current month
+  if(v==='calendar'&&S.v!=='calendar'){const d=new Date();S.calY=d.getFullYear();S.calM=d.getMonth();}
+  S.v=v;if(x)Object.assign(S,x);saveUI();render();window.scrollTo(0,0);}
 
 // ===== DASHBOARD =====
 // Account / sync prompt on the dashboard (signed-out devices, old GitHub link states)
