@@ -29,7 +29,7 @@ if(location.hostname==='irnw.github.io')location.replace('https://theplanner.pag
   --text:#f2f1ed;--text2:#a4a7b4;--text3:#7f8495;--line:#2a2e3a;--line-strong:#4d4578;--border:#2a2e3a;--border2:#4d4578;
   --input-bg:#191c24;--radius:0px;--radius-lg:0px;--shadow:none;--shadow2:0 30px 80px rgba(0,0,0,.5);
   --header-bg:rgba(15,16,20,.92);--overlay:rgba(5,6,10,.62);
-  --sg:#a89cff;--sg-dim:rgba(168,156,255,.16);--my:#f2a65a;--my-dim:rgba(242,166,90,.14);
+  --sg:#7fa8ff;--sg-dim:rgba(127,168,255,.15);--leave:#f28fb0;--leave-dim:rgba(242,143,176,.15);--synced:#8fdcae;--my:#f2a65a;--my-dim:rgba(242,166,90,.14);
   --glass:rgba(255,255,255,.03);--glass-border:#2a2e3a;--fill:rgba(168,156,255,.1);--fill2:rgba(168,156,255,.06);--sep:#2a2e3a;
   --glow-1:#a89cff;--glow-2:#c1b8ff;
   --font:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
@@ -46,7 +46,7 @@ if(location.hostname==='irnw.github.io')location.replace('https://theplanner.pag
   --text:#111111;--text2:#6f6f78;--text3:#a0a0aa;--line:#e7e3ef;--line-strong:#ddd6f3;--border:#e7e3ef;--border2:#ddd6f3;
   --input-bg:#ffffff;--radius:0px;--radius-lg:0px;--shadow:none;--shadow2:0 30px 80px rgba(17,17,17,.14);
   --header-bg:rgba(247,246,243,.92);--overlay:rgba(17,17,17,.28);
-  --sg:#8a7fe8;--sg-dim:#f1efff;--my:#c97a2b;--my-dim:rgba(201,122,43,.1);
+  --sg:#3d7ad6;--sg-dim:rgba(61,122,214,.1);--leave:#d6608a;--leave-dim:rgba(214,96,138,.1);--synced:#4fae73;--my:#c97a2b;--my-dim:rgba(201,122,43,.1);
   --glass:rgba(0,0,0,.02);--glass-border:#e7e3ef;--fill:#f1efff;--fill2:rgba(138,127,232,.06);--sep:#e7e3ef;
   --glow-1:#8a7fe8;--glow-2:#5f52d6;
   --font:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
@@ -923,6 +923,23 @@ input[type=checkbox],input[type=radio]{accent-color:var(--primary-deep)}
 }
 .ytabs{align-items:center}
 .yt{display:inline-flex;align-items:center;justify-content:center;line-height:1;padding:9px 16px!important}
+/* Synced = pastel green */
+.sync-dot.connected,.sidebar-footer .sync-dot.connected{color:var(--synced)!important}
+/* Leave days: rose dot, distinct from holiday calendars (blue/orange) and trips (lavender) */
+.cal-leave-dot{background:var(--leave)!important}
+/* World map: visible land, borders and hover in both themes */
+.world-map-container{background:var(--card)!important;border:1px solid var(--line)!important;border-radius:0!important}
+[data-theme="dark"] .world-map-container path.country{fill:#2c303d;stroke:#14161c;stroke-width:.6}
+[data-theme="dark"] .world-map-container path.country.untracked{fill:#24272f;opacity:1}
+[data-theme="dark"] .world-map-container path.country:hover{fill:#454a5c;opacity:1}
+[data-theme="dark"] .world-map-container path.country.visited{fill:#a89cff;opacity:1}
+[data-theme="dark"] .world-map-container path.country.visited:hover{fill:#c1b8ff}
+[data-theme="light"] .world-map-container path.country{fill:#e3dfeb;stroke:#fbfaf8;stroke-width:.6}
+[data-theme="light"] .world-map-container path.country.untracked{fill:#ebe8f0;opacity:1}
+[data-theme="light"] .world-map-container path.country:hover{fill:#cdc6dd;opacity:1}
+[data-theme="light"] .world-map-container path.country.visited{fill:#8a7fe8;opacity:1}
+[data-theme="light"] .world-map-container path.country.visited:hover{fill:#5f52d6}
+.world-map-container path:not(.country){stroke:var(--line)!important;opacity:.6!important}
 @keyframes sheetIn{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 .more-list{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line)}
 .more-list button{display:flex;align-items:center;gap:12px;padding:15px 16px;background:none;border:0;border-top:1px solid var(--line);color:var(--text);font:inherit;font-size:17px;text-align:left;cursor:pointer}
@@ -2905,7 +2922,7 @@ function showCalDay(ds){
     (t.transport||[]).forEach(x=>{if(x.date===ds)out.push(`🚌 ${esc(x.name||x.type||'Transport')}${x.time?' · '+esc(x.time):''}`);});
     return out;
   };
-  const body=`${phs.length||leave?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${phs.map(ph=>`<span class="d-ph ph-c${ph.ci}" style="font-size:11px;padding:3px 8px">${esc(ph.n)}${ph.country!=='MINE'?' · '+esc(phLabel(ph.country)):''}</span>`).join('')}${leave?`<span class="d-ph" style="font-size:11px;padding:3px 8px;background:var(--purple-dim);color:var(--purple)">${applied?'Leave applied':'Leave day'}</span>`:''}</div>`:''}
+  const body=`${phs.length||leave?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${phs.map(ph=>`<span class="d-ph ph-c${ph.ci}" style="font-size:11px;padding:3px 8px">${esc(ph.n)}${ph.country!=='MINE'?' · '+esc(phLabel(ph.country)):''}</span>`).join('')}${leave?`<span class="d-ph" style="font-size:11px;padding:3px 8px;background:var(--leave-dim);color:var(--leave)">${applied?'Leave applied':'Leave day'}</span>`:''}</div>`:''}
     ${evs.length?evs.map(t=>{const[a,b]=_calEvRange(t),bk=bookings(t);return `<div class="calL-ev" data-action="view" data-id="${t.id}" style="align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--glass-border)"><span class="calL-bar" style="background:${eColor(t)}"></span><div style="min-width:0;flex:1"><div class="calL-name" style="white-space:normal">${esc(t.name)}</div><div class="calL-meta">${esc(fmt(a))}${b!==a?' – '+esc(fmt(b)):''}</div>${bk.length?`<div style="margin-top:6px;font-size:12px;line-height:1.6;color:var(--text2)">${bk.join('<br>')}</div>`:''}</div><span style="color:var(--text3);font-size:12px">›</span></div>`;}).join('')
       :'<p style="font-size:12px;color:var(--text3)">Nothing planned on this day.</p>'}
     <button class="btn btn-s" data-action="cal-add-on" data-date="${ds}" style="margin-top:12px;font-size:12px">+ New event on this day</button>`;
