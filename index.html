@@ -510,6 +510,8 @@ const _ml=document.createElement('link');_ml.rel='manifest';_ml.href=URL.createO
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" async></script>
 <script>
 // ===== PDF.js =====
+// Local calendar date "YYYY-MM-DD" (toISOString() is UTC, a day behind before 8am in Singapore)
+function ymd(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function initPdfJs(){if(typeof pdfjsLib!=='undefined')pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}
 initPdfJs();
 
@@ -599,7 +601,7 @@ function eventPaymentStatus(t){
   const withPay=items.filter(i=>i.depositAmount||i.fullPaymentAmount||i.paymentDueDate||i.fullyPaid);
   if(!withPay.length)return null;
   const allPaid=withPay.every(i=>i.fullyPaid==='yes');
-  const td=new Date().toISOString().slice(0,10);
+  const td=ymd(new Date());
   const overdue=withPay.filter(i=>i.paymentDueDate&&i.fullyPaid!=='yes'&&i.paymentDueDate<td);
   const upcoming=withPay.filter(i=>i.paymentDueDate&&i.fullyPaid!=='yes'&&i.paymentDueDate>=td);
   const unpaidDeposits=withPay.filter(i=>i.depositAmount&&i.depositPaid!=='yes');
@@ -862,7 +864,7 @@ const toSGD=(amt,cur,storedRate)=>(parseFloat(amt)||0)*(storedRate||S.rates[cur]
 const snapRate=(cur)=>S.rates[cur]||DRATES[cur]||1;
 const fmtM=(n,c)=>(c||'')+' '+(parseFloat(n)||0).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtDT=dt=>{if(!dt)return '—';try{const d=new Date(dt.includes('T')?dt:dt.replace(' ','T'));if(isNaN(d))return esc(dt);return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+', '+d.toLocaleTimeString('en-GB',{hour:'numeric',minute:'2-digit',hour12:true});}catch(e){return esc(dt);}};
-function eventStatus(t){const td=new Date().toISOString().slice(0,10);if(t.startDate<=td&&t.endDate>=td)return 'active';if(t.startDate>td)return 'upcoming';return 'completed';}
+function eventStatus(t){const td=ymd(new Date());if(t.startDate<=td&&t.endDate>=td)return 'active';if(t.startDate>td)return 'upcoming';return 'completed';}
 
 // ===== TIME PERIOD FILTER =====
 const TP_OPTIONS=[
@@ -877,9 +879,9 @@ function tpRange(tp){
   const now=new Date(),y=now.getFullYear(),m=now.getMonth();
   if(!tp||tp==='all')return{from:null,to:null};
   if(tp==='year')return{from:y+'-01-01',to:y+'-12-31'};
-  if(tp==='quarter'){const q=Math.floor(m/3)*3;const qs=new Date(y,q,1),qe=new Date(y,q+3,0);return{from:qs.toISOString().slice(0,10),to:qe.toISOString().slice(0,10)};}
-  if(tp==='3m'){const d=new Date(now);d.setMonth(d.getMonth()-3);return{from:d.toISOString().slice(0,10),to:now.toISOString().slice(0,10)};}
-  if(tp==='6m'){const d=new Date(now);d.setMonth(d.getMonth()-6);return{from:d.toISOString().slice(0,10),to:now.toISOString().slice(0,10)};}
+  if(tp==='quarter'){const q=Math.floor(m/3)*3;const qs=new Date(y,q,1),qe=new Date(y,q+3,0);return{from:ymd(qs),to:ymd(qe)};}
+  if(tp==='3m'){const d=new Date(now);d.setMonth(d.getMonth()-3);return{from:ymd(d),to:ymd(now)};}
+  if(tp==='6m'){const d=new Date(now);d.setMonth(d.getMonth()-6);return{from:ymd(d),to:ymd(now)};}
   if(tp==='custom')return{from:S._tpFrom||null,to:S._tpTo||null};
   return{from:null,to:null};
 }
@@ -1277,8 +1279,8 @@ async function connectSyncFromDash(){
 function defS(){return{v:'dashboard',tid:null,tab:'flights',ly:2026,calY:2026,calM:new Date().getMonth(),tfY:null,theme:null,_themeSet:false,rates:{...DRATES},trips:importEvents(),leave:importLeave(),lastModified:1}}
 function eCost(t){let s=0;['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>s+=toSGD(e.cost,e.currency,e.rateToSGD)));return s;}
 function allCost(){return S.events.reduce((s,t)=>s+eCost(t),0);}
-function upcoming(){const td=new Date().toISOString().slice(0,10);return S.events.filter(t=>t.endDate>=td).sort((a,b)=>a.startDate.localeCompare(b.startDate));}
-function past(){const td=new Date().toISOString().slice(0,10);return S.events.filter(t=>t.endDate<td).sort((a,b)=>b.startDate.localeCompare(a.startDate));}
+function upcoming(){const td=ymd(new Date());return S.events.filter(t=>t.endDate>=td).sort((a,b)=>a.startDate.localeCompare(b.startDate));}
+function past(){const td=ymd(new Date());return S.events.filter(t=>t.endDate<td).sort((a,b)=>b.startDate.localeCompare(a.startDate));}
 function toast(m){const d=document.createElement('div');d.className='toast';d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),2500);}
 function eColor(t){return catColor(t.category||'trip');}
 
@@ -1464,7 +1466,7 @@ function nav(v,x){S.v=v;if(x)Object.assign(S,x);saveS();render();window.scrollTo
 // ===== DASHBOARD =====
 function vDash(){
   const ft=tpFilter(S.events);
-  const td=new Date().toISOString().slice(0,10);
+  const td=ymd(new Date());
   const curYear=new Date().getFullYear();
   const lyRaw=S.leave[curYear]||{};
   const lyJobs=(lyRaw.jobs||[]);
@@ -1796,7 +1798,7 @@ function vCal(){
   const first=new Date(y,m,1),last=new Date(y,m+1,0);
   const startDay=first.getDay()||7;// Mon=1
   const daysInMonth=last.getDate();
-  const today=new Date().toISOString().slice(0,10);
+  const today=ymd(new Date());
   // Build leave days set using centralized PH data
   const leaveDays=new Set();
   S.events.forEach(t=>{
@@ -1804,7 +1806,7 @@ function vCal(){
     const ts=t.startDate,te=t.endDate;if(!ts||!te)return;
     let cur=new Date(ts+'T00:00:00');const end=new Date(te+'T00:00:00');
     while(cur<=end){
-      const ds=cur.toISOString().slice(0,10);const dow=cur.getDay();
+      const ds=ymd(cur);const dow=cur.getDay();
       if(dow!==0&&dow!==6&&!isSGPH(ds))leaveDays.add(ds);
       cur.setDate(cur.getDate()+1);
     }
@@ -1879,7 +1881,7 @@ function calcLeaveDaysForYear(year,useFilter){
     if(!t.startDate||!t.endDate)return;
     let cur=new Date(t.startDate+'T00:00:00');const end=new Date(t.endDate+'T00:00:00');
     while(cur<=end){
-      const ds=cur.toISOString().slice(0,10);const dow=cur.getDay();
+      const ds=ymd(cur);const dow=cur.getDay();
       if(ds.startsWith(yStr)&&dow!==0&&dow!==6&&!isSGPH(ds))count++;
       cur.setDate(cur.getDate()+1);
     }
@@ -2127,7 +2129,7 @@ function generateICS(){
   toast('Calendar exported — import into your calendar app');
 }
 function exportUpcomingICS(){
-  const today=new Date().toISOString().slice(0,10);
+  const today=ymd(new Date());
   const origEvents=S.events;
   S.events=S.events.filter(t=>t.endDate>=today);
   generateICS();
@@ -2693,7 +2695,7 @@ function buildItineraryItems(t,opts){
     const d=f.departureTime?(f.departureTime.includes('T')?f.departureTime.split('T')[0]:f.departureTime.split(' ')[0]):'';
     if(!inRange(d||t.startDate))return;
     const det=[];
-    if(f.from||f.to)det.push(['Route',`${f.from||'?'} → ${f.to||'?'}`]);
+    if(f.from||f.to)det.push(['Route',`${f.from||'?'} to ${f.to||'?'}`]);
     if(f.departureTime)det.push(['Depart',fmtT2(f.departureTime)]);
     if(f.arrivalTime)det.push(['Arrive',fmtT2(f.arrivalTime)]);
     if(f.pnr)det.push(['PNR',f.pnr]);
@@ -3195,7 +3197,7 @@ function suTime24(t){
 }
 // Flights detected in a parsed document → editable leg rows
 function suLegsFromParsed(p){
-  if(p.multiLeg&&p.legs&&p.legs.length)return p.legs.map(l=>({airline:l.airline||p.airline||'',duration:l.duration||'',fn:l.flightNumber||'',from:l.from||'',to:l.to||'',date:l.date||'',time:suTime24(l.departureTime),adate:l.arrivalDate||l.date||'',atime:suTime24(l.arrivalTime),seat:l.seat||''}));
+  if(p.multiLeg&&p.legs&&p.legs.length)return p.legs.map(l=>({airline:l.airline||p.airline||'',duration:l.duration||'',fn:l.flightNumber||'',from:l.from||'',to:l.to||'',date:l.date||'',time:suTime24(l.departureTime),adate:l.arrivalDate||l.date||'',atime:suTime24(l.arrivalTime),seat:l.seat||'',pnr:l.pnr||'',cost:l.cost||'',currency:l.currency||''}));
   return [{airline:p.airline||'',fn:p.flightNumber||'',from:p.from||'',to:p.to||'',date:p.date||'',time:suTime24(p.departureTime),adate:p.dateTo||p.date||'',atime:suTime24(p.arrivalTime),seat:p.seat||''}];
 }
 // Suggested event name/locations: for round trips, the destination is where the longest stay happens
@@ -3214,7 +3216,7 @@ function suTripInfo(legs){
 function suLegRowHtml(l){
   l=l||{};
   const f=(n,v,ph,type)=>`<label class="su-lf"><span>${ph}</span><input class="fc" ${type?`type="${type}"`:''} data-k="${n}" value="${esc(v||'')}"${n==='from'||n==='to'?' list="location-list" autocomplete="off"':''}></label>`;
-  return `<div class="su-leg" data-airline="${esc(l.airline||'')}" data-duration="${esc(l.duration||'')}">
+  return `<div class="su-leg" data-airline="${esc(l.airline||'')}" data-duration="${esc(l.duration||'')}" data-pnr="${esc(l.pnr||'')}" data-cost="${esc(l.cost||'')}" data-currency="${esc(l.currency||'')}">
     <div class="su-leg-head"><span class="su-leg-n"></span><button type="button" class="btn btn-ghost su-leg-rm" title="Remove this flight">Remove</button></div>
     <div class="su-leg-grid">
       ${f('fn',l.fn,'Flight #')}${f('from',l.from,'From')}${f('to',l.to,'To')}${f('seat',l.seat,'Seat')}
@@ -3223,7 +3225,7 @@ function suLegRowHtml(l){
   </div>`;
 }
 function suReadLegs(){
-  return [...document.querySelectorAll('#su-legs .su-leg')].map(r=>{const o={airline:r.dataset.airline||'',duration:r.dataset.duration||''};r.querySelectorAll('[data-k]').forEach(i=>o[i.dataset.k]=i.value.trim());return o;}).filter(l=>l.fn||l.from||l.to);
+  return [...document.querySelectorAll('#su-legs .su-leg')].map(r=>{const o={airline:r.dataset.airline||'',duration:r.dataset.duration||'',pnr:r.dataset.pnr||'',cost:r.dataset.cost||'',currency:r.dataset.currency||''};r.querySelectorAll('[data-k]').forEach(i=>o[i.dataset.k]=i.value.trim());return o;}).filter(l=>l.fn||l.from||l.to);
 }
 // Date span covered by the legs (or by a non-flight booking)
 function suSpan(type,parsed){
@@ -3281,14 +3283,14 @@ function suRenderBody(parsed){
   const box=document.getElementById('su-parsed');
   if(type!=='flight'){box.innerHTML=suParsedHtml(parsed);return;}
   const legs=suLegsFromParsed(parsed);
-  const legCost=legs.length&&parsed.multiLeg?(parsed.legs||[]).reduce((s,l)=>s+(parseFloat(l.cost)||0),0):0;
-  const cost=parsed.cost||(legCost?String(legCost):'');
+  const perLeg=legs.filter(l=>l.cost);
+  const cost=perLeg.length?'':parsed.cost||'';
   box.innerHTML=`<h4><span style="color:var(--green)">✓</span> <span id="su-leg-count"></span> found${parsed.pnr?` · PNR <span style="font-family:monospace">${esc(parsed.pnr)}</span>`:''}</h4>
     <p style="font-size:11px;color:var(--text3);margin:-2px 0 10px">Check each flight below. Fix anything misread, remove extras, or add any flight that wasn't picked up. All of them are saved together.</p>
     <div id="su-legs">${legs.map(suLegRowHtml).join('')}</div>
     <button type="button" class="btn btn-s" id="su-add-leg" style="width:100%;margin-top:6px">+ Add another flight</button>
     <div class="fg" style="margin-top:12px">
-      <div class="fi"><label>Booking total</label><input class="fc" type="number" step="0.01" id="su-cost" value="${esc(cost)}"></div>
+      <div class="fi"><label>Booking total</label><input class="fc" type="number" step="0.01" id="su-cost" value="${esc(cost)}"${perLeg.length?` placeholder="Per flight" disabled title="Each flight keeps its own cost: ${esc(perLeg.map(l=>l.fn+' '+(l.currency||'')+' '+l.cost).join(', '))}"`:''}></div>
       <div class="fi"><label>Currency</label>${curSel(parsed.currency||'SGD','su-cost-cur')}</div>
     </div>
     <div style="font-size:10px;color:var(--text3);margin-top:4px">The total is recorded on the first flight so it's only counted once.</div>
@@ -3311,7 +3313,8 @@ function suMergeDocs(docs){
     if(!cur){byKey.set(k,{...l});continue;}
     // A document with times is the more detailed schedule: take its date/time group together
     if(!cur.departureTime&&l.departureTime)Object.assign(cur,{date:l.date||cur.date,departureTime:l.departureTime,arrivalDate:l.arrivalDate||cur.arrivalDate,arrivalTime:l.arrivalTime||cur.arrivalTime});
-    for(const f of ['airline','flightNumber','from','to','date','arrivalDate','arrivalTime','seat','duration'])if(!cur[f]&&l[f])cur[f]=l[f];
+    for(const f of ['airline','flightNumber','from','to','date','arrivalDate','arrivalTime','seat','duration','pnr'])if(!cur[f]&&l[f])cur[f]=l[f];
+    if(/^\d+$/.test(cur.pnr||'')&&/[A-Z]/.test(l.pnr||''))cur.pnr=l.pnr;// airline PNR beats an OTA booking number
   }
   const legs=[...byKey.values()].sort((a,b)=>((a.date||'9')+(a.departureTime||'')).localeCompare((b.date||'9')+(b.departureTime||'')));
   // Airline PNR (letters+digits) beats an OTA's numeric booking number; the largest amount is the booking total
@@ -3379,7 +3382,7 @@ function showSmartUpload(){
       let ev;
       if(evId==='__new__'){
         const name=document.getElementById('su-ev-name').value.trim()||'New Event';
-        const span=suSpan(type,parsed),td=new Date().toISOString().slice(0,10);
+        const span=suSpan(type,parsed),td=ymd(new Date());
         const sd=document.getElementById('su-ev-sd').value||span.start||td;
         let ed=document.getElementById('su-ev-ed').value||span.end||sd;if(ed<sd)ed=sd;
         const locs=type==='flight'?suTripInfo(legs).locations:(parsed.locations||[]);
@@ -3390,13 +3393,15 @@ function showSmartUpload(){
       ['hotels','flights','activities','transport'].forEach(k=>{if(!ev[k])ev[k]=[];});
       if(type==='flight'){
         const dt=(d,t)=>d?(t?d+'T'+t:d+'T00:00'):'';
+        const perLegCost=legs.some(l=>l.cost);
         legs.forEach((l,i)=>{
           const dep=dt(l.date,l.time),arr=dt(l.adate||l.date,l.atime);
+          const lc=perLegCost?l.cost:(i===0?cost:''),lcur=perLegCost?(l.currency||cur):cur;
           let duration=l.duration||'';
           if(!duration&&l.time&&l.atime&&dep&&arr)duration=flightDuration(dep,arr,tzForPlace(l.from),tzForPlace(l.to));
           const code=(l.fn.match(/^[A-Z0-9]{2}/i)||[''])[0].toUpperCase();
-          ev.flights.push({id:uid(),airline:AIRLINE_MAP[code]||l.airline||parsed.airline||'',flightNumber:l.fn.replace(/\s+/g,'').toUpperCase(),pnr:parsed.pnr||'',seat:l.seat,from:l.from,to:l.to,departureTime:dep,arrivalTime:arr,duration,
-            cost:i===0?cost:'',currency:cur,rateToSGD:snapRate(cur),notes:i===0&&cost&&legs.length>1?`Booking total for ${legs.length} flights`:'',ocrText:i===0?(parsed.rawText||''):''});
+          ev.flights.push({id:uid(),airline:AIRLINE_MAP[code]||l.airline||parsed.airline||'',flightNumber:l.fn.replace(/\s+/g,'').toUpperCase(),pnr:l.pnr||parsed.pnr||'',seat:l.seat,from:l.from,to:l.to,departureTime:dep,arrivalTime:arr,duration,
+            cost:lc,currency:lcur,rateToSGD:snapRate(lcur),notes:!perLegCost&&i===0&&cost&&legs.length>1?`Booking total for ${legs.length} flights`:'',ocrText:i===0?(parsed.rawText||''):''});
         });
       }else{
         const entry={id:uid(),cost:parsed.cost||'',currency:parsed.currency||'SGD',rateToSGD:snapRate(parsed.currency||'SGD'),notes:parsed.rawText?'[Auto-extracted]':'',ocrText:parsed.rawText||''};
@@ -3455,8 +3460,8 @@ function showSmartUpload(){
 
 // ===== SHARED PARSING HELPERS =====
 const MMAP={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
-const AIRLINE_MAP={'SQ':'Singapore Airlines','TR':'Scoot','GA':'Garuda','ID':'Batik Air','CI':'China Airlines','CX':'Cathay Pacific','FY':'Firefly','AK':'AirAsia','MH':'Malaysia Airlines','TG':'Thai Airways','EK':'Emirates','QR':'Qatar Airways','3K':'Jetstar Asia','JT':'Lion Air','5J':'Cebu Pacific','PR':'Philippine Airlines','QZ':'AirAsia Indonesia','OD':'Batik Air Malaysia','ET':'Ethiopian Airlines','QG':'Citilink','IN':'NAM Air','JL':'Japan Airlines','NH':'ANA','KE':'Korean Air','OZ':'Asiana','VN':'Vietnam Airlines','WJ':'Susi Air','IW':'Wings Air','QF':'Qantas','NZ':'Air New Zealand','AI':'Air India','BR':'EVA Air','TK':'Turkish Airlines','LH':'Lufthansa','BA':'British Airways','AF':'Air France','KL':'KLM','SK':'SAS','AY':'Finnair','LX':'Swiss','OS':'Austrian','UA':'United Airlines','AA':'American Airlines','DL':'Delta','WN':'Southwest','AC':'Air Canada','CZ':'China Southern','MU':'China Eastern','CA':'Air China','HU':'Hainan Airlines','SL':'Thai Lion Air','FD':'Thai AirAsia','DD':'Nok Air','PG':'Bangkok Airways','BI':'Royal Brunei','UL':'SriLankan Airlines','WY':'Oman Air','GF':'Gulf Air','SV':'Saudia','RJ':'Royal Jordanian','MS':'EgyptAir','SA':'South African Airways','KQ':'Kenya Airways','ET':'Ethiopian Airlines','TP':'TAP Portugal','IB':'Iberia','AZ':'ITA Airways'};
-const AIRLINE_NAMES=['Singapore Airlines','Scoot','Garuda','Batik Air','China Airlines','Cathay Pacific','Firefly','AirAsia','Malaysia Airlines','Thai Airways','Emirates','Qatar Airways','Jetstar','Jetstar Asia','Lion Air','Cebu Pacific','Philippine Airlines','Ethiopian Airlines','Citilink','Japan Airlines','ANA','Korean Air','Asiana','Vietnam Airlines','Qantas','Air New Zealand','Air India','EVA Air','Turkish Airlines','Lufthansa','British Airways','Air France','KLM','SAS','Finnair','Swiss','Austrian','United Airlines','American Airlines','Delta','Southwest','Air Canada','China Southern','China Eastern','Air China','Hainan Airlines','Thai Lion Air','Thai AirAsia','Nok Air','Bangkok Airways','Royal Brunei','SriLankan Airlines','Oman Air','Gulf Air','Saudia','Royal Jordanian','EgyptAir','South African Airways','Kenya Airways','TAP Portugal','Iberia','ITA Airways','Ryanair','easyJet','Wizz Air','IndiGo','SpiceJet','Vietjet','Bamboo Airways','Starlux','Peach Aviation','Spring Airlines','AirAsia X','Batik Air Malaysia'];
+const AIRLINE_MAP={'SQ':'Singapore Airlines','TR':'Scoot','GA':'Garuda','ID':'Batik Air','CI':'China Airlines','CX':'Cathay Pacific','FY':'Firefly','AK':'AirAsia','MH':'Malaysia Airlines','TG':'Thai Airways','EK':'Emirates','QR':'Qatar Airways','3K':'Jetstar Asia','JT':'Lion Air','5J':'Cebu Pacific','PR':'Philippine Airlines','QZ':'AirAsia Indonesia','OD':'Batik Air Malaysia','ET':'Ethiopian Airlines','QG':'Citilink','IN':'NAM Air','JL':'Japan Airlines','NH':'ANA','KE':'Korean Air','OZ':'Asiana','VN':'Vietnam Airlines','WJ':'Susi Air','IW':'Wings Air','QF':'Qantas','NZ':'Air New Zealand','AI':'Air India','BR':'EVA Air','TK':'Turkish Airlines','LH':'Lufthansa','BA':'British Airways','AF':'Air France','KL':'KLM','SK':'SAS','AY':'Finnair','LX':'Swiss','OS':'Austrian','UA':'United Airlines','AA':'American Airlines','DL':'Delta','WN':'Southwest','AC':'Air Canada','CZ':'China Southern','MU':'China Eastern','CA':'Air China','HU':'Hainan Airlines','SL':'Thai Lion Air','FD':'Thai AirAsia','DD':'Nok Air','PG':'Bangkok Airways','BI':'Royal Brunei','UL':'SriLankan Airlines','WY':'Oman Air','GF':'Gulf Air','SV':'Saudia','RJ':'Royal Jordanian','MS':'EgyptAir','SA':'South African Airways','KQ':'Kenya Airways','ET':'Ethiopian Airlines','TP':'TAP Portugal','IB':'Iberia','AZ':'ITA Airways','TW':"T'way Air",'RS':'Air Seoul','7C':'Jeju Air','LJ':'Jin Air','BX':'Air Busan','ZE':'Eastar Jet'};
+const AIRLINE_NAMES=['Singapore Airlines','Scoot','Garuda','Batik Air','China Airlines','Cathay Pacific','Firefly','AirAsia','Malaysia Airlines','Thai Airways','Emirates','Qatar Airways','Jetstar','Jetstar Asia','Lion Air','Cebu Pacific','Philippine Airlines','Ethiopian Airlines','Citilink','Japan Airlines','ANA','Korean Air','Asiana','Vietnam Airlines','Qantas','Air New Zealand','Air India','EVA Air','Turkish Airlines','Lufthansa','British Airways','Air France','KLM','SAS','Finnair','Swiss','Austrian','United Airlines','American Airlines','Delta','Southwest','Air Canada','China Southern','China Eastern','Air China','Hainan Airlines','Thai Lion Air','Thai AirAsia','Nok Air','Bangkok Airways','Royal Brunei','SriLankan Airlines','Oman Air','Gulf Air','Saudia','Royal Jordanian','EgyptAir','South African Airways','Kenya Airways','TAP Portugal','Iberia','ITA Airways','Ryanair','easyJet','Wizz Air','IndiGo','SpiceJet','Vietjet','Bamboo Airways','Starlux','Peach Aviation','Spring Airlines','AirAsia X','Batik Air Malaysia',"T'way Air",'Air Seoul','Jeju Air','Jin Air','Air Busan','Eastar Jet'];
 const AIRPORTS={SIN:'Singapore',KUL:'Kuala Lumpur',CGK:'Jakarta',DPS:'Bali',NRT:'Tokyo Narita',HND:'Tokyo Haneda',KIX:'Osaka',BKK:'Bangkok',ICN:'Seoul',PVG:'Shanghai',PEK:'Beijing',MLE:'Maldives',MNL:'Manila',CEB:'Cebu',TPE:'Taipei',SYD:'Sydney',MEL:'Melbourne',LHR:'London',HKG:'Hong Kong',HAN:'Hanoi',SGN:'Ho Chi Minh',HKT:'Phuket',CNX:'Chiang Mai',PEN:'Penang',LGK:'Langkawi',USM:'Koh Samui',JOG:'Yogyakarta',SUB:'Surabaya',MDC:'Manado',LBJ:'Labuan Bajo',TRK:'Tarakan',KNO:'Medan',ADD:'Addis Ababa',JRO:'Kilimanjaro',NBO:'Nairobi',DAR:'Dar es Salaam',DOH:'Doha',DXB:'Dubai',IST:'Istanbul',CDG:'Paris',AMS:'Amsterdam',FRA:'Frankfurt',ZRH:'Zurich',FCO:'Rome',BCN:'Barcelona',MAD:'Madrid',CAI:'Cairo',CPT:'Cape Town',BWN:'Brunei',RGN:'Yangon',REP:'Siem Reap',SZB:'Subang',XSP:'Singapore Seletar',TWU:'Tawau',BKI:'Kota Kinabalu',SDK:'Sandakan',MYY:'Miri',KCH:'Kuching',BTJ:'Banda Aceh',PKU:'Pekanbaru',UPG:'Makassar',BPN:'Balikpapan',PLM:'Palembang',SOC:'Solo',SRG:'Semarang',AMQ:'Ambon',GTO:'Gorontalo',KDI:'Kendari',WGP:'Waingapu',TMC:'Tambolaka',MOF:'Maumere',ENE:'Ende',RTG:'Ruteng',BMU:'Bima',LOP:'Lombok',HLP:'Jakarta Halim',DMK:'Bangkok Don Mueang',CNS:'Cairns',AKL:'Auckland',WLG:'Wellington',DEL:'Delhi',BOM:'Mumbai',CMB:'Colombo',KTM:'Kathmandu',JFK:'New York JFK',LAX:'Los Angeles',SFO:'San Francisco',ORD:'Chicago',MIA:'Miami',YVR:'Vancouver',YYZ:'Toronto',GRU:'São Paulo',LIM:'Lima',BOG:'Bogota',SCL:'Santiago',EZE:'Buenos Aires',MUC:'Munich',VIE:'Vienna',CPH:'Copenhagen',OSL:'Oslo',ARN:'Stockholm',HEL:'Helsinki',LIS:'Lisbon',ATH:'Athens',WAW:'Warsaw',PRG:'Prague',BUD:'Budapest',DUB:'Dublin',EDI:'Edinburgh',GVA:'Geneva',MXP:'Milan',CTS:'Sapporo',FUK:'Fukuoka',ITM:'Osaka Itami',GMP:'Seoul Gimpo',CJU:'Jeju',DAD:'Da Nang',PQC:'Phu Quoc',KBV:'Krabi',HDY:'Hat Yai',CEI:'Chiang Rai',LPQ:'Luang Prabang',VTE:'Vientiane',PNH:'Phnom Penh',SBW:'Sibu',BTU:'Bintulu',LBU:'Labuan',JHB:'Johor Bahru',IPH:'Ipoh',TGG:'Kuala Terengganu',AOR:'Alor Setar',SZX:'Shenzhen',CAN:'Guangzhou',HGH:'Hangzhou',CTU:'Chengdu',KMG:'Kunming',XMN:'Xiamen',WUH:'Wuhan',NKG:'Nanjing',TSN:'Tianjin',TAO:'Qingdao',CKG:'Chongqing',NGO:'Nagoya',BEJ:'Berau',KOE:'Kupang',ARD:'Alor',AUH:'Abu Dhabi',MCT:'Muscat',JED:'Jeddah',ZNZ:'Zanzibar',SEZ:'Seychelles',MRU:'Mauritius',DIL:'Dili',BDO:'Bandung',PDG:'Padang',BTH:'Batam',TNJ:'Tanjung Pinang',DJJ:'Jayapura',SOQ:'Sorong',TTE:'Ternate',MKW:'Manokwari',LDU:'Lahad Datu',OKA:'Okinawa',HIJ:'Hiroshima',SDJ:'Sendai',PPS:'Puerto Princesa',USU:'Coron',MPH:'Boracay',IAO:'Siargao',DVO:'Davao',CXR:'Nha Trang'};
 // Airport time zones (flights are stored in each airport's local time)
 const AIRPORT_TZ=(()=>{const m={};for(const[tz,codes]of Object.entries({"Asia/Singapore":"SIN XSP","Asia/Kuala_Lumpur":"KUL PEN LGK SZB TWU BKI SDK MYY KCH SBW BTU LBU JHB IPH TGG AOR LDU","Asia/Jakarta":"CGK HLP KNO PKU PLM SRG SOC JOG BTJ BDO PDG BTH TNJ SUB","Asia/Makassar":"DPS LBJ TRK UPG BPN MDC KDI GTO WGP TMC MOF ENE RTG BMU LOP KOE ARD BEJ","Asia/Jayapura":"AMQ DJJ SOQ TTE MKW","Asia/Dili":"DIL","Asia/Tokyo":"NRT HND KIX ITM CTS FUK NGO OKA HIJ SDJ","Asia/Seoul":"ICN GMP CJU","Asia/Shanghai":"PVG PEK SZX CAN HGH CTU KMG XMN WUH NKG TSN TAO CKG","Asia/Hong_Kong":"HKG","Asia/Taipei":"TPE","Asia/Manila":"MNL CEB PPS USU MPH IAO DVO","Asia/Bangkok":"BKK DMK HKT CNX USM KBV HDY CEI","Asia/Ho_Chi_Minh":"SGN HAN DAD PQC CXR","Asia/Vientiane":"LPQ VTE","Asia/Phnom_Penh":"PNH REP","Asia/Yangon":"RGN","Asia/Brunei":"BWN","Indian/Maldives":"MLE","Asia/Colombo":"CMB","Asia/Kolkata":"DEL BOM","Asia/Kathmandu":"KTM","Australia/Sydney":"SYD","Australia/Melbourne":"MEL","Australia/Brisbane":"CNS","Pacific/Auckland":"AKL WLG","Asia/Dubai":"DXB AUH","Asia/Qatar":"DOH","Asia/Muscat":"MCT","Asia/Riyadh":"JED","Europe/Istanbul":"IST","Africa/Addis_Ababa":"ADD","Africa/Dar_es_Salaam":"JRO DAR ZNZ","Africa/Nairobi":"NBO","Africa/Cairo":"CAI","Africa/Johannesburg":"CPT","Indian/Mahe":"SEZ","Indian/Mauritius":"MRU","Europe/London":"LHR EDI","Europe/Dublin":"DUB","Europe/Paris":"CDG","Europe/Amsterdam":"AMS","Europe/Berlin":"FRA MUC","Europe/Zurich":"ZRH GVA","Europe/Rome":"FCO MXP","Europe/Madrid":"BCN MAD","Europe/Vienna":"VIE","Europe/Copenhagen":"CPH","Europe/Oslo":"OSL","Europe/Stockholm":"ARN","Europe/Helsinki":"HEL","Europe/Lisbon":"LIS","Europe/Athens":"ATH","Europe/Warsaw":"WAW","Europe/Prague":"PRG","Europe/Budapest":"BUD","America/New_York":"JFK MIA","America/Los_Angeles":"LAX SFO","America/Chicago":"ORD","America/Vancouver":"YVR","America/Toronto":"YYZ","America/Sao_Paulo":"GRU","America/Lima":"LIM","America/Bogota":"BOG","America/Santiago":"SCL","America/Argentina/Buenos_Aires":"EZE"}))codes.split(' ').forEach(c=>m[c]=tz);return m;})();
@@ -3640,7 +3645,7 @@ function _tryDirectExtract(txt){
 // ===== KNOWN ITINERARY LAYOUTS =====
 // Dedicated readers for the itinerary formats of frequently used airlines (SQ, Scoot, AirAsia,
 // Batik, Firefly, Garuda, Qatar, Emirates, Malaysia Airlines). Tried before the generic parser.
-const AIRPORT_NAME_ALIASES=[[/CHANGI/i,'SIN'],[/SELETAR/i,'XSP'],[/SOEKARNO.?HATTA/i,'CGK'],[/NGURAH\s*RAI|DENPASAR/i,'DPS'],[/JUANDA/i,'SUB'],[/KALIMARAU/i,'BEJ'],[/JUWATA/i,'TRK'],[/KOMODO\s*AIRPORT|LABUAN\s*BAJO/i,'LBJ'],[/SULTAN\s*ABDUL\s*AZIZ\s*SHAH|SUBANG/i,'SZB'],[/KUALA\s*LUMPUR\s*INT|\bKLIA\b/i,'KUL'],[/HAMAD\s*INT/i,'DOH'],[/DUBAI\s*INT/i,'DXB'],[/HALIM\s*PERDANA/i,'HLP'],[/EL\s*TARI/i,'KOE'],[/ZAINUDDIN\s*ABDUL\s*MADJID|LOMBOK\s*INT/i,'LOP'],[/SAM\s*RATULANGI/i,'MDC'],[/KUALANAMU/i,'KNO'],[/SULTAN\s*HASANUDDIN/i,'UPG'],[/NARITA/i,'NRT'],[/HANEDA/i,'HND'],[/SUVARNABHUMI/i,'BKK'],[/DON\s*MUEANG/i,'DMK'],[/INCHEON/i,'ICN'],[/TULLAMARINE/i,'MEL'],[/KINGSFORD\s*SMITH/i,'SYD'],[/VELANA/i,'MLE'],[/HEATHROW/i,'LHR'],[/DOMINE\s*EDUARD\s*OSOK/i,'SOQ'],[/SULTAN\s*BABULLAH/i,'TTE'],[/SENTANI/i,'DJJ'],[/PATTIMURA/i,'AMQ'],[/RENDANI/i,'MKW'],[/ADISUCIPTO|YOGYAKARTA\s*INT/i,'JOG'],[/SEPINGGAN|SULTAN\s*AJI\s*MUHAMMAD/i,'BPN'],[/HANG\s*NADIM/i,'BTH'],[/MINANGKABAU/i,'PDG']];
+const AIRPORT_NAME_ALIASES=[[/CHANGI/i,'SIN'],[/SELETAR/i,'XSP'],[/SOEKARNO.?HATTA/i,'CGK'],[/NGURAH\s*RAI|DENPASAR/i,'DPS'],[/JUANDA/i,'SUB'],[/KALIMARAU/i,'BEJ'],[/JUWATA/i,'TRK'],[/KOMODO\s*AIRPORT|LABUAN\s*BAJO/i,'LBJ'],[/SULTAN\s*ABDUL\s*AZIZ\s*SHAH|SUBANG/i,'SZB'],[/KUALA\s*LUMPUR\s*INT|\bKLIA\b/i,'KUL'],[/HAMAD\s*INT/i,'DOH'],[/DUBAI\s*INT/i,'DXB'],[/HALIM\s*PERDANA/i,'HLP'],[/EL\s*TARI/i,'KOE'],[/ZAINUDDIN\s*ABDUL\s*MADJID|LOMBOK\s*INT/i,'LOP'],[/SAM\s*RATULANGI/i,'MDC'],[/KUALANAMU/i,'KNO'],[/SULTAN\s*HASANUDDIN/i,'UPG'],[/NARITA/i,'NRT'],[/HANEDA/i,'HND'],[/SUVARNABHUMI/i,'BKK'],[/DON\s*MUEANG/i,'DMK'],[/INCHEON/i,'ICN'],[/TULLAMARINE/i,'MEL'],[/KINGSFORD\s*SMITH/i,'SYD'],[/VELANA/i,'MLE'],[/HEATHROW/i,'LHR'],[/DOMIN\w*\s*ED[UW]ARD\s*OSOK/i,'SOQ'],[/CHHATRAPATI/i,'BOM'],[/INDIRA\s*GANDHI/i,'DEL'],[/GIMPO/i,'GMP'],[/SULTAN\s*BABULLAH/i,'TTE'],[/SENTANI/i,'DJJ'],[/PATTIMURA/i,'AMQ'],[/RENDANI/i,'MKW'],[/ADISUCIPTO|YOGYAKARTA\s*INT/i,'JOG'],[/SEPINGGAN|SULTAN\s*AJI\s*MUHAMMAD/i,'BPN'],[/HANG\s*NADIM/i,'BTH'],[/MINANGKABAU/i,'PDG']];
 const _MON='Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?';
 function _cityCode(str){
   // "Flight Information Surabaya" → SUB: try trailing/leading word groups against airport cities
@@ -3684,8 +3689,10 @@ function _findDates(str){
     if(!yr)yr=_inferYear(mm,dd);
     out.push({date:`${yr}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`,pos,end:pos+len});
   };
-  const d1=new RegExp('\\b(\\d{1,2})[\\s/.-]*('+_MON+')\\b\\.?,?(?:[\\s/.-]*(\\d{4}|\\d{2}(?!\\s*(?:'+_MON+')))(?![\\d:]))?','gi');
-  while((m=d1.exec(str))!==null)mk(m[1],m[2],m[3],m.index,m[0].length);
+  const d0=/\b(20\d{2})-(\d{2})-(\d{2})(?![\d:])/g;
+  while((m=d0.exec(str))!==null)if(+m[2]>=1&&+m[2]<=12&&+m[3]>=1&&+m[3]<=31)out.push({date:`${m[1]}-${m[2]}-${m[3]}`,pos:m.index,end:m.index+m[0].length});
+  const d1=new RegExp('\\b(\\d{1,2})[\\s/.-]*('+_MON+')(?![a-z])\\.?,?(?:[\\s/.-]*(\\d{4}|\\d{2}(?!\\s*(?:'+_MON+')))(?![\\d:]))?','gi');
+  while((m=d1.exec(str))!==null){if(!out.some(o=>m.index<o.end&&m.index+m[0].length>o.pos))mk(m[1],m[2],m[3],m.index,m[0].length);}
   const d2=new RegExp('\\b('+_MON+')\\.?\\s*(\\d{1,2})(?:st|nd|rd|th)?(?![\\d:])(?:,?\\s*(\\d{4}))?','gi');
   while((m=d2.exec(str))!==null){if(!out.some(o=>m.index<o.end&&m.index+m[0].length>o.pos))mk(m[2],m[1],m[3],m.index,m[0].length);}
   const OCR_MON={an:'Jan',eb:'Feb',ar:'Mar',pr:'Apr',ay:'May',un:'Jun',ul:'Jul',ug:'Aug',ep:'Sep',ct:'Oct',ov:'Nov',ec:'Dec'};
@@ -3693,7 +3700,7 @@ function _findDates(str){
   while((m=d3.exec(str))!==null){if(!out.some(o=>m.index<o.end&&m.index+m[0].length>o.pos))mk(m[1],OCR_MON[m[2].toLowerCase()],m[3],m.index,m[0].length);}
   return out.sort((a,b)=>a.pos-b.pos);
 }
-const _addDays=(d,n)=>{const x=new Date(d+'T00:00:00');x.setDate(x.getDate()+n);return x.toISOString().slice(0,10);};
+const _addDays=(d,n)=>{const x=new Date(d+'T00:00:00');x.setDate(x.getDate()+n);return ymd(x);};
 // Flight number near a position; tolerates common OCR slips ("$0922", "SQ6T1", "1.50656")
 function _fnNear(str,docAirlineCode){
   const exact=new RegExp('\\b('+_FNCODES+')\\s{0,3}(\\d{1,4})\\b','g');let m,best=null;
@@ -3726,7 +3733,7 @@ const _isAp=c=>!!AIRPORTS[c];
 
 // A. Trip.com-style blocks (Batik Air, Citilink, Lion group…)
 function _layoutTripBlocks(txt){
-  const re=/([A-Z][A-Za-z .'()]{1,45}?)\s+-\s+([A-Z][A-Za-z .'()]{1,30}?)\s+Departure\s+(\d{1,2}:\d{2}(?:\s*[AaPp]\.?[Mm]\b\.?)?),\s*([A-Za-z]+\s+\d{1,2},\s*\d{4}),\s*([\s\S]*?)\s+Arrival\s+(\d{1,2}:\d{2}(?:\s*[AaPp]\.?[Mm]\b\.?)?),\s*([A-Za-z]+\s+\d{1,2},\s*\d{4}),\s*([\s\S]*?)\s+(?:\d\s+)?Airline\s+([A-Za-z .]+?)\s+([A-Z0-9]{2})\s?(\d{1,4})\b/g;
+  const re=/([A-Z][A-Za-z .'()]{1,45}?)\s+-\s+([A-Z][A-Za-z .'()]{1,30}?)(?:\s+\d{1,2})?\s+Departure\s+(\d{1,2}:\d{2}(?:\s*[AaPp]\.?[Mm]\b\.?)?),\s*([A-Za-z]+\s+\d{1,2},\s*\d{4}),\s*([\s\S]*?)\s+Arrival\s+(\d{1,2}:\d{2}(?:\s*[AaPp]\.?[Mm]\b\.?)?),\s*([A-Za-z]+\s+\d{1,2},\s*\d{4}),\s*([\s\S]*?)\s+(?:\d\s+)?Airline\s+([A-Za-z .]+?)\s+([A-Z0-9]{2})\s?(\d{1,4})\b/g;
   const legs=[];let m;
   while((m=re.exec(txt))!==null){
     const leg={fromCode:_cityCode(m[5])||_cityCode(m[1]),toCode:_cityCode(m[8])||_cityCode(m[2]),departureTime:_hhmm(m[3]),arrivalTime:_hhmm(m[6])};
@@ -3920,22 +3927,92 @@ function _layoutAirportNames(txt){
   });
   return legs;
 }
+// J. Route list without times (Trip.com receipts): "Singapore - Kuala Lumpur  Malaysia Airlines MH614  August 5, 2026"
+function _layoutRouteList(txt){
+  const re=new RegExp("([A-Z][A-Za-z .']{1,30}?)\\s+[-–]\\s+([A-Z][A-Za-z .' ]{1,60}?)\\s+("+_FNCODES+")\\s?(\\d{1,4})\\s+((?:"+_MON+")\\.?\\s+\\d{1,2},?\\s+\\d{4}|\\d{1,2}\\s+(?:"+_MON+")\\.?\\s+\\d{4})",'g');
+  const legs=[];let m;
+  while((m=re.exec(txt))!==null){
+    // "Kuala Lumpur  Malaysia Airlines": the destination is the longest leading run of words that names a city
+    const w=m[2].trim().split(/\s+/);let toCode='';
+    for(let k=Math.min(3,w.length);k>=1&&!toCode;k--)toCode=_cityCode(w.slice(0,k).join(' '));
+    const leg={fromCode:_cityCode(m[1]),toCode};
+    if(!leg.fromCode||!leg.toCode||leg.fromCode===leg.toCode)continue;
+    const ds=_findDates(m[5]);if(ds[0])leg.date=ds[0].date;
+    legs.push(_finishLeg(leg,{code:m[3],num:m[4]}));
+  }
+  return legs;
+}
+// K. Flight number, then date and times in a table row (t'way, Air Seoul, Air India…):
+//    "TW171 A330-300 2022-12-31(Sat) 19:35 01:00 +1 06h25m", "RS922 22Dec22 (Thu) 10:05 11:15", "AI2106 10:30 05Nov2025 14:05 05Nov2025"
+function _layoutFnDateTimes(txt){
+  const D="(?:20\\d{2}-\\d{2}-\\d{2}|\\d{1,2}\\s?(?:"+_MON+")\\s?(?:\\d{4}|\\d{2})?)(?:\\s*\\([A-Za-z]{2,3}\\))?",T="\\d{1,2}:\\d{2}";
+  const re=new RegExp("\\b("+_FNCODES+")\\s?(\\d{1,4})\\s+(?:[A-Z0-9-]{3,10}\\s+)?(?:("+D+")\\s+("+T+")\\s+("+T+")|("+T+")\\s+("+D+")\\s+("+T+")(?:\\s+("+D+"))?)",'g');
+  const legs=[];let m,prevEnd=0;
+  while((m=re.exec(txt))!==null){
+    const before=txt.substring(Math.max(prevEnd,m.index-300),m.index).replace(/\(([A-Z])\s*([A-Z])\s*([A-Z])\)/g,' $1$2$3 ');// "(G  MP)" → GMP
+    prevEnd=m.index+m[0].length;
+    let codes=[...before.matchAll(/\b([A-Z]{3})\b/g)].map(x=>x[1]).filter(_isAp).filter((c,k,a)=>!k||c!==a[k-1]);
+    if(codes.length<2)codes=_placeCodesInOrder(before);
+    if(codes.length<2)continue;
+    const leg={fromCode:codes[codes.length-2],toCode:codes[codes.length-1]};
+    if(m[3]){leg.departureTime=m[4];leg.arrivalTime=m[5];const d=_findDates(m[3]);if(d[0])leg.date=d[0].date;}
+    else{leg.departureTime=m[6];leg.arrivalTime=m[8];const d=_findDates(m[7]),a=m[9]?_findDates(m[9]):[];if(d[0])leg.date=d[0].date;if(a[0])leg.arrivalDate=a[0].date;}
+    legs.push(_finishLeg(leg,{code:m[1],num:m[2]}));
+  }
+  return legs;
+}
+// L. This app's own itinerary PDF ("Generated by Holiday Tracker"): "Day 1 — Wednesday, 1 July 2026 … FLIGHT Scoot TR278
+//    Route: Singapore to Jakarta Depart: 6:15 pm Arrive: 7:15 pm PNR: MGH6MH Cost: SGD 175.2"
+function _layoutTrackerExport(txt){
+  if(!/Generated by Holiday Tracker/.test(txt))return [];
+  // Older exports drew "→" as "!’" and letter-spaced the route: "S i n g a p o r e  !’    J a k a r t a"
+  const unspace=x=>x.replace(/!’|!'/g,' to ').split(/\s{2,}/).map(w=>/^(?:\S )+\S$/.test(w.trim())?w.trim().replace(/ /g,''):w).join(' ').replace(/\s+/g,' ').trim();
+  const days=[...txt.matchAll(/Day\s+\d+\s+—\s+\w+,\s+(\d{1,2}\s+\w+\s+\d{4})/g)].map(x=>({pos:x.index,date:(_findDates(x[1])[0]||{}).date}));
+  const re=/FLIGHT\s+(.{0,40}?)\b([A-Z0-9]{2})\s?(\d{1,4})\s+Route:\s+([\s\S]{1,120}?)\s+Depart:\s+([\d:]+\s*[ap]m)?\s*(?:Arrive:\s+([\d:]+\s*[ap]m))?([\s\S]*?)(?=FLIGHT\s|ACTIVITY\s|HOTEL\s|TRANSPORT\s|Day\s+\d+\s+—|Cost Summary|$)/g;
+  const legs=[];let m;
+  while((m=re.exec(txt))!==null){
+    const route=unspace(m[4]).split(/\s+to\s+|\s*→\s*/);if(route.length<2)continue;
+    const leg={from:route[0].trim(),to:route[1].trim(),departureTime:m[5]?_hhmm(m[5]):'',arrivalTime:m[6]?_hhmm(m[6]):''};
+    leg.fromCode=_cityCode(leg.from)||leg.from;leg.toCode=_cityCode(leg.to)||leg.to;
+    const day=days.filter(d=>d.pos<m.index).pop();if(day)leg.date=day.date;
+    const rest=m[7],pnr=rest.match(/PNR:\s+([A-Z0-9]{4,10})\b/),cost=rest.match(/Cost:\s+([A-Z]{3})\s+([\d,]+\.?\d*)/),seat=rest.match(/Seat:\s+(\d{1,2}[A-K])\b/);
+    if(pnr)leg.pnr=pnr[1];if(seat)leg.seat=seat[1];
+    if(cost){leg.currency=cost[1];leg.cost=cost[2].replace(/,/g,'');}
+    const fn={code:m[2],num:m[3]};const al=m[1].trim();
+    _finishLeg(leg,fn);if(!AIRLINE_MAP[fn.code]&&al)leg.airline=al;
+    leg.from=AIRPORTS[leg.fromCode]||leg.from;leg.to=AIRPORTS[leg.toCode]||leg.to;
+    legs.push(leg);
+  }
+  return legs;
+}
 function _parseKnownLayouts(txt){
   const routed=l=>l.fromCode&&l.toCode;
-  for(const fn of [_layoutTripBlocks,_layoutGdsTable,_layoutScootCard,_layoutCodeTime,_layoutTimeCode,_layoutEndpoints,_layoutLabelledTimes,_layoutAirportNames,_layoutBracketCodes]){
+  for(const fn of [_layoutTrackerExport,_layoutTripBlocks,_layoutGdsTable,_layoutScootCard,_layoutCodeTime,_layoutTimeCode,_layoutEndpoints,_layoutLabelledTimes,_layoutAirportNames,_layoutBracketCodes,_layoutFnDateTimes,_layoutRouteList]){
     let legs;try{legs=fn(txt);}catch(e){console.warn('layout parser failed',fn.name,e);continue;}
     // Drop repeats of the same flight (e.g. itinerary + passenger sections)
     legs=legs.filter((l,i)=>legs.findIndex(x=>x.fromCode===l.fromCode&&x.toCode===l.toCode&&x.date===l.date&&x.departureTime===l.departureTime)===i);
     if(legs.length&&legs.every(routed)&&legs.some(l=>l.date)){
-      const pnrM=[...txt.matchAll(/(?:PNR|RESERVATION\s*CODE|Booking\s*(?:Ref(?:erence)?|No\.?|Number|ID|Code)|Confirmation\s*(?:Number|Code|#))(?:\s*\(PNR\))?\s*[:#.]?\s*([A-Za-z0-9]{5,8})\b/gi)].map(x=>x[1]).find(c=>/^[A-Z0-9]+$/.test(c)&&/[A-Z]/.test(c));
-      legs.forEach(l=>{if(pnrM&&!l.pnr)l.pnr=pnrM;});
+      const afterTkt=txt.match(/\b\d{3}-?\s?\d{10}\s+([A-Z0-9]{6})\b/);
+      const pnrM=(afterTkt&&/[A-Z]/.test(afterTkt[1])?afterTkt[1]:'')||[...txt.matchAll(/(?:PNR|RESERVATION\s*(?:CODE|No\.?|Number)|Booking\s*(?:Ref(?:erence)?|No\.?|Number|ID|Code)|Confirmation\s*(?:Number|Code|#))(?:\s*\(PNR\))?\s*[:#.]?\s*([A-Za-z0-9]{5,8})\b/gi)].filter(x=>!/^[\sA-Z]{0,30}\((?:First|Last)\s*name/i.test(txt.substr(x.index+x[0].length,40))).map(x=>x[1]).find(c=>/^[A-Z0-9]+$/.test(c)&&/[A-Z]/.test(c));
+      // No airline reference: an OTA's numeric booking number ("Booking No. 1578946896522001") is the next best
+      const otaNo=pnrM?'':(txt.match(/Booking\s*(?:No\.?|Number|ID)\s*[:#.]?\s*(\d{8,20})\b/i)||[])[1];
+      legs.forEach(l=>{if((pnrM||otaNo)&&!l.pnr)l.pnr=pnrM||otaNo;});
       // Printed duration ("Duration: 4hr(s) 15min(s)") beats local-time arithmetic across time zones
       legs.forEach(l=>{
         if(l.duration||!l.flightNumber)return;
         const fm=l.flightNumber.match(/^([A-Z0-9]{2})0*(\d+)$/);if(!fm)return;
         const at=txt.search(new RegExp('\\b'+fm[1]+'\\s{0,3}0*'+fm[2]+'\\b'));if(at<0)return;
         const d=txt.substring(at,at+260).match(/(\d{1,2})\s*h(?:rs?|ours?)?(?:\(s\))?\.?\s*(\d{1,2})\s*m(?:ins?|inutes?)?(?:\(s\))?/i);
-        if(d)l.duration=d[1]+'h '+d[2].padStart(2,'0')+'m';
+        if(d)l.duration=parseInt(d[1])+'h '+d[2].padStart(2,'0')+'m';
+      });
+      // Seat printed in the flight's own section ("Seat : 34D"); a bare "30K" in a table is often baggage
+      legs.forEach((l,i)=>{
+        if(l.seat||!l.flightNumber)return;
+        const fm=l.flightNumber.match(/^([A-Z0-9]{2})0*(\d+)$/);if(!fm)return;
+        const at=txt.search(new RegExp('\\b'+fm[1]+'\\s{0,3}0*'+fm[2]+'\\b'));if(at<0)return;
+        const nx=legs.slice(i+1).map(x=>txt.indexOf(x.flightNumber,at+3)).filter(x=>x>at);
+        const st=txt.substring(at,nx.length?Math.min(...nx):at+600).match(/\bSeat\s*(?:No\.?|Number)?\s*[:：]?\s*(\d{1,2}[A-K])\b/i);
+        if(st)l.seat=st[1];
       });
       console.log('parseKnownLayouts: '+fn.name+' → '+legs.length+' leg(s)');
       return legs;
@@ -4140,7 +4217,7 @@ function parseFlightSegments(txt){
 
 function dedupeLines(txt){
   // Times like "10 ∶ 20" (ratio sign) in some OTA PDFs
-  txt=txt.replace(/(\d{1,2})\s*[∶꞉]\s*(\d{2})/g,'$1:$2');
+  txt=txt.replace(/\u0000/g,'').replace(/(\d{1,2})\s*[∶꞉]\s*(\d{2})/g,'$1:$2');
   // Some PDF extractors (e.g. Malaysia Airlines) repeat each phrase 3-4x on one line: "14:35 14:35 14:35 14:35"
   txt=txt.replace(/(\S(?:[^\n]{0,80}?\S)?)(?:[ \t]+\1){2,}(?=\s|$)/g,'$1');
   // …or repeat each line 2-4x
@@ -4158,6 +4235,8 @@ function dedupeLines(txt){
 // Booking total + currency (sets r.cost / r.currency)
 function _extractCost(txt,r){
   const costPats=[
+    /Grand\s*total\s*[:#]?\s*(SGD|USD|MYR|IDR|EUR|GBP|THB|PHP|AUD|CNY|MVR|EGP|TWD|KRW|INR|JPY|HKD)\s*([\d,]+\.?\d*)/i,
+    /Total\s*\([^)]{1,25}\)\s*[:#]?\s*(SGD|USD|MYR|IDR|EUR|GBP|THB|PHP|AUD|CNY|MVR|EGP|TWD|KRW|INR|JPY|HKD)\s*([\d,]+\.?\d*)/i,
     // "Grand total: IDR 2,320,000"
     /(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare|Charge[ds]?|Paid|Due|Payable)?|TOTAL)\s*[:#]?\s*(SGD|USD|MYR|IDR|EUR|GBP|THB|PHP|AUD|CNY|MVR|EGP|TWD|KRW)\s*([\d,]+\.?\d*)/i,
     // "Total S$ 79.10" or "Total Rp 3,106,856"
@@ -4618,7 +4697,7 @@ function fHotel(ev,h){
     const ci=m.querySelector('[name="ci"]'),co=m.querySelector('[name="co"]'),ni=m.querySelector('[name="nights"]');
     wireFullPayment(m);
     const syncNights=()=>{if(ci.value&&co.value){const n=calcNights(ci.value,co.value);if(n)ni.value=n;}};
-    const syncCo=()=>{if(ci.value&&ni.value&&parseInt(ni.value)>0){const d=new Date(ci.value+'T00:00:00');d.setDate(d.getDate()+parseInt(ni.value));co.value=d.toISOString().slice(0,10);}};
+    const syncCo=()=>{if(ci.value&&ni.value&&parseInt(ni.value)>0){const d=new Date(ci.value+'T00:00:00');d.setDate(d.getDate()+parseInt(ni.value));co.value=ymd(d);}};
     ci.addEventListener('change',()=>{if(ni.value&&!co.value)syncCo();else syncNights();});
     co.addEventListener('change',syncNights);
     ni.addEventListener('change',syncCo);
@@ -4711,7 +4790,7 @@ function fAct(ev,a){
     const sd=m.querySelector('[name="date"]'),ed=m.querySelector('[name="endDate"]'),dy=m.querySelector('[name="days"]');
     wireFullPayment(m);
     const syncDays=()=>{if(sd.value&&ed.value){const n=calcNights(sd.value,ed.value);if(n)dy.value=n;}};
-    const syncEnd=()=>{if(sd.value&&dy.value&&parseInt(dy.value)>0){const d=new Date(sd.value+'T00:00:00');d.setDate(d.getDate()+parseInt(dy.value));ed.value=d.toISOString().slice(0,10);}};
+    const syncEnd=()=>{if(sd.value&&dy.value&&parseInt(dy.value)>0){const d=new Date(sd.value+'T00:00:00');d.setDate(d.getDate()+parseInt(dy.value));ed.value=ymd(d);}};
     sd.addEventListener('change',()=>{if(dy.value&&!ed.value)syncEnd();else syncDays();});
     ed.addEventListener('change',syncDays);
     dy.addEventListener('change',syncEnd);
