@@ -487,6 +487,14 @@ td.mg-l{color:var(--text3);white-space:nowrap;padding-top:9px}
   .clash-badge{font-size:8px;padding:1px 4px}
   .sidebar-collapse-btn{display:none}
 }
+.guide-intro{font-size:12px;color:var(--text2);margin:0 0 10px}
+.guide-sec{border-top:1px solid var(--border);padding:2px 0}
+.guide-sec summary{cursor:pointer;padding:10px 0;font-size:13px;font-weight:600;color:var(--text1,inherit);list-style-position:inside}
+.guide-body{font-size:12.5px;line-height:1.65;color:var(--text2);padding:0 0 12px}
+.guide-body ol,.guide-body ul{margin:0;padding-left:20px}
+.guide-body li{margin:0 0 6px}
+.guide-body p{margin:0 0 8px}
+.guide-note{font-size:11.5px;color:var(--text3);margin-top:8px!important}
 </style>
 <script>
 const _m={name:'Holiday Tracker',short_name:'HoliTracker',start_url:'.',display:'standalone',background_color:'#0a0a0f',theme_color:'#0a0a0f',icons:[{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%236c8cff'/%3E%3Cpath d='M350 200l-85-85-85 85M265 115v200M145 340h222' stroke='white' stroke-width='36' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E",sizes:'512x512',type:'image/svg+xml'}]};
@@ -508,6 +516,7 @@ const _ml=document.createElement('link');_ml.rel='manifest';_ml.href=URL.createO
 <script src="https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js" async></script>
 <script src="https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js" async></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" async></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script>
 // ===== PDF.js =====
 // Local calendar date "YYYY-MM-DD" (toISOString() is UTC, a day behind before 8am in Singapore)
@@ -912,7 +921,7 @@ function loadS(){
   for(const key of ['htV5','htV4']){
     try{const d=localStorage.getItem(key);if(d){const p=JSON.parse(d);
       if(p.trips&&!p.events){p.events=p.trips.map(t=>({...t,category:t.category||'trip',requiresLeave:t.requiresLeave!==undefined?t.requiresLeave:true}));delete p.trips;}
-      if(p.events&&p.events.length&&p.leave&&typeof p.leave==='object'){
+      if(Array.isArray(p.events)&&p.leave&&typeof p.leave==='object'){
       if(key!=='htV5')try{localStorage.setItem('htV5',JSON.stringify(p));}catch(e2){}
       if(!p.lastModified)p.lastModified=1;
       return p;
@@ -954,17 +963,17 @@ function mergeEvents(local,remote){
 let _appErrorState=false; // set true if app hits runtime error
 let _syncTimer=null;
 function debouncedSync(){
-  if(!getSyncConfig().token||_appErrorState)return;
+  if(!cloudMode()||_appErrorState)return;
   clearTimeout(_syncTimer);
-  _syncTimer=setTimeout(()=>pushToGist(),3000);
+  _syncTimer=setTimeout(()=>{_syncTimer=null;cloudPush();},3000);
 }
 
 let _pollTimer=null;
 function startSyncPolling(){
   if(_pollTimer)return;
   _pollTimer=setInterval(()=>{
-    if(document.visibilityState==='visible'&&getSyncConfig().token){
-      pullFromGist().then(pulled=>{if(pulled)render();});
+    if(document.visibilityState==='visible'&&cloudMode()){
+      cloudPull().then(pulled=>{if(pulled)render();});
     }
   },30000);
 }
@@ -1013,7 +1022,7 @@ async function pushToGist(retried){
   if((S.events||[]).length===0){console.warn('Push blocked: empty events array');return;}
   document.querySelectorAll('.sync-dot').forEach(d=>d.classList.add('syncing'));
   // Before pushing, merge remote visitedCountries so we never overwrite with fewer
-  try{if(c.gistId){const g=await gistAPI('/gists/'+c.gistId);if(g&&g.files&&g.files[GIST_FILE]){const r=JSON.parse(g.files[GIST_FILE].content);if(r.visitedCountries&&r.visitedCountries.length){const local=new Set(S.visitedCountries||[]);r.visitedCountries.forEach(x=>local.add(x));S.visitedCountries=[...local];}mergeAppleCalUrl(r);}}}catch(e){/* non-fatal */}
+  try{if(c.gistId){const g=await gistAPI('/gists/'+c.gistId);if(g&&g.files&&g.files[GIST_FILE]){const r=JSON.parse(g.files[GIST_FILE].content);if(r.migratedToAccount){c.retired=true;setSyncConfig(c);updateSyncStatus('Your data has moved to an account — sign in under Settings → Your Account');document.querySelectorAll('.sync-dot').forEach(d=>d.classList.remove('syncing'));render();return;}if(r.visitedCountries&&r.visitedCountries.length){const local=new Set(S.visitedCountries||[]);r.visitedCountries.forEach(x=>local.add(x));S.visitedCountries=[...local];}mergeAppleCalUrl(r);}}}catch(e){/* non-fatal */}
   const payload={description:GIST_DESC,files:{[GIST_FILE]:{content:JSON.stringify(syncData(),null,2)},[ICS_FILE]:{content:buildICSFeed()}}};
   try{
     let resp;
@@ -1065,6 +1074,7 @@ async function pullFromGist(retried){
     // One-time privacy migration: if the sync gist is still public, recreate it as secret
     if(gist.public===true&&!window._gistMigrating){window._gistMigrating=true;ensureGistSecret(c.gistId).finally(()=>{window._gistMigrating=false;});}
     const remote=JSON.parse(gist.files[GIST_FILE].content);
+    if(remote.migratedToAccount&&!c.retired){c.retired=true;setSyncConfig(c);updateSyncStatus('Your data has moved to an account — sign in under Settings → Your Account');render();return false;}
     // Always merge visitedCountries via union regardless of lastModified
     let vcChanged=mergeAppleCalUrl(remote);
     if(remote.visitedCountries&&remote.visitedCountries.length){const local=new Set(S.visitedCountries||[]);const before=local.size;remote.visitedCountries.forEach(c=>local.add(c));if(local.size>before){S.visitedCountries=[...local];vcChanged=true;}}
@@ -1109,6 +1119,7 @@ async function fullSync(retried){
     else{const found=await findExistingGist();if(found){c.gistId=found.id;setSyncConfig(c);gist=await gistAPI('/gists/'+found.id);}}
     if(gist&&gist.files&&gist.files[GIST_FILE]){
       const remote=JSON.parse(gist.files[GIST_FILE].content);
+      if(remote.migratedToAccount){c.retired=true;setSyncConfig(c);updateSyncStatus('Your data has moved to an account — sign in under Settings → Your Account');render();return;}
       // Always merge visitedCountries via union regardless of lastModified
       if(remote.visitedCountries&&remote.visitedCountries.length){const local=new Set(S.visitedCountries||[]);remote.visitedCountries.forEach(c=>local.add(c));S.visitedCountries=[...local];}
       if(remote.lastModified&&remote.lastModified>S.lastModified){
@@ -1276,7 +1287,311 @@ async function connectSyncFromDash(){
     if(btn){btn.disabled=false;btn.textContent='Connect & Sync';}
   }
 }
-function defS(){return{v:'dashboard',tid:null,tab:'flights',ly:2026,calY:2026,calM:new Date().getMonth(),tfY:null,theme:null,_themeSet:false,rates:{...DRATES},trips:importEvents(),leave:importLeave(),lastModified:1}}
+// ===== ACCOUNTS (Supabase) =====
+// Each person signs in with email + password; their data lives in one row of public.user_data that
+// the database only lets them read or write (Row Level Security, see supabase/schema.sql).
+// The URL and publishable key below are meant to be public — they can't read anyone's data on their own.
+const SUPA_URL='';
+const SUPA_KEY='';
+const OWNER_KEY='htOwner';// which account the data cached on this device belongs to
+const MIN_PW=10;
+let _sb=null,_acct=null,_acctBusy=false,_acctReady=false;
+function acctEnabled(){return !!(SUPA_URL&&SUPA_KEY&&window.supabase&&window.supabase.createClient);}
+function sbClient(){
+  if(!_sb&&acctEnabled())_sb=window.supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  return _sb;
+}
+// Where changes sync to: the signed-in account, else the older GitHub gist (until it's moved over)
+function cloudMode(){return _acct?'account':getSyncConfig().token&&!getSyncConfig().retired?'gist':null;}
+function cloudPush(){return cloudMode()==='account'?acctPush():cloudMode()==='gist'?pushToGist():null;}
+function cloudPull(){return cloudMode()==='account'?acctPull():cloudMode()==='gist'?pullFromGist():Promise.resolve(false);}
+function cloudFullSync(){return cloudMode()==='account'?acctPull(true).then(()=>acctPush()):cloudMode()==='gist'?fullSync():null;}
+
+// Everything personal this app keeps in the browser — removed on sign-out
+function wipeLocalData(){['htV5','htV4','htV5_backup','htV5_backup_ts','htSync',OWNER_KEY].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});}
+function acctPayload(){const d=syncData();delete d.trips;return d;}
+function normEvents(r){return(r.events||r.trips||[]).map(t=>t.category?t:{...t,category:'trip',requiresLeave:true});}
+function hasLocalData(){return(S.events||[]).length>0;}
+
+async function acctFetch(){
+  const{data,error}=await sbClient().from('user_data').select('data,modified_ms').eq('user_id',_acct.id).maybeSingle();
+  if(error)throw error;
+  return data;
+}
+async function acctPush(){
+  if(!_acct||_acctBusy||_appErrorState)return;
+  document.querySelectorAll('.sync-dot').forEach(d=>d.classList.add('syncing'));
+  try{
+    // Same merge-before-push as the gist sync: never drop countries or the Apple link another device added
+    const row=await acctFetch().catch(()=>null);
+    // Another device saved something newer: take that first instead of overwriting it with older data
+    if(row&&(row.modified_ms||0)>(S.lastModified||0)){document.querySelectorAll('.sync-dot').forEach(d=>d.classList.remove('syncing'));await acctPull();return;}
+    if(row&&row.data){
+      const r=row.data;
+      if(r.visitedCountries&&r.visitedCountries.length){const l=new Set(S.visitedCountries||[]);r.visitedCountries.forEach(x=>l.add(x));S.visitedCountries=[...l];}
+      mergeAppleCalUrl(r);
+    }
+    const{error}=await sbClient().from('user_data').upsert({user_id:_acct.id,data:acctPayload(),modified_ms:S.lastModified||Date.now()});
+    if(error)throw error;
+    const c=getSyncConfig();c.lastPush=Date.now();setSyncConfig(c);
+    updateSyncStatus('Saved to your account just now');
+    gistFeedSync();
+  }catch(e){console.error('Account push failed:',e);updateSyncStatus('Sync error: '+(e.message||e));}
+  finally{document.querySelectorAll('.sync-dot').forEach(d=>d.classList.remove('syncing'));}
+}
+async function acctPull(quiet){
+  if(!_acct||_acctBusy)return false;
+  try{
+    const row=await acctFetch();
+    if(!row||!row.data)return false;
+    const r=row.data;let changed=mergeAppleCalUrl(r);
+    if(r.visitedCountries&&r.visitedCountries.length){const l=new Set(S.visitedCountries||[]);const n=l.size;r.visitedCountries.forEach(x=>l.add(x));if(l.size>n){S.visitedCountries=[...l];changed=true;}}
+    const rm=row.modified_ms||r.lastModified||0;
+    if(rm>(S.lastModified||0)){
+      backupBeforeSync();
+      S.events=mergeEvents(S.events||[],normEvents(r));
+      S.leave=r.leave||S.leave;S.rates=r.rates||S.rates;S.ratesUpdated=r.ratesUpdated||S.ratesUpdated;S.theme=r.theme||S.theme;
+      S.lastModified=rm;changed=true;
+    }
+    const apple=await gistFeedSync(true);
+    if(changed||apple){try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}applyTheme();render();if(!quiet)updateSyncStatus('Pulled latest from your account');return true;}
+    updateSyncStatus('Up to date');return false;
+  }catch(e){console.error('Account pull failed:',e);updateSyncStatus('Sync error: '+(e.message||e));return false;}
+}
+// Until Apple Calendar moves to the server, a device that still has the GitHub token keeps the
+// calendar feed (out) and the Apple import (in) going through the gist. The data file there is retired.
+async function gistFeedSync(pullOnly){
+  const c=getSyncConfig();if(!c.token||!c.gistId)return false;
+  try{
+    const g=await gistAPI('/gists/'+c.gistId);
+    const changed=importAppleCalendar(g.files&&g.files[APPLE_ICS_FILE]?g.files[APPLE_ICS_FILE].content:'');
+    if(!pullOnly)await gistAPI('/gists/'+c.gistId,{method:'PATCH',body:JSON.stringify({files:{[ICS_FILE]:{content:buildICSFeed()}}})});
+    return changed;
+  }catch(e){console.warn('Calendar feed sync failed:',e);return false;}
+}
+// Leave a note in the old gist so devices not yet signed in stop syncing there (their pushes are refused)
+async function retireGist(){
+  const c=getSyncConfig();if(!c.token||!c.gistId)return;
+  const d={...syncData(),migratedToAccount:true,migratedAt:new Date().toISOString()};
+  await gistAPI('/gists/'+c.gistId,{method:'PATCH',body:JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(d,null,2)}}})});
+  c.retired=true;setSyncConfig(c);
+}
+
+// Signed in (new sign-in, or a session restored on page load)
+async function acctOnSignIn(user){
+  _acctBusy=true;
+  try{
+    const owner=localStorage.getItem(OWNER_KEY);
+    // Data cached here belongs to a different account: remove it before loading this one
+    if(owner&&owner!==user.id){wipeLocalData();S=defS();}
+    const unclaimed=!owner&&hasLocalData();// from before accounts existed, or used signed-out
+    const row=await acctFetch();
+    if(owner===user.id){_acctBusy=false;await acctPull(true);return;}
+    if(unclaimed){
+      // Bring in the newest copy from the old GitHub sync first, so nothing made on another device is missed
+      if(getSyncConfig().token&&!getSyncConfig().retired){try{await pullFromGist();}catch(e){}}
+      const n=(S.events||[]).length,remoteN=row&&row.data?normEvents(row.data).length:0;
+      const choice=await acctAsk(row&&row.data
+        ?{title:'Add this device\'s data to your account?',body:`This device has <b>${n} event${n===1?'':'s'}</b> that aren't saved to any account. Your account already has <b>${remoteN}</b>.<br><br><b>Add them</b> to combine both (nothing is lost). <b>Don't add</b> keeps a backup on this device and shows only your account's data.`,yes:'Add them',no:"Don't add"}
+        :{title:'Move your existing data into your account?',body:`This device has <b>${n} event${n===1?'':'s'}</b>${getSyncConfig().token?' (including everything from your GitHub sync)':''}. Move it into your new account so it's private to you and available on any device you sign in to.<br><br>A backup copy stays on this device${getSyncConfig().token?' and in your GitHub gist':''} until you're sure everything is there.`,yes:'Move my data',no:'Start empty'});
+      if(choice){
+        if(row&&row.data){S.events=mergeEvents(normEvents(row.data),S.events||[]);S.leave={...(row.data.leave||{}),...(S.leave||{})};}
+        S.lastModified=Date.now();
+        localStorage.setItem(OWNER_KEY,user.id);
+        _acctBusy=false;await acctPush();
+        if(getSyncConfig().token&&!getSyncConfig().retired){try{await retireGist();}catch(e){console.warn('Could not mark gist as moved:',e);}}
+        toast(`${(S.events||[]).length} events saved to your account`);
+      }else{
+        backupBeforeSync();
+        S=defS();
+        if(row&&row.data){S.events=normEvents(row.data);S.leave=row.data.leave||{};S.rates=row.data.rates||S.rates;S.lastModified=row.modified_ms||1;}
+        localStorage.setItem(OWNER_KEY,user.id);try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
+      }
+    }else{
+      localStorage.setItem(OWNER_KEY,user.id);
+      if(row&&row.data){S=defS();S.events=normEvents(row.data);S.leave=row.data.leave||{};S.rates=row.data.rates||S.rates;S.ratesUpdated=row.data.ratesUpdated||'';S.theme=row.data.theme||S.theme;S.visitedCountries=row.data.visitedCountries||[];S.appleCalUrl=row.data.appleCalUrl||'';S.appleCalUrlAt=row.data.appleCalUrlAt||0;S.lastModified=row.modified_ms||1;try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}}
+    }
+  }catch(e){console.error('Sign-in sync failed:',e);toast('Signed in, but syncing failed: '+(e.message||e));}
+  finally{_acctBusy=false;applyTheme();render();}
+}
+// Yes/No dialog that resolves true/false (Cancel or closing = false)
+function acctAsk(o){
+  return new Promise(res=>{
+    let done=false;const fin=v=>{if(!done){done=true;res(v);}};
+    modal(esc(o.title),`<p style="font-size:13px;line-height:1.6;color:var(--text2)">${o.body}</p>`,()=>{fin(true);},{saveLabel:o.yes});
+    const bg=document.getElementById('mbg');
+    bg.querySelectorAll('[data-action="xm"]').forEach(b=>{if(b.classList.contains('btn'))b.textContent=o.no;b.addEventListener('click',()=>fin(false));});
+    const obs=new MutationObserver(()=>{if(!bg.classList.contains('open')){obs.disconnect();setTimeout(()=>fin(false),0);}});obs.observe(bg,{attributes:true,attributeFilter:['class']});
+  });
+}
+
+async function acctInit(){
+  const sb=sbClient();if(!sb){_acctReady=true;return;}
+  sb.auth.onAuthStateChange((ev,session)=>{
+    const u=session&&session.user||null,was=_acct&&_acct.id;
+    _acct=u;
+    // Supabase advises not awaiting its own calls inside this callback
+    setTimeout(()=>{
+      if(ev==='PASSWORD_RECOVERY')acctShowNewPassword();
+      if(u&&u.id!==was)acctOnSignIn(u);
+      else if(!u&&was){wipeLocalData();S=defS();applyTheme();render();toast('Signed out');}
+      else render();
+    },0);
+  });
+  const{data}=await sb.auth.getSession();
+  if(!data.session)_acct=null;
+  _acctReady=true;
+  try{render();}catch(e){}
+}
+const _acctMsg=(id,m,err)=>{const el=document.getElementById(id);if(el){el.textContent=m;el.style.color=err?'var(--red,#ff6b6b)':'var(--text3)';}};
+function _acctCreds(){const e=(document.getElementById('acct-email')||{}).value||'',p=(document.getElementById('acct-pw')||{}).value||'';return{email:e.trim(),password:p};}
+async function acctSignUp(){
+  const{email,password}=_acctCreds();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return _acctMsg('acct-msg','Enter a valid email address.',1);
+  if(password.length<MIN_PW)return _acctMsg('acct-msg',`Use a password of at least ${MIN_PW} characters.`,1);
+  _acctMsg('acct-msg','Creating your account…');
+  const name=((document.getElementById('acct-name')||{}).value||'').trim().slice(0,40);
+  const{data,error}=await sbClient().auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname,data:name?{name}:{}}});
+  if(error)return _acctMsg('acct-msg',error.message,1);
+  if(data.user&&!data.session)_acctMsg('acct-msg',`Almost done: we've emailed ${email}. Open that email and tap the confirmation link, then come back and sign in.`);
+}
+async function acctSignIn(){
+  const{email,password}=_acctCreds();
+  if(!email||!password)return _acctMsg('acct-msg','Enter your email and password.',1);
+  _acctMsg('acct-msg','Signing in…');
+  const{error}=await sbClient().auth.signInWithPassword({email,password});
+  if(error)return _acctMsg('acct-msg',/confirm/i.test(error.message)?'Please confirm your email first: open the link we emailed you.':/invalid/i.test(error.message)?'Wrong email or password.':error.message,1);
+}
+async function acctForgot(){
+  const{email}=_acctCreds();
+  if(!email)return _acctMsg('acct-msg','Type your email above first, then tap “Forgot password?” again.',1);
+  const{error}=await sbClient().auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+  _acctMsg('acct-msg',error?error.message:`If ${email} has an account, a reset link is on its way. Open it on this device.`,!!error);
+}
+function acctShowNewPassword(){
+  modal('Choose a new password',`<div class="fi"><label>New password (at least ${MIN_PW} characters)</label><input class="fc" type="password" id="acct-newpw" autocomplete="new-password"></div><p id="acct-newpw-msg" style="font-size:11px;color:var(--text3);margin-top:8px"></p>`,()=>{
+    const pw=document.getElementById('acct-newpw').value;
+    if(pw.length<MIN_PW){_acctMsg('acct-newpw-msg',`Use at least ${MIN_PW} characters.`,1);return false;}
+    sbClient().auth.updateUser({password:pw}).then(({error})=>toast(error?'Could not change password: '+error.message:'Password changed'));
+  },{saveLabel:'Save password'});
+}
+async function acctSignOut(){
+  const ok=await acctAsk({title:'Sign out?',body:'Your data stays safe in your account. It will be removed from this device, so sign out on any shared or borrowed device.',yes:'Sign out',no:'Cancel'});
+  if(!ok)return;
+  if(_syncTimer){clearTimeout(_syncTimer);_syncTimer=null;await acctPush();}
+  await sbClient().auth.signOut();// fires SIGNED_OUT → local data wiped
+}
+async function acctDelete(){
+  modal('Delete account',`<p style="font-size:13px;line-height:1.6;color:var(--text2)">This permanently deletes your account and <b>all</b> your trips, payments and documents. It can't be undone. Download a copy first (Settings → Data → Export JSON) if you might want it.</p><div class="fi" style="margin-top:10px"><label>Type DELETE to confirm</label><input class="fc" id="acct-del-confirm" autocomplete="off"></div>`,()=>{
+    if(document.getElementById('acct-del-confirm').value.trim()!=='DELETE'){toast('Type DELETE to confirm');return false;}
+    (async()=>{
+      const{error}=await sbClient().rpc('delete_my_account');
+      if(error){toast('Could not delete account: '+error.message);return;}
+      await sbClient().auth.signOut().catch(()=>{});
+      wipeLocalData();S=defS();render();toast('Your account and data were deleted');
+    })();
+  },{saveLabel:'Delete forever',danger:true});
+}
+function vAccountCard(){
+  if(!acctEnabled())return '';
+  if(_acct)return `<div class="card" id="acct-card" style="margin-bottom:16px"><div class="card-header"><h3>Your Account</h3></div><div class="card-body">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap"><span style="color:#4ade80;font-size:13px">● Signed in</span><span style="font-size:13px">${esc(_acct.email||'')}</span></div>
+      <p id="sync-status" style="font-size:11px;color:var(--text3);margin:0 0 10px">${getSyncConfig().lastPush?'Last saved: '+new Date(getSyncConfig().lastPush).toLocaleString():'Changes save to your account automatically.'}</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-p" data-action="sync-now" style="font-size:12px">↻ Sync Now</button>
+        <button class="btn btn-s" data-action="acct-change-pw" style="font-size:12px">Change Password</button>
+        <button class="btn btn-s" data-action="acct-signout" style="font-size:12px">Sign Out</button>
+        <button class="btn btn-d" data-action="acct-delete" style="font-size:12px;margin-left:auto">Delete Account</button>
+      </div></div></div>`;
+  return `<div class="card" id="acct-card" style="margin-bottom:16px;border:1px solid var(--primary)"><div class="card-header"><h3>Your Account</h3></div><div class="card-body">
+      <p style="font-size:12px;color:var(--text2);margin:0 0 12px">Sign in to keep your trips private, backed up and on all your devices. New here? Enter your email, choose a password and tap <b>Create Account</b>.</p>
+      <form onsubmit="return false" autocomplete="on">
+        <div class="fi" style="margin-bottom:8px"><label>Email</label><input class="fc" id="acct-email" type="email" autocomplete="username" inputmode="email" placeholder="you@example.com"></div>
+        <div class="fi" style="margin-bottom:8px"><label>First name <span style="color:var(--text3);font-weight:400">(new accounts, optional)</span></label><input class="fc" id="acct-name" autocomplete="given-name" maxlength="40"></div>
+        <div class="fi" style="margin-bottom:10px"><label>Password <span style="color:var(--text3);font-weight:400">(at least ${MIN_PW} characters)</span></label><input class="fc" id="acct-pw" type="password" autocomplete="current-password"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-p" data-action="acct-signin" style="font-size:12px">Sign In</button>
+          <button class="btn btn-s" data-action="acct-signup" style="font-size:12px">Create Account</button>
+          <a href="#" data-action="acct-forgot" style="font-size:11px;color:var(--primary);margin-left:auto">Forgot password?</a>
+        </div>
+      </form>
+      <p id="acct-msg" style="font-size:11px;color:var(--text3);margin:10px 0 0;line-height:1.5"></p></div></div>`;
+}
+// ===== USER GUIDE (Settings) =====
+function vGuideCard(){
+  const sec=(title,body,open)=>`<details class="guide-sec"${open?' open':''}><summary>${title}</summary><div class="guide-body">${body}</div></details>`;
+  const ol=items=>`<ol>${items.map(i=>`<li>${i}</li>`).join('')}</ol>`;
+  const ul=items=>`<ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul>`;
+  const firstTime=acctEnabled()&&!_acct,acc=acctEnabled();
+  return `<div class="card" id="guide-card" style="margin-bottom:16px"><div class="card-header"><h3>📖 User Guide</h3></div><div class="card-body guide">
+    <p class="guide-intro">${acc?'New here? Follow steps 1 to 4 once. Each takes a minute or two. ':''}Tap a heading to open it.</p>
+    ${sec('What is Holiday Tracker?',`<p>One place for every trip: flights, hotels, activities and transport, what you've paid and what's still due, your leave days and the countries you've visited. You can drop in a booking email or PDF and it fills in the details for you.</p>`,firstTime)}
+    ${!acc?'':sec('Step 1 · Create your account',ol([
+      'Open the menu (☰ at the top-left on a phone) and tap <b>Settings</b>.',
+      'In <b>Your Account</b>, type your email address.',
+      `Choose a password of at least ${MIN_PW} characters. A short sentence works well, e.g. <i>blue kayak on lake toba</i>. Don't reuse a password from another site.`,
+      'Tap <b>Create Account</b>.',
+      'Check your email inbox for a message from Supabase Auth, the sign-in service this app uses. Can\'t find it? Look in Spam or Junk.',
+      'Tap the link in that email. You come back to Holiday Tracker, signed in.',
+      'If the app asks <b>Move your existing data into your account?</b>, tap <b>Move my data</b> to keep what\'s on this device.'
+    ]))}
+    ${!acc?'':sec('Step 2 · Use it on your phone too',ol([
+      'On your phone, open the same web address you use on your computer.',
+      'Go to <b>Settings → Your Account</b>, enter the same email and password, and tap <b>Sign In</b>.',
+      'Make it an app icon. <b>iPhone (Safari):</b> tap the Share button (square with an arrow) → <b>Add to Home Screen</b>. <b>Android (Chrome):</b> tap ⋮ → <b>Add to Home screen</b>.',
+      'Changes save automatically and show up on your other devices within about 30 seconds.'
+    ]))}
+    ${sec((acc?'Step 3 · ':'')+'Add your first trip',ol([
+      'Go to <b>Dashboard</b> or <b>Events</b> and tap <b>+ New Event</b>.',
+      'Give it a name (e.g. <i>Bali Diving</i>), pick the start and end dates and the places you\'re visiting, then tap <b>Save</b>.',
+      'Open the event. Use the tabs <b>Flights</b>, <b>Hotels</b>, <b>Activities</b> and <b>Transport</b> and the <b>+ Add…</b> buttons to add bookings by hand, or let the app read them for you (Step 4).'
+    ]))}
+    ${sec((acc?'Step 4 · ':'')+'Let the app read your bookings (Smart Upload)',`${ol([
+      'Tap the <b>Scan</b> button at the bottom-right of the screen.',
+      'Drop in a booking PDF, pick a screenshot, or paste (⌘V / Ctrl+V) a screenshot or the text of a confirmation email.',
+      'Booked through an agent such as Trip.com or Agoda? Add the <b>e-ticket and the receipt</b> together: they\'re combined into one booking with times, reference and price.',
+      'Check what it found. Every field can be edited; fix anything that\'s wrong and remove anything you don\'t want.',
+      'Choose which event it belongs to (it suggests one) or create a new event, then tap <b>Save</b>.'
+    ])}<p class="guide-note">Works with most airline e-tickets (Singapore Airlines, Scoot, Garuda, Batik, AirAsia, Malaysia Airlines, Air India, t'way and more), Trip.com and Agoda, hotel vouchers and ferry tickets. Always give the result a quick check.</p>`)}
+    ${sec('Track payments and your budget',ul([
+      'In any booking, fill in <b>Deposit Amount</b> (and its currency) and the <b>Full Payment</b> amount. The card shows what\'s paid and the balance left.',
+      'Set a payment due date and the Dashboard reminds you when it\'s coming up.',
+      'Costs in any currency are converted to SGD. Rates update automatically and can be adjusted under <b>Settings → Exchange Rates</b>.',
+      '<b>Budget</b> (in the menu) totals your spending by year, event and category.'
+    ]))}
+    ${sec('Calendar, leave and countries',ul([
+      '<b>Calendar</b> shows all your events by month, with public holidays.',
+      '<b>Leave</b> counts the work days each trip uses. Add your yearly allowance there.',
+      '<b>Countries</b> is your travel map: tap a country to mark it visited, tap again to unmark.'
+    ]))}
+    ${sec('Share or print an itinerary',ol([
+      'Open the event and tap <b>Export</b>.',
+      'Choose PDF or Excel and what to include (untick <b>Costs</b> or <b>Booking details</b> before sharing with others).',
+      'Tap <b>Generate</b>. The file downloads to your device.'
+    ]))}
+    ${!acc?'':sec('Password help and signing out',ul([
+      '<b>Forgot your password?</b> Go to <b>Settings → Your Account</b>, type your email and tap <b>Forgot password?</b>. Open the email on the same device and choose a new password.',
+      '<b>Change password:</b> while signed in, tap <b>Change Password</b>.',
+      '<b>Sign Out</b> removes your data from that device. It stays safe in your account. Always sign out on shared or borrowed devices.',
+      '<b>Delete Account</b> permanently deletes your account and everything in it. Download a copy first: <b>Settings → Data → Export JSON</b>.'
+    ]))}
+    ${!acc?'':sec('Keeping your data private',ul([
+      'Only you can see your trips. Each account can only ever read its own data; this is enforced by the database, not just by the app.',
+      'Your password is never stored or visible to anyone, including the app\'s owner. Only a scrambled version is kept to check it.',
+      'Holiday Tracker will <b>never</b> ask for your password by email or message. If someone does, it\'s a scam.',
+      'Use a password you don\'t use anywhere else, and sign out on devices that aren\'t yours.',
+      'Your booking documents may contain passport numbers or other personal details. Only upload what you\'re comfortable storing.'
+    ]))}
+    ${sec('Something not working?',ul([
+      '<b>No confirmation or reset email:</b> check Spam/Junk, wait a few minutes, and make sure the email address is spelled correctly. Emails can be limited to a few per hour, so try again later if needed.',
+      '<b>“Wrong email or password”:</b> check for typos and Caps Lock, or use <b>Forgot password?</b>.',
+      '<b>Changes not showing on another device:</b> tap <b>↻ Sync Now</b> in <b>Settings → Your Account</b> on both devices.',
+      '<b>The app looks out of date:</b> reload the page (on a computer, hold Shift while clicking reload, or press ⌘⇧R / Ctrl+Shift+R).',
+      '<b>Smart Upload misread something:</b> just edit the field before saving. Scanned images work best when sharp and straight.'
+    ]))}
+  </div></div>`;
+}
+function defS(){return{v:'dashboard',tid:null,tab:'flights',ly:2026,calY:2026,calM:new Date().getMonth(),tfY:null,theme:null,_themeSet:false,rates:{...DRATES},events:importEvents(),leave:importLeave(),lastModified:1}}
 function eCost(t){let s=0;['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>s+=toSGD(e.cost,e.currency,e.rateToSGD)));return s;}
 function allCost(){return S.events.reduce((s,t)=>s+eCost(t),0);}
 function upcoming(){const td=ymd(new Date());return S.events.filter(t=>t.endDate>=td).sort((a,b)=>a.startDate.localeCompare(b.startDate));}
@@ -1326,27 +1641,7 @@ function sortCtrlHtml(prefix,curKey,curDir){
 }
 
 // ===== IMPORT DATA =====
-function importEvents(){return[
-{id:uid(),name:'Copenhagen, Iceland & Oslo',startDate:'2024-01-02',endDate:'2024-01-14',locations:['Copenhagen','Iceland','Oslo'],sharedLink:'',notes:'Grab era. 8 leave days.',year:2024,hotels:[],category:'trip',requiresLeave:true,flights:[],activities:[],transport:[]},
-{id:uid(),name:'Tioman Dive',startDate:'2024-03-28',endDate:'2024-03-30',locations:['Tioman, Malaysia'],sharedLink:'',notes:'',year:2024,hotels:[],category:'trip',requiresLeave:true,flights:[],activities:[],transport:[]},
-{id:uid(),name:'Halmahera & Lembeh',startDate:'2024-04-28',endDate:'2024-05-08',locations:['Halmahera','Lembeh'],sharedLink:'',notes:'WM LOB',year:2024,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Garuda',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Halmahera',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Taiwan',startDate:'2024-05-18',endDate:'2024-05-23',locations:['Taiwan'],sharedLink:'',notes:'',year:2024,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'China Airlines',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Taiwan',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Bali',startDate:'2024-08-02',endDate:'2024-08-09',locations:['Bali'],sharedLink:'',notes:'',year:2024,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Scoot',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Bali',cost:'',currency:'SGD',notes:'Outbound',ocrText:''},{id:uid(),airline:'Singapore Airlines',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Bali',to:'Singapore',cost:'',currency:'SGD',notes:'Return',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Beijing & Shanghai',startDate:'2024-08-25',endDate:'2024-09-05',locations:['Beijing','Shanghai'],sharedLink:'',notes:'',year:2024,hotels:[],category:'trip',requiresLeave:true,flights:[],activities:[],transport:[]},
-{id:uid(),name:'Shanghai New Year',startDate:'2025-01-01',endDate:'2025-01-05',locations:['Shanghai'],sharedLink:'',notes:'ByteDance. SQ flights.',year:2025,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Singapore Airlines',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Shanghai',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Japan',startDate:'2025-03-28',endDate:'2025-04-06',locations:['Japan'],sharedLink:'',notes:'4 leave days.',year:2025,hotels:[],category:'trip',requiresLeave:true,flights:[],activities:[],transport:[]},
-{id:uid(),name:'Alor Diving',startDate:'2025-04-27',endDate:'2025-05-07',locations:['Alor, Indonesia'],sharedLink:'',notes:'6 leave days.',year:2025,hotels:[],category:'trip',requiresLeave:true,flights:[],activities:[],transport:[]},
-{id:uid(),name:'Egypt LOB',startDate:'2025-08-16',endDate:'2025-08-29',locations:['Egypt'],sharedLink:'',notes:'10 leave days.',year:2025,hotels:[],category:'trip',requiresLeave:true,flights:[],activities:[],transport:[]},
-{id:uid(),name:'Hangzhou Worktrip',startDate:'2025-10-09',endDate:'2025-10-14',locations:['Hangzhou'],sharedLink:'',notes:'',year:2025,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Cathay Pacific',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Hangzhou',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Lembeh',startDate:'2025-10-15',endDate:'2025-10-20',locations:['Lembeh'],sharedLink:'',notes:'2 leave days.',year:2025,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Scoot',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Manado',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Koh Samui',startDate:'2025-11-20',endDate:'2025-11-24',locations:['Koh Samui'],sharedLink:'',notes:'',year:2025,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Scoot',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Koh Samui',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Maldives',startDate:'2026-03-06',endDate:'2026-03-15',locations:['Maldives'],sharedLink:'',notes:'Paid all. SQ.',year:2026,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Singapore Airlines',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Maldives',cost:'',currency:'SGD',notes:'Booked',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Padel Training KL',startDate:'2026-04-02',endDate:'2026-04-03',locations:['Kuala Lumpur'],sharedLink:'',notes:'',year:2026,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Scoot',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'KL',cost:'',currency:'SGD',notes:'',ocrText:''},{id:uid(),airline:'Firefly',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'KL',to:'Singapore',cost:'',currency:'MYR',notes:'',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Malapascua',startDate:'2026-04-28',endDate:'2026-05-03',locations:['Malapascua, Philippines'],sharedLink:'https://docs.google.com/spreadsheets/u/1/d/1RMsobomY2wN4yYV1toEHczTMMEFTcpXzhNbL1cMtaP4/edit?gid=0#gid=0',notes:'Deposit paid. SQ 28 Apr-3 May.',year:2026,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Singapore Airlines',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Cebu',cost:'',currency:'SGD',notes:'Booked',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Komodo',startDate:'2026-05-27',endDate:'2026-06-02',locations:['Komodo','Kuala Lumpur'],sharedLink:'',notes:'Deposit paid. Flights KL-LBJ booked.',year:2026,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Scoot',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'KL',cost:'',currency:'SGD',notes:'25 May evening',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Tarakan & Bali',startDate:'2026-07-01',endDate:'2026-07-12',locations:['Tarakan','Jakarta','Bali'],sharedLink:'https://docs.google.com/spreadsheets/d/16pWJm9TNwxp0LZkkENiU3K7ygEUxBPo4HKvDhFqBIyU/edit',notes:'Multi-leg.',year:2026,hotels:[],category:'trip',requiresLeave:true,flights:[{id:uid(),airline:'Scoot',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Singapore',to:'Jakarta',cost:'',currency:'SGD',notes:'',ocrText:''},{id:uid(),airline:'Batik Air',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Jakarta',to:'Tarakan',cost:'',currency:'IDR',notes:'',ocrText:''},{id:uid(),airline:'Garuda',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Jakarta',to:'Bali',cost:'',currency:'IDR',notes:'',ocrText:''},{id:uid(),airline:'Singapore Airlines',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',from:'Bali',to:'Singapore',cost:'',currency:'SGD',notes:'',ocrText:''}],activities:[],transport:[]},
-{id:uid(),name:'Ray Chen Concert',category:'activity',requiresLeave:false,startDate:'2026-06-20',endDate:'2026-06-20',locations:['Singapore'],sharedLink:'',notes:'',year:2026,hotels:[],flights:[],activities:[{id:uid(),name:'Ray Chen Concert',location:'Singapore',date:'2026-06-20',time:'',duration:'',notes:'',bookingDetails:'',cost:'',currency:'SGD',ocrText:''}],transport:[]},
-];}
+function importEvents(){return[];}
 
 function importLeave(){return{};}
 
@@ -1510,7 +1805,7 @@ function vDash(){
   const usedCats=[...new Set(ft.map(t=>t.category||'trip'))];
   const catTabs=CATEGORIES.filter(c=>usedCats.includes(c.id));
   return `
-  <div class="page-header"><div><h2>Dashboard</h2><div class="subtitle">Welcome back, Irene</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${syncIndicatorHtml()}</div></div>
+  <div class="page-header"><div><h2>Dashboard</h2><div class="subtitle">Welcome back${_acct&&_acct.user_metadata&&_acct.user_metadata.name?', '+esc(_acct.user_metadata.name):''}</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${syncIndicatorHtml()}</div></div>
   <div class="page-content">
     <div class="stats">
       <div class="stat blue"><div class="s-label">Events</div><div class="s-val">${ft.length}</div><div class="s-sub">${totalDays} days total</div></div>
@@ -1520,6 +1815,15 @@ function vDash(){
     </div>
     ${payDue.length?`<div class="card" style="margin-bottom:16px;border:1px solid var(--orange);border-radius:10px;overflow:hidden"><div style="background:rgba(251,146,60,.08);padding:12px 16px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><span style="font-weight:600;font-size:13px;color:var(--orange)">Payments Due</span></div>${payDue.map(t=>`<div style="font-size:12px;color:var(--text2);padding:2px 0"><span style="font-weight:600">${esc(t.name)}</span> has unpaid bookings with upcoming due dates</div>`).join('')}</div></div>`:''}
     ${(()=>{const sc=getSyncConfig();
+      if(acctEnabled()){
+        if(_acct||!_acctReady)return '';
+        const legacy=sc.token&&!sc.retired;
+        return `<div class="card" style="margin-bottom:16px;border:1px solid var(--primary);border-radius:12px;overflow:hidden"><div style="background:linear-gradient(135deg,rgba(108,140,255,.15),rgba(108,140,255,.05));padding:16px 20px">
+          <h3 style="margin:0 0 6px;font-size:15px">${legacy?'Move your data into your own account':sc.retired?'Sign in to see your trips':'Keep your trips safe with a free account'}</h3>
+          <p style="font-size:12px;color:var(--text2);margin:0 0 12px">${legacy?'Create your account (email + password) and your existing trips move into it. Nothing is lost: a backup stays on this device and in GitHub until you\'re sure.':sc.retired?'Your data has moved to your account. Sign in to load it on this device.':'Without an account, your trips live only in this browser. With one, they\'re private to you, backed up and on all your devices.'}</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-p" data-action="go-account" style="font-size:13px">${legacy?'Set up my account':sc.retired?'Sign in':'Create account / Sign in'}</button><button class="btn btn-s" data-action="open-guide" style="font-size:13px">How it works</button></div>
+        </div></div>`;
+      }
       // Token expired state
       if(sc.token&&_syncErrorState==='401')return `
     <div class="card sync-error-card" style="margin-bottom:16px;border:1px solid var(--orange);border-radius:12px;overflow:hidden">
@@ -2516,6 +2820,17 @@ function renderWorldMap(){
     .then(r=>r.json())
     .then(world=>{
       const countries=topojson.feature(world,world.objects.countries).features;
+      // The map data draws French Guiana as part of France (250): split it off so visiting France
+      // doesn't light up South America. It becomes its own, untracked shape.
+      const fr=countries.find(f=>String(f.id)==='250');
+      if(fr&&fr.geometry&&fr.geometry.type==='MultiPolygon'){
+        const isGuiana=poly=>d3.geoCentroid({type:'Polygon',coordinates:poly})[0]<-30;
+        const guf=fr.geometry.coordinates.filter(isGuiana);
+        if(guf.length){
+          fr.geometry={type:'MultiPolygon',coordinates:fr.geometry.coordinates.filter(p=>!isGuiana(p))};
+          countries.push({type:'Feature',id:'GUF',properties:{name:'French Guiana'},geometry:{type:'MultiPolygon',coordinates:guf}});
+        }
+      }
       svg.selectAll('path.country')
         .data(countries)
         .enter().append('path')
@@ -2544,13 +2859,16 @@ function renderWorldMap(){
 // ===== SETTINGS =====
 function vSettings(){
   return `
-  <div class="page-header"><div><h2>Settings</h2><div class="subtitle">Rates & data</div></div></div>
+  <div class="page-header"><div><h2>Settings</h2><div class="subtitle">Account, guide, rates & data</div></div></div>
   <div class="page-content">
+    ${vAccountCard()}
+    ${vGuideCard()}
     <div class="card" style="margin-bottom:16px"><div class="card-header"><h3>Exchange Rates (to SGD)</h3><button class="btn btn-s" onclick="fetchLiveRates().then(()=>render())">↻ Refresh Rates</button></div><div class="card-body">
       <p style="font-size:11px;color:var(--text3);margin-bottom:12px">How much 1 unit of each currency equals in SGD. ${S.ratesUpdated?'Last updated: '+esc(S.ratesUpdated):'Using default rates.'} Rates auto-refresh on page load.</p>
       <div class="rate-grid">${CUR.filter(c=>c!=='SGD').map(c=>`<div class="rate-item"><label>${c}</label><input type="number" step="0.0001" value="${S.rates[c]||0}" data-rc="${c}" class="fc" style="width:auto"> SGD</div>`).join('')}</div>
     </div></div>
-    <div class="card" style="margin-bottom:16px"><div class="card-header"><h3>Cloud Sync</h3></div><div class="card-body">
+    ${acctEnabled()&&(!getSyncConfig().token||getSyncConfig().retired)?'':`<div class="card" style="margin-bottom:16px"><div class="card-header"><h3>${acctEnabled()?'Old GitHub Sync':'Cloud Sync'}</h3></div><div class="card-body">
+      ${acctEnabled()?`<p style="font-size:12px;color:var(--orange);margin:0 0 10px">${_acct?'Your data now syncs through your account. This GitHub link is only used for the Apple Calendar feed until that moves to your account too.':'Sync now works through accounts. Sign in or create your account above: your data here will be moved into it.'}</p>`:''}
       <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Sync your data across devices using a GitHub Gist. Create a <a href="https://github.com/settings/tokens/new?scopes=gist&description=Holiday+Tracker+Sync" target="_blank" rel="noopener" style="color:var(--primary)">Personal Access Token</a> with <strong>gist</strong> scope only.</p>
       ${(()=>{const c=getSyncConfig();
         // Token expired state
@@ -2584,10 +2902,10 @@ function vSettings(){
           <button class="btn btn-p" data-action="sync-connect" style="font-size:12px">Connect & Sync</button>
           <span id="sync-status" style="font-size:11px;color:var(--text3)"></span>
         </div>`;})()}
-    </div></div>
+    </div></div>`}
     <div class="card" style="margin-bottom:16px"><div class="card-header"><h3>Apple Calendar (iCloud) Sync</h3></div><div class="card-body">
       ${(()=>{const url=calFeedUrl();const sc=getSyncConfig();
-        if(!sc.token&&!url)return '<p style="font-size:11px;color:var(--text3)">Connect cloud sync above first — the calendar feed is published alongside your sync data.</p>';
+        if(!sc.token&&!url)return acctEnabled()?'<p style="font-size:11px;color:var(--text3)">Apple Calendar sync for accounts is coming soon. Until then you can download a calendar file below (Calendar Export).</p>':'<p style="font-size:11px;color:var(--text3)">Connect cloud sync above first — the calendar feed is published alongside your sync data.</p>';
         if(!url)return '<p style="font-size:11px;color:var(--text3)">Feed will be available after the next sync completes. Make any change (or click below) to publish it.</p><button class="btn btn-s" data-action="publish-feed" style="margin-top:8px">Publish Calendar Feed Now</button>';
         return `
         <p style="font-size:11px;color:var(--text3);margin-bottom:10px">Subscribe once and your calendar stays up to date automatically — every change in this app republishes the feed, and iCloud re-fetches it on the refresh interval you choose. One-way: tracker → calendar.</p>
@@ -4946,7 +5264,15 @@ document.addEventListener('click',e=>{
     case 'sync-connect':connectSync();break;
     case 'dash-sync-connect':connectSyncFromDash();break;
     case 'sync-disconnect':disconnectSync();break;
-    case 'sync-now':fullSync();break;
+    case 'sync-now':cloudFullSync();break;
+    case 'acct-signin':acctSignIn();break;
+    case 'acct-signup':acctSignUp();break;
+    case 'acct-forgot':e.preventDefault();acctForgot();break;
+    case 'acct-signout':acctSignOut();break;
+    case 'acct-delete':acctDelete();break;
+    case 'acct-change-pw':acctShowNewPassword();break;
+    case 'open-guide':nav('settings');setTimeout(()=>{const g=document.getElementById('guide-card');if(g){g.querySelector('details')?.setAttribute('open','');g.scrollIntoView({behavior:'smooth'});}},50);break;
+    case 'go-account':nav('settings');setTimeout(()=>{const g=document.getElementById('acct-card');if(g){g.scrollIntoView({behavior:'smooth'});document.getElementById('acct-email')?.focus();}},50);break;
     case 'link-device':linkDevice();break;
     case 'sync-push':pushToGist().then(()=>toast('Pushed to cloud'));break;
     case 'sync-pull':pullFromGist().then(pulled=>{if(pulled)toast('Pulled from cloud');else toast('Already up to date');});break;
@@ -5099,7 +5425,8 @@ document.getElementById('fab').onclick=()=>showSmartUpload();
 try{render();
   // Auto-sync on load
   const _initConf=getSyncConfig();
-  if(_initConf.token){setTimeout(()=>fullSync(),800);}
+  if(acctEnabled()){acctInit().then(()=>{if(!_acct&&cloudMode()==='gist')fullSync();});}
+  else if(_initConf.token){setTimeout(()=>fullSync(),800);}
   else if(_initConf.gistId){
     // Arrived via link — pull data anonymously (read-only, no token needed)
     setTimeout(()=>pullGistAnon(_initConf.gistId),500);
@@ -5110,24 +5437,24 @@ try{render();
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'){
     const vc=getSyncConfig();
-    if(vc.token)fullSync();
-    else if(vc.gistId)pullGistAnon(vc.gistId);
+    if(cloudMode())cloudFullSync();
+    else if(vc.gistId&&!acctEnabled())pullGistAnon(vc.gistId);
   }
 });
 window.addEventListener('focus',()=>{
   const fc=getSyncConfig();
-  if(fc.token)pullFromGist().then(pulled=>{if(pulled){render();toast('Synced from cloud');}});
-  else if(fc.gistId)pullGistAnon(fc.gistId);
+  if(cloudMode())cloudPull().then(pulled=>{if(pulled){render();toast('Synced from cloud');}});
+  else if(fc.gistId&&!acctEnabled())pullGistAnon(fc.gistId);
 });
 window.addEventListener('beforeunload',()=>{
-  if(_syncTimer){clearTimeout(_syncTimer);pushToGist();}
+  if(_syncTimer){clearTimeout(_syncTimer);cloudPush();}
 });
 startSyncPolling();
 setInterval(()=>{try{renderSidebar();}catch(e){}},60000);
 
 // Offline detection
 const _ob=document.createElement('div');_ob.className='offline-banner';_ob.textContent='You are offline — changes will sync when reconnected';document.body.appendChild(_ob);
-window.addEventListener('online',()=>{_ob.classList.remove('show');if(getSyncConfig().token)pushToGist();});
+window.addEventListener('online',()=>{_ob.classList.remove('show');if(cloudMode())cloudPush();});
 window.addEventListener('offline',()=>_ob.classList.add('show'));
 if(!navigator.onLine)_ob.classList.add('show');
 </script>
