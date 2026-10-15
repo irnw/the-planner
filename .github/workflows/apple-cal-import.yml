@@ -31,7 +31,7 @@ jobs:
           URL=$(echo "$GIST_JSON" | jq -r '.files["holiday-tracker-data.json"].content | fromjson | .appleCalUrl // empty')
           if [ -z "$URL" ]; then echo "::warning::No appleCalUrl configured in tracker settings"; exit 0; fi
           URL="${URL/webcal:\/\//https:\/\/}"
-          curl -sfL --max-time 60 "$URL" -o cal.ics
+          curl -sfL --max-time 60 --retry 4 --retry-delay 10 --retry-all-errors "$URL" -o cal.ics
           if ! grep -q "BEGIN:VCALENDAR" cal.ics; then echo "Fetched content is not a valid ICS calendar"; exit 1; fi
           # Skip the PATCH if nothing changed
           echo "$GIST_JSON" | jq -r '.files["apple-calendar-import.ics"].content // ""' > existing.ics
