@@ -2,10 +2,12 @@ name: Keepalive
 # GitHub disables scheduled workflows after 60 days without repo activity.
 # Re-enabling each workflow via the API resets that timer (including for this
 # workflow itself), so the scheduled jobs keep running without dummy commits.
+# It also pings the Supabase database, because free projects pause after 7 days
+# without activity (which would make sign-in fail until restored by hand).
 
 on:
   schedule:
-    - cron: '17 3 * * 1'  # Weekly, Monday 03:17 UTC
+    - cron: '17 3 * * 1,4'  # Monday and Thursday 03:17 UTC
   workflow_dispatch:
 
 permissions:
@@ -24,3 +26,14 @@ jobs:
             gh api -X PUT "repos/${{ github.repository }}/actions/workflows/$id/enable"
             echo "Enabled workflow $id"
           done
+      - name: Keep the Supabase project awake
+        run: |
+          # Publishable key: public by design (it's in the web app too); this request can't read any data.
+          # Any query reaching the database counts as activity, even though it is refused.
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 \
+            "https://lfezxmbsnsrkyqvismaj.supabase.co/rest/v1/user_data?select=user_id&limit=1" \
+            -H "apikey: sb_publishable_Dq3LuTEfNwRFTQ85XfTIEw_bRBqHqRq")
+          echo "Supabase responded with HTTP $code"
+          if [ "$code" = "000" ] || [ "$code" -ge 500 ]; then
+            echo "::warning title=Supabase unreachable::The project may be paused. Restore it at https://supabase.com/dashboard"
+          fi
