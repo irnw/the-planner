@@ -909,6 +909,20 @@ input[type=checkbox],input[type=radio]{accent-color:var(--primary-deep)}
 .evr.apple .evr-name{font-size:.95rem}
 .entry-top h4{font-size:15px}
 @media(max-width:860px){.page-header{padding:22px 18px 2px!important}.page-header h2{font-size:24px}.hero-name{font-size:20px}.hero-cd b{font-size:22px}}
+/* Leave summary: all eight figures in one row (4 x 2 on phones) */
+.leave-boxes{grid-template-columns:repeat(8,minmax(0,1fr))!important}
+.leave-boxes .lb{padding:16px 8px!important;border-left:1px solid var(--line)!important;border-top:none!important}
+.leave-boxes .lb:first-child{border-left:none!important}
+.leave-boxes .lb .lv{font-size:22px!important}
+.leave-boxes .lb .ll{font-size:8px!important;letter-spacing:.14em!important;line-height:1.5;margin-top:4px}
+@media(max-width:860px){
+  .leave-boxes{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  .leave-boxes .lb:nth-child(5){border-left:none!important}
+  .leave-boxes .lb:nth-child(n+5){border-top:1px solid var(--line)!important}
+  .leave-boxes .lb .lv{font-size:19px!important}
+}
+.ytabs{align-items:center}
+.yt{display:inline-flex;align-items:center;justify-content:center;line-height:1;padding:9px 16px!important}
 @keyframes sheetIn{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 .more-list{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line)}
 .more-list button{display:flex;align-items:center;gap:12px;padding:15px 16px;background:none;border:0;border-top:1px solid var(--line);color:var(--text);font:inherit;font-size:17px;text-align:left;cursor:pointer}
