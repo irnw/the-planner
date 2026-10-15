@@ -5,39 +5,46 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0a0a0f">
-<title>Holiday Tracker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-title" content="Planner">
+<title>The Planner</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
 /* ========== THEME VARIABLES ========== */
 [data-theme="dark"]{
-  --bg:#0f1014;--bg2:#14161c;--sidebar-bg:#0b0c10;--sidebar-hover:rgba(255,255,255,.05);--sidebar-active:rgba(138,127,232,.12);
-  --card:#191c24;--card-hover:#1e2130;--primary:#8a7fe8;--primary-dim:rgba(138,127,232,.10);--primary-glow:rgba(138,127,232,.22);
-  --accent:#e87070;--accent-dim:rgba(232,112,112,.10);--green:#4ade80;--green-dim:rgba(74,222,128,.10);
-  --orange:#f0a060;--orange-dim:rgba(240,160,96,.10);--purple:#a78bfa;--purple-dim:rgba(167,139,250,.10);
-  --text:#f2f1ed;--text2:#8b949e;--text3:#505868;--border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.12);
-  --input-bg:rgba(255,255,255,.05);--radius:14px;--radius-lg:24px;--shadow:none;--shadow2:0 16px 48px rgba(0,0,0,.5);
-  --header-bg:rgba(15,16,20,.92);--overlay:rgba(0,0,0,.8);
-  --sg:#8a7fe8;--sg-dim:rgba(138,127,232,.12);--my:#f0a060;--my-dim:rgba(240,160,96,.12);
-  --glass:rgba(255,255,255,.03);--glass-border:#2a2e3a;
-  --glow-1:#8a7fe8;--glow-2:#a78bfa;
-  --serif:'Playfair Display',Georgia,serif;
+  /* Apple system colours (dark) */
+  --bg:#000000;--bg2:#1c1c1e;--sidebar-bg:rgba(28,28,30,.92);--sidebar-hover:rgba(255,255,255,.06);--sidebar-active:rgba(184,170,255,.16);
+  --card:#1c1c1e;--card-hover:#242426;--primary:#b8aaff;--primary-dim:rgba(184,170,255,.15);--primary-glow:rgba(184,170,255,.3);--on-primary:#1b1533;
+  --accent:#ff453a;--accent-dim:rgba(255,69,58,.14);--green:#30d158;--green-dim:rgba(48,209,88,.14);
+  --orange:#ff9f0a;--orange-dim:rgba(255,159,10,.14);--purple:#bf5af2;--purple-dim:rgba(191,90,242,.14);
+  --text:#ffffff;--text2:rgba(235,235,245,.62);--text3:rgba(235,235,245,.36);--border:rgba(84,84,88,.42);--border2:rgba(84,84,88,.65);
+  --input-bg:rgba(118,118,128,.24);--radius:12px;--radius-lg:14px;--shadow:none;--shadow2:0 20px 60px rgba(0,0,0,.6);
+  --header-bg:rgba(0,0,0,.72);--overlay:rgba(0,0,0,.55);
+  --sg:#5e5ce6;--sg-dim:rgba(94,92,230,.2);--my:#ff9f0a;--my-dim:rgba(255,159,10,.16);
+  --glass:rgba(255,255,255,.04);--glass-border:rgba(84,84,88,.42);
+  --glow-1:#b8aaff;--glow-2:#8f7cf7;
+  --serif:var(--font);
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Helvetica Neue','Segoe UI',Roboto,Inter,Arial,sans-serif;
+  --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace;
+  --fill:rgba(118,118,128,.24);--fill2:rgba(118,118,128,.16);--sep:rgba(84,84,88,.5);
 }
 [data-theme="light"]{
-  --bg:#f7f6f3;--bg2:#efede8;--sidebar-bg:#0b0c10;--sidebar-hover:rgba(255,255,255,.08);--sidebar-active:rgba(138,127,232,.15);
-  --card:#ffffff;--card-hover:#faf9f6;--primary:#6f63d6;--primary-dim:rgba(111,99,214,.06);--primary-glow:rgba(111,99,214,.15);
-  --accent:#d65050;--accent-dim:rgba(214,80,80,.06);--green:#16a34a;--green-dim:rgba(22,163,74,.06);
-  --orange:#d48030;--orange-dim:rgba(212,128,48,.06);--purple:#7c3aed;--purple-dim:rgba(124,58,237,.06);
-  --text:#111;--text2:#52526a;--text3:#a0a0aa;--border:rgba(0,0,0,.06);--border2:rgba(0,0,0,.10);
-  --input-bg:#ffffff;--radius:14px;--radius-lg:24px;--shadow:none;--shadow2:0 12px 40px rgba(0,0,0,.08);
-  --header-bg:rgba(247,246,243,.94);--overlay:rgba(0,0,0,.45);
-  --sg:#6f63d6;--sg-dim:rgba(111,99,214,.08);--my:#d48030;--my-dim:rgba(212,128,48,.08);
-  --glass:rgba(0,0,0,.02);--glass-border:#e7e3ef;
-  --glow-1:#6f63d6;--glow-2:#7c3aed;
-  --serif:'Playfair Display',Georgia,serif;
+  /* Apple system colours (light) */
+  --bg:#f2f2f7;--bg2:#ffffff;--sidebar-bg:rgba(246,246,248,.92);--sidebar-hover:rgba(0,0,0,.05);--sidebar-active:rgba(124,106,232,.13);
+  --card:#ffffff;--card-hover:#f7f7fa;--primary:#7c6ae8;--primary-dim:rgba(124,106,232,.1);--primary-glow:rgba(124,106,232,.24);--on-primary:#ffffff;
+  --accent:#ff3b30;--accent-dim:rgba(255,59,48,.1);--green:#28a745;--green-dim:rgba(52,199,89,.12);
+  --orange:#f08c00;--orange-dim:rgba(255,149,0,.12);--purple:#af52de;--purple-dim:rgba(175,82,222,.1);
+  --text:#000000;--text2:rgba(60,60,67,.66);--text3:rgba(60,60,67,.38);--border:rgba(60,60,67,.14);--border2:rgba(60,60,67,.24);
+  --input-bg:rgba(118,118,128,.12);--radius:12px;--radius-lg:14px;--shadow:0 1px 2px rgba(0,0,0,.04);--shadow2:0 20px 60px rgba(0,0,0,.18);
+  --header-bg:rgba(242,242,247,.78);--overlay:rgba(0,0,0,.32);
+  --sg:#5856d6;--sg-dim:rgba(88,86,214,.12);--my:#f08c00;--my-dim:rgba(255,149,0,.12);
+  --glass:rgba(0,0,0,.02);--glass-border:rgba(60,60,67,.14);
+  --glow-1:#7c6ae8;--glow-2:#a594f9;
+  --serif:var(--font);
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Helvetica Neue','Segoe UI',Roboto,Inter,Arial,sans-serif;
+  --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace;
+  --fill:rgba(118,118,128,.12);--fill2:rgba(118,118,128,.08);--sep:rgba(60,60,67,.18);
 }
 
 body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px;transition:background .3s,color .3s;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
@@ -320,7 +327,7 @@ td.mg-l{color:var(--text3);white-space:nowrap;padding-top:9px}
 .kind-opt{position:relative;cursor:pointer}
 .kind-opt input{position:absolute;opacity:0;pointer-events:none}
 .kind-opt span{display:block;text-align:center;font-size:12px;padding:8px 4px;border:1px solid var(--border);border-radius:8px;color:var(--text2)}
-.kind-opt input:checked+span{border-color:var(--primary);background:var(--primary);color:#fff;font-weight:600}
+.kind-opt input:checked+span{border-color:var(--primary);background:var(--primary);color:var(--on-primary);font-weight:600}
 .kind-opt input:focus-visible+span{outline:2px solid var(--primary);outline-offset:2px}
 .apple-attach-btn{margin-left:auto;font-size:10px;padding:3px 8px;white-space:nowrap;border:1px dashed var(--border)}
 .trip-card .trip-foot{flex-wrap:wrap;row-gap:6px}
@@ -334,7 +341,7 @@ td.mg-l{color:var(--text3);white-space:nowrap;padding-top:9px}
 .dz-tabs{display:flex;gap:0;margin-bottom:10px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
 .dz-tab{flex:1;padding:8px 12px;font-size:12px;text-align:center;cursor:pointer;background:var(--bg2);color:var(--text2);border:none;transition:all .15s;font-weight:500}
 .dz-tab:not(:last-child){border-right:1px solid var(--border)}
-.dz-tab.active{background:var(--primary);color:#fff}
+.dz-tab.active{background:var(--primary);color:var(--on-primary)}
 .dz-tab:hover:not(.active){background:var(--primary-dim)}
 .dz-paste-area{width:100%;min-height:120px;max-height:200px;padding:10px;font-size:12px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);color:var(--text);resize:vertical;font-family:inherit;line-height:1.5}
 .dz-paste-area::placeholder{color:var(--text3)}
@@ -373,7 +380,7 @@ td.mg-l{color:var(--text3);white-space:nowrap;padding-top:9px}
 
 /* ========== UNDO TOAST ========== */
 .toast-undo{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--glass-border);color:var(--text);padding:10px 16px;border-radius:10px;font-size:13px;z-index:300;animation:tIn .3s;box-shadow:0 8px 32px rgba(0,0,0,.4);display:flex;align-items:center;gap:12px;backdrop-filter:blur(12px)}
-.toast-undo .undo-btn{background:var(--primary);color:#fff;border:none;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;font-family:inherit}
+.toast-undo .undo-btn{background:var(--primary);color:var(--on-primary);border:none;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;font-family:inherit}
 .toast-undo .undo-btn:hover{filter:brightness(1.15)}
 .toast-undo .undo-timer{width:60px;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
 .toast-undo .undo-timer-bar{height:100%;background:var(--primary);transition:width linear}
@@ -631,15 +638,213 @@ td.mg-l{color:var(--text3);white-space:nowrap;padding-top:9px}
 }
 </style>
 <script>
-const _m={name:'Holiday Tracker',short_name:'HoliTracker',start_url:'.',display:'standalone',background_color:'#0a0a0f',theme_color:'#0a0a0f',icons:[{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%236c8cff'/%3E%3Cpath d='M350 200l-85-85-85 85M265 115v200M145 340h222' stroke='white' stroke-width='36' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E",sizes:'512x512',type:'image/svg+xml'}]};
+const _m={name:'The Planner',short_name:'Planner',description:'Your days and journeys, planned.',start_url:'.',display:'standalone',background_color:'#000000',theme_color:'#000000',icons:[{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%236c8cff'/%3E%3Cpath d='M350 200l-85-85-85 85M265 115v200M145 340h222' stroke='white' stroke-width='36' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E",sizes:'512x512',type:'image/svg+xml'}]};
 const _ml=document.createElement('link');_ml.rel='manifest';_ml.href=URL.createObjectURL(new Blob([JSON.stringify(_m)],{type:'application/json'}));document.head.appendChild(_ml);
 </script>
+<style id="ds2">
+/* ===== Design system v2 (Apple-style): one font, system colours, grouped surfaces, hairline separators ===== */
+body{font-family:var(--font);font-size:14px;letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
+code,.kbd,.mono,[style*="monospace"]{font-family:var(--mono)!important}
+h1,h2,h3,h4{letter-spacing:-.015em}
+::selection{background:var(--primary-glow)}
+:focus-visible{outline:3px solid var(--primary-glow);outline-offset:2px;border-radius:8px}
+
+/* Sidebar: follows the theme (light in light mode), translucent, no shortcut numbers */
+.sidebar{background:var(--sidebar-bg);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-right:.5px solid var(--sep)}
+.sidebar-brand{padding:22px 18px 18px}
+.sidebar-brand .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(160deg,#d9cfff 0%,#a594f9 45%,#7c6ae8 100%);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.sidebar-brand h1{font-size:17px;font-weight:700;letter-spacing:-.02em;text-transform:none;color:var(--text)}
+.nav-section{display:none}
+.nav{padding:6px 10px}
+.nav-item{color:var(--text);font-size:14px;padding:8px 10px;border-radius:8px;margin-bottom:1px;font-weight:450}
+.nav-item svg{opacity:1;color:var(--primary);width:18px;height:18px}
+.nav-item:hover{background:var(--sidebar-hover);color:var(--text)}
+.nav-item.active{background:var(--sidebar-active);color:var(--text);font-weight:600}
+.nav-item .kbd{display:none}
+.sidebar-footer{border-top:.5px solid var(--sep)}
+.theme-toggle{color:var(--text2)}
+.theme-toggle:hover{background:var(--sidebar-hover);color:var(--text)}
+.sidebar-collapse-btn{background:var(--card)!important;color:var(--text2)!important;border:.5px solid var(--sep)!important}
+
+/* Large titles, translucent bar */
+.page-header{background:var(--header-bg);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:.5px solid var(--sep);padding:22px 32px 16px}
+.page-header h2{font-family:var(--font);font-size:30px;font-weight:700;letter-spacing:-.025em;line-height:1.15}
+.page-header .subtitle{font-size:14px;color:var(--text2);letter-spacing:-.01em;margin-top:3px}
+.back-link{color:var(--primary)!important;font-size:15px;font-weight:500;margin-bottom:6px}
+
+/* Surfaces: grouped cards, no heavy borders */
+.card,.trip-card,.entry,.hero,.evr-list,.calm,.calL,.att{border:none!important;box-shadow:var(--shadow)}
+[data-theme="dark"] .card,[data-theme="dark"] .trip-card,[data-theme="dark"] .entry,[data-theme="dark"] .hero,[data-theme="dark"] .evr-list,[data-theme="dark"] .calL{box-shadow:none}
+.card{border-radius:var(--radius-lg)}
+.card-header{border-bottom:.5px solid var(--sep);padding:14px 18px}
+.card-header h3,.modal-head h3,.cal-nav h3,.hero-name,.cal-ph-list h3{font-family:var(--font)!important;font-weight:700;letter-spacing:-.02em}
+.card-header h3{font-size:17px}
+.entry{border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;background:var(--card)}
+.trip-card{border-radius:var(--radius-lg)}
+.trip-name{font-family:var(--font)!important;font-weight:650;letter-spacing:-.02em}
+.evr-list,.calL{background:var(--card)}
+.evr,.calL-day{border-color:var(--sep)!important}
+.evr{border-top-width:.5px}
+.calL{gap:0;background:var(--card)}.calL-day{background:transparent;border-top:.5px solid var(--sep)}.calL-day:first-child{border-top:0}
+.sec-h{font-size:13px;font-weight:600;letter-spacing:-.01em;text-transform:none;color:var(--text2)}
+.hero{background:var(--card)}
+.hero-name{font-size:26px}
+.hero-cd b{font-family:var(--font);font-weight:700;letter-spacing:-.03em}
+.hero-k{text-transform:none;letter-spacing:-.01em;font-size:13px;color:var(--text2)}
+
+/* Stat panels: one grouped panel with hairline dividers instead of separate coloured tiles */
+.stats{gap:0;background:var(--card);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow)}
+.stats .stat{background:transparent;border:none;border-radius:0;border-left:.5px solid var(--sep);padding:14px 18px}
+.stats .stat:first-child{border-left:none}
+.stat .s-label{font-size:12px;font-weight:500;color:var(--text2);text-transform:none;letter-spacing:-.01em}
+.stat .s-val{font-family:var(--font)!important;font-weight:700;letter-spacing:-.03em;color:var(--text)!important;font-size:26px}
+.stat .s-sub{color:var(--text3)}
+.stat.green .s-val{color:var(--text)!important}
+.leave-boxes{gap:0;background:var(--card);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow)}
+.leave-boxes .lb{background:transparent!important;border:none;border-radius:0;border-left:.5px solid var(--sep);padding:16px 10px}
+.leave-boxes .lb:first-child{border-left:none}
+.leave-boxes .lb .lv{font-family:var(--font)!important;font-weight:700;letter-spacing:-.03em;color:var(--text)!important}
+.leave-boxes .lb .ll{text-transform:none;letter-spacing:-.01em;font-size:11px;color:var(--text2)!important}
+.leave-boxes .lb.t-bal .lv{color:var(--green)!important}
+.leave-boxes .lb.t-req .lv{color:var(--orange)!important}
+
+/* Buttons: filled primary, grey secondary, plain text tertiary */
+.btn{border-radius:10px;font-size:14px;font-weight:600;padding:8px 15px;letter-spacing:-.01em;border:none}
+.btn-p{background:var(--primary);color:var(--on-primary)}
+.btn-p:hover{filter:brightness(1.08)}
+.btn-s{background:var(--fill2);color:var(--primary);border:none}
+.btn-s:hover{background:var(--fill);border:none}
+.btn-d{background:var(--accent-dim);color:var(--accent)}
+.btn-ghost{color:var(--primary);font-weight:500}
+.btn-ghost:hover{background:var(--fill2);color:var(--primary)}
+.fab{background:var(--primary);color:var(--on-primary)!important;box-shadow:0 8px 24px rgba(0,0,0,.22),0 2px 6px rgba(0,0,0,.12);font-weight:600}
+
+/* Fields: filled, borderless, sentence-case labels */
+.fc{background:var(--input-bg);border:1px solid transparent;border-radius:10px;font-family:var(--font);font-size:15px;color:var(--text)}
+.fc:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-dim);outline:none}
+select.fc{font-size:14px}
+.fi label{text-transform:none;letter-spacing:-.01em;font-size:13px;font-weight:500;color:var(--text2)}
+.search-bar input{background:var(--input-bg);border:1px solid transparent;border-radius:10px;font-size:14px}
+
+/* Segmented controls (event tabs, view switches, category chips) */
+.tabs{background:var(--fill2);border:none;border-radius:9px;padding:2px;gap:0}
+.tab{border-radius:7px;font-size:13px;font-weight:500;color:var(--text);padding:6px 10px}
+.tab.active{background:var(--card);color:var(--text);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.04)}
+[data-theme="dark"] .tab.active{background:#636366}
+.seg{background:var(--fill2);border:none;border-radius:9px;padding:2px}
+.seg button{border-radius:7px;color:var(--text);font-weight:500;font-size:13px;padding:5px 12px}
+.seg button.on{background:var(--card);color:var(--text);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.14)}
+[data-theme="dark"] .seg button.on{background:#636366}
+.yt{border:none;background:var(--fill2);color:var(--text);border-radius:999px}
+.yt.active{background:var(--primary)!important;color:var(--on-primary)!important}
+
+/* Tags & small labels: softer */
+.tag{border-radius:6px;font-weight:600}
+.clash-badge{border-radius:6px}
+
+/* Dialogs as sheets */
+.modal-bg{background:var(--overlay)}
+.modal{background:var(--card);border:none;border-radius:16px;box-shadow:var(--shadow2)}
+[data-theme="light"] .modal{background:#f2f2f7}
+[data-theme="light"] .modal .fc{background:#fff;border-color:rgba(60,60,67,.12)}
+.modal-head{border-bottom:.5px solid var(--sep);padding:14px 18px}
+.modal-head h3{font-size:17px}
+.modal-foot{border-top:.5px solid var(--sep)}
+.modal-x{border-radius:50%!important;background:var(--fill2)!important;color:var(--text2)!important;width:28px;height:28px}
+.toast{background:rgba(30,30,32,.92);color:#fff;border:none;border-radius:12px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 10px 30px rgba(0,0,0,.25)}
+
+/* Calendar & lists in the new palette */
+.calm{border:none;background:var(--sep);box-shadow:var(--shadow)}
+.calm-hc{background:var(--card);color:var(--text2);text-transform:none;letter-spacing:0;font-size:12px}
+.calm-bg{background:var(--card)}
+.calm-bg.other{background:var(--bg2);opacity:.5}
+[data-theme="light"] .calm-bg.other{background:#f7f7f9;opacity:1}
+.calm-top.other .calm-num{color:var(--text3)}
+.calm-num{font-weight:600}
+.calm-bar{border-radius:6px;font-weight:600}
+.calm-bg.today{box-shadow:none}
+.calm-top .calm-num{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:11px}
+.calm-week:has(.calm-bg.today) .calm-top[data-date] .calm-num{}
+.hero::before{width:4px}
+.att{background:var(--orange-dim);box-shadow:none}
+.att.bad{background:var(--accent-dim)}
+.evr-when{color:var(--text2);font-weight:500}
+.evr-when.now{color:var(--green);font-weight:600}
+.ph-legend{border:none!important;background:transparent!important;padding-left:2px!important}
+
+/* Phone tab bar (replaces the ☰ menu) */
+.tabbar{display:none}
+@media(max-width:768px){
+  .hamburger,.sidebar-overlay{display:none!important}
+  .sidebar{display:none!important}
+  .main{margin-left:0!important;padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+  .page-header{padding:14px 16px 12px!important}
+  .page-header h2{font-size:28px}
+  .tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:120;background:var(--header-bg);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-top:.5px solid var(--sep);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;color:var(--text3);font:inherit;font-size:10px;font-weight:500;padding:2px 0;cursor:pointer}
+  .tabbar button svg{width:24px;height:24px}
+  .tabbar button.on{color:var(--primary)}
+  .fab{bottom:calc(74px + env(safe-area-inset-bottom))!important;right:14px!important}
+  .toast{bottom:calc(80px + env(safe-area-inset-bottom))!important}
+  .stats{grid-template-columns:1fr 1fr!important}
+  .stats .stat{border-top:.5px solid var(--sep)}
+  .stats .stat:nth-child(odd){border-left:none}
+  .stats .stat:nth-child(-n+2){border-top:none}
+  .leave-boxes .lb{border-top:.5px solid var(--sep)}
+  .leave-boxes .lb:nth-child(odd){border-left:none}
+  .leave-boxes .lb:nth-child(-n+2){border-top:none}
+  .modal-bg{padding:0!important;align-items:flex-end!important}
+  .modal{border-radius:16px 16px 0 0;max-height:94vh;overflow:auto;animation:sheetIn .28s cubic-bezier(.2,.8,.2,1)}
+}
+
+/* Booking cards: Edit + ⋯ menu; sentence-case field labels */
+.entry-acts{display:flex;align-items:center;gap:2px}
+.entry-acts .btn-ghost{font-size:14px;padding:4px 10px}
+.more-menu{position:relative}
+.more-menu summary{list-style:none;cursor:pointer;width:30px;height:30px;border-radius:15px;display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:18px;line-height:1;user-select:none}
+.more-menu summary::-webkit-details-marker{display:none}
+.more-menu summary:hover,.more-menu[open] summary{background:var(--fill2)}
+.more-menu .mm{position:absolute;right:0;top:34px;z-index:30;min-width:220px;background:var(--card);border-radius:12px;box-shadow:var(--shadow2),0 0 0 .5px var(--sep);overflow:hidden;display:flex;flex-direction:column}
+[data-theme="dark"] .more-menu .mm{background:#2c2c2e}
+.more-menu .mm button{background:none;border:0;border-top:.5px solid var(--sep);text-align:left;padding:11px 14px;font:inherit;font-size:14px;color:var(--text);cursor:pointer}
+.more-menu .mm button:first-child{border-top:0}
+.more-menu .mm button:hover{background:var(--fill2)}
+.more-menu .mm .mm-del{color:var(--accent)}
+.eg .ek{text-transform:none;letter-spacing:-.01em;font-size:12px;font-weight:500;color:var(--text2)}
+.eg .ev{font-size:14px}
+input[type=checkbox],input[type=radio]{accent-color:var(--primary)}
+/* Leave summary: an even 4 × 2 grid */
+.leave-boxes{grid-template-columns:repeat(4,1fr)!important}
+.leave-boxes .lb:nth-child(4n+1){border-left:none}
+.leave-boxes .lb:nth-child(n+5){border-top:.5px solid var(--sep)}
+@media(max-width:768px){.leave-boxes{grid-template-columns:repeat(2,1fr)!important}}
+.stat[style*="border"]{border-color:transparent!important}
+
+.calm-num.wk,.calm-hc.wk,.d-num.weekend{color:var(--text2)!important}
+[data-theme="light"] .calm{background:rgba(60,60,67,.12)}
+.tl-cost,.timeline .cost,[class*="tl-"] .cost{color:var(--text2)!important}
+.brand-tag{font-size:10.5px;color:var(--text3);letter-spacing:-.005em;margin-top:2px;line-height:1.3}
+.sidebar-brand .logo{background:linear-gradient(160deg,#d9cfff 0%,#a594f9 45%,#7c6ae8 100%)}
+/* Lavender accent: filled controls use the readable text colour for the theme */
+.btn-p svg,.fab svg{color:inherit}
+.seg button.on,.tab.active{color:var(--text)}
+.calm-bar{color:#fff;text-shadow:0 0 1px rgba(0,0,0,.15)}
+[data-theme="dark"] .evr-when.now,[data-theme="dark"] .hero-cd b{color:var(--primary)}
+@keyframes sheetIn{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.more-list{display:flex;flex-direction:column;background:var(--card);border-radius:12px;overflow:hidden}
+.more-list button{display:flex;align-items:center;gap:12px;padding:13px 14px;background:none;border:0;border-top:.5px solid var(--sep);color:var(--text);font:inherit;font-size:16px;text-align:left;cursor:pointer}
+.more-list button:first-child{border-top:0}
+.more-list button svg{width:22px;height:22px;color:var(--primary)}
+.more-list button span.chev{margin-left:auto;color:var(--text3)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
 </head>
 <body>
 
 <button class="hamburger" id="hamburger" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 <nav class="sidebar" id="sidebar"></nav>
+<nav class="tabbar" id="tabbar" aria-label="Main"></nav>
 <div class="main" id="app"></div>
 <button class="fab" id="fab" title="Quick Upload — Drop a PDF/image to auto-detect booking info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="fab-label">Scan</span></button>
 <div class="modal-bg" id="mbg"></div>
@@ -663,15 +868,18 @@ const CUR=['SGD','MYR','USD','IDR','EUR','JPY','THB','PHP','AUD','GBP','CNY','MV
 const DRATES={SGD:1,MYR:0.284,USD:1.34,IDR:0.0000847,EUR:1.46,JPY:0.0089,THB:0.038,PHP:0.024,AUD:0.87,GBP:1.70,CNY:0.185,MVR:0.087,EGP:0.027,TWD:0.042,KRW:0.00098};
 const EVENT_COLORS=['#6c8cff','#ff6b6b','#4ade80','#fb923c','#a78bfa','#f472b6','#22d3ee','#facc15','#34d399','#f87171'];
 const ACT_COLORS=['#2ea8a0','#d49650','#c87070','#d47898','#5aad6a','#4da0d0','#b07cc8','#d4a050','#6aab8e','#5a9ec8'];
+// Product name (shown in the sidebar, title, exports and calendar feed). Stored data keys keep their old names.
+const APP_NAME='The Planner';
+const APP_TAGLINE='Your days and journeys, planned.';
 const CATEGORIES=[
-  {id:'trip',label:'Trip',color:'#2ea8a0'},
-  {id:'work',label:'Work',color:'#d49650'},
-  {id:'training',label:'Training',color:'#c87070'},
-  {id:'social',label:'Social',color:'#d47898'},
-  {id:'personal',label:'Personal',color:'#5aad6a'},
-  {id:'activity',label:'Activity',color:'#4da0d0'}
+  {id:'trip',label:'Trip',color:'#8e7cf0'},
+  {id:'work',label:'Work',color:'#ff9f0a'},
+  {id:'training',label:'Training',color:'#ff453a'},
+  {id:'social',label:'Social',color:'#ff375f'},
+  {id:'personal',label:'Personal',color:'#30d158'},
+  {id:'activity',label:'Activity',color:'#bf5af2'}
 ];
-function catColor(c){const cat=CATEGORIES.find(x=>x.id===c);return cat?cat.color:'#2ea8a0';}
+function catColor(c){const cat=CATEGORIES.find(x=>x.id===c);return cat?cat.color:'#8e7cf0';}
 function catLabel(c){const cat=CATEGORIES.find(x=>x.id===c);return cat?cat.label:c||'Trip';}
 
 // ===== COUNTRY SYNC =====
@@ -1145,7 +1353,7 @@ function maybeAskRegion(){
   if(S.prefs&&S.prefs._confirmed||(S.events||[]).length||asked||window._regionAsked)return;
   window._regionAsked=true;try{localStorage.setItem('htRegionAsked','1');}catch(e){}
   const g=P();
-  modal('Welcome to Holiday Tracker',`<p style="font-size:13px;color:var(--text2);line-height:1.6;margin:0 0 12px">Where are you based? This sets your currency, public holidays, weekend and date style. You can change it any time in <b>Settings → Region &amp; Preferences</b>.</p>
+  modal(`Welcome to ${APP_NAME}`,`<p style="font-size:13px;color:var(--text2);line-height:1.6;margin:0 0 12px">Where are you based? This sets your currency, public holidays, weekend and date style. You can change it any time in <b>Settings → Region &amp; Preferences</b>.</p>
     <div class="fi"><label>Home country</label><select class="fc" id="welcome-cc">${ALL_COUNTRIES.map(c=>`<option value="${c.code}"${c.code===g.country?' selected':''}>${esc(c.name)}</option>`).join('')}</select></div>`,()=>{
     const cc=document.getElementById('welcome-cc').value;
     S.prefs={...defaultPrefsFor(cc),_confirmed:true};saveS();render();
@@ -1866,14 +2074,14 @@ function vGuideCard(){
   const firstTime=acctEnabled()&&!_acct,acc=acctEnabled();
   return `<div class="card" id="guide-card" style="margin-bottom:16px"><div class="card-header"><h3>📖 User Guide</h3></div><div class="card-body guide">
     <p class="guide-intro">${acc?'New here? Follow steps 1 to 4 once. Each takes a minute or two. ':''}Tap a heading to open it.</p>
-    ${sec('What is Holiday Tracker?',`<p>One place for every trip: flights, hotels, activities and transport, what you've paid and what's still due, your leave days and the countries you've visited. You can drop in a booking email or PDF and it fills in the details for you.</p>`,firstTime)}
+    ${sec(`What is ${APP_NAME}?`,`<p>One place for every trip: flights, hotels, activities and transport, what you've paid and what's still due, your leave days and the countries you've visited. You can drop in a booking email or PDF and it fills in the details for you.</p>`,firstTime)}
     ${!acc?'':sec('Step 1 · Create your account',ol([
-      'Open the menu (☰ at the top-left on a phone) and tap <b>Settings</b>.',
+      'Go to <b>Settings</b>: in the sidebar on a computer, or <b>More → Settings</b> at the bottom of the screen on a phone.',
       'In <b>Your Account</b>, type your email address.',
       `Choose a password of at least ${MIN_PW} characters. A short sentence works well, e.g. <i>blue kayak on lake toba</i>. Don't reuse a password from another site.`,
       'Tap <b>Create Account</b>.',
       'Check your email inbox for a message from Supabase Auth, the sign-in service this app uses. Can\'t find it? Look in Spam or Junk.',
-      'Tap the link in that email. You come back to Holiday Tracker, signed in.',
+      `Tap the link in that email. You come back to ${APP_NAME}, signed in.`,
       'If the app asks <b>Move your existing data into your account?</b>, tap <b>Move my data</b> to keep what\'s on this device.'
     ]))}
     ${!acc?'':sec('Step 2 · Use it on your phone too',ol([
@@ -1927,7 +2135,7 @@ function vGuideCard(){
     ${!acc?'':sec('Keeping your data private',ul([
       'Only you can see your trips. Each account can only ever read its own data; this is enforced by the database, not just by the app.',
       'Your password is never stored or visible to anyone, including the app\'s owner. Only a scrambled version is kept to check it.',
-      'Holiday Tracker will <b>never</b> ask for your password by email or message. If someone does, it\'s a scam.',
+      `${APP_NAME} will <b>never</b> ask for your password by email or message. If someone does, it's a scam.`,
       'Use a password you don\'t use anywhere else, and sign out on devices that aren\'t yours.',
       'Your booking documents may contain passport numbers or other personal details. Only upload what you\'re comfortable storing.'
     ]))}
@@ -2070,11 +2278,25 @@ function syncIndicatorHtml(){
   return `<div class="sync-dot connected"><div class="sd-icon"></div>Synced${timeAgo?' · '+timeAgo:''}</div>`;
 }
 
+// Phone tab bar: the four most used places + More (Budget, Countries, Settings, appearance)
+const TAB_IDS=['dashboard','events','calendar','leave'];
+function renderTabbar(){
+  const el=document.getElementById('tabbar');if(!el)return;
+  const cur=S.v==='detail'?'events':S.v,inMore=!TAB_IDS.includes(cur);
+  el.innerHTML=TAB_IDS.map(id=>{const n=NAVS.find(x=>x.id===id);return `<button class="${cur===id?'on':''}" data-action="nav" data-to="${id}" aria-label="${n.label}">${n.icon}<span>${id==='dashboard'?'Home':n.label}</span></button>`;}).join('')+
+    `<button class="${inMore?'on':''}" data-action="more-sheet" aria-label="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>More</span></button>`;
+}
+function showMoreSheet(){
+  const item=id=>{const n=NAVS.find(x=>x.id===id);return `<button data-action="nav-more" data-to="${id}">${n.icon}<span>${n.label}</span><span class="chev">›</span></button>`;};
+  modal('More',`<div class="more-list">${['budget','countries','settings'].map(item).join('')}</div>
+    <div class="more-list" style="margin-top:14px"><button data-action="more-theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><span>${S.theme==='dark'?'Light appearance':'Dark appearance'}</span></button></div>`,null,{noSave:true});
+}
 function renderSidebar(){
+  try{renderTabbar();}catch(e){}
   const isDark=S.theme==='dark';
   document.getElementById('sidebar').innerHTML=`
     <button class="sidebar-collapse-btn" onclick="toggleSidebarCollapse()" title="Toggle sidebar">&#8249;</button>
-    <div class="sidebar-brand"><div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.9.3 1.1l5.7 3.8-2.2 2.2-2.5-.3c-.4 0-.7.1-.9.4l-.1.1c-.2.3-.2.7.1 1l2.3 2.3c.3.3.7.3 1 .1l.1-.1c.2-.2.4-.5.4-.9l-.3-2.5 2.2-2.2 3.8 5.7c.2.4.7.5 1.1.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg></div><h1>HOLIDAY TRACKER</h1></div>
+    <div class="sidebar-brand"><div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8 16.5c1.6-2.6 3.4-2.6 4.6-1.2s2.6 1.4 3.9-.8" stroke-width="1.7"/></svg></div><div><h1>${APP_NAME}</h1><div class="brand-tag">${APP_TAGLINE}</div></div></div>
     <div class="nav">
       <div class="nav-section">Menu</div>
       ${NAVS.map((n,i)=>`<div class="nav-item${S.v===n.id||(S.v==='detail'&&n.id==='events')?' active':''}" data-action="nav" data-to="${n.id}" role="button" tabindex="0" aria-label="${n.label} (${i+1})">${n.icon}<span>${n.label}</span><span class="kbd" style="margin-left:auto">${i+1}</span></div>`).join('')}
@@ -2340,7 +2562,7 @@ function rFlights(t){
   ${dupBannerHtml(t,'flights')}
   ${sorted.length?sorted.map(f=>`
     <div class="entry">
-      <div class="entry-top"><h4>${esc(f.airline||'')} ${esc(f.flightNumber||'')}${f.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div style="display:flex;gap:4px">${f.appleUid?`<button class="btn btn-ghost" data-action="apple-detach" data-eid="${f.id}" title="Make it a separate Apple event again">Detach</button>`:''}<button class="btn btn-ghost" data-action="dup-flight" data-eid="${f.id}" title="Duplicate (return flight)">Dup</button><button class="btn btn-ghost" data-action="edit-flight" data-eid="${f.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-flight" data-eid="${f.id}">Del</button></div></div>
+      <div class="entry-top"><h4>${esc(f.airline||'')} ${esc(f.flightNumber||'')}${f.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div class="entry-acts"><button class="btn btn-ghost" data-action="edit-flight" data-eid="${f.id}">Edit</button><details class="more-menu"><summary aria-label="More actions" title="More actions">⋯</summary><div class="mm">${f.appleUid?`<button  data-action="apple-detach" data-eid="${f.id}" title="Make it a separate Apple event again">Detach from Apple Calendar</button>`:''}<button  data-action="dup-flight" data-eid="${f.id}" title="Duplicate (return flight)">Duplicate</button><button class="mm-del" data-action="del-flight" data-eid="${f.id}">Delete</button></div></details></div></div>
       <div class="entry-grid">
         ${f.from||f.to?`<div class="eg"><span class="ek">Route</span><span class="ev">${esc(f.from||'?')} → ${esc(f.to||'?')}</span></div>`:''}
         ${f.pnr?`<div class="eg"><span class="ek">PNR</span><span class="ev" style="font-family:monospace">${esc(f.pnr)}</span></div>`:''}
@@ -2361,7 +2583,7 @@ function rHotels(t){
   ${dupBannerHtml(t,'hotels')}
   ${sorted.length?sorted.map(h=>`
     <div class="entry">
-      <div class="entry-top"><h4>${esc(h.name||'Hotel')}${h.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div style="display:flex;gap:4px">${h.appleUid?`<button class="btn btn-ghost" data-action="apple-detach" data-eid="${h.id}" title="Make it a separate Apple event again">Detach</button>`:''}<button class="btn btn-ghost" data-action="edit-hotel" data-eid="${h.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-hotel" data-eid="${h.id}">Del</button></div></div>
+      <div class="entry-top"><h4>${esc(h.name||'Hotel')}${h.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div class="entry-acts"><button class="btn btn-ghost" data-action="edit-hotel" data-eid="${h.id}">Edit</button><details class="more-menu"><summary aria-label="More actions" title="More actions">⋯</summary><div class="mm">${h.appleUid?`<button  data-action="apple-detach" data-eid="${h.id}" title="Make it a separate Apple event again">Detach from Apple Calendar</button>`:''}<button class="mm-del" data-action="del-hotel" data-eid="${h.id}">Delete</button></div></details></div></div>
       <div class="entry-grid">
         ${h.bookingNumber?`<div class="eg"><span class="ek">Booking #</span><span class="ev">${esc(h.bookingNumber)}</span></div>`:''}
         ${h.checkIn?`<div class="eg"><span class="ek">Check-in</span><span class="ev">${fmt(h.checkIn)}</span></div>`:''}
@@ -2381,7 +2603,7 @@ function rActs(t){
   ${dupBannerHtml(t,'activities')}
   ${sorted.length?sorted.map(a=>`
     <div class="entry">
-      <div class="entry-top"><h4>${esc(a.name||'Activity')}${a.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div style="display:flex;gap:4px">${a.appleUid?`<button class="btn btn-ghost" data-action="apple-detach" data-eid="${a.id}" title="Make it a separate Apple event again">Detach</button>`:''}<button class="btn btn-ghost" data-action="edit-act" data-eid="${a.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-act" data-eid="${a.id}">Del</button></div></div>
+      <div class="entry-top"><h4>${esc(a.name||'Activity')}${a.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div class="entry-acts"><button class="btn btn-ghost" data-action="edit-act" data-eid="${a.id}">Edit</button><details class="more-menu"><summary aria-label="More actions" title="More actions">⋯</summary><div class="mm">${a.appleUid?`<button  data-action="apple-detach" data-eid="${a.id}" title="Make it a separate Apple event again">Detach from Apple Calendar</button>`:''}<button class="mm-del" data-action="del-act" data-eid="${a.id}">Delete</button></div></details></div></div>
       <div class="entry-grid">
         ${a.location?`<div class="eg"><span class="ek">Location</span><span class="ev">${esc(a.location)}</span></div>`:''}
         ${a.date&&a.endDate?`<div class="eg"><span class="ek">Dates</span><span class="ev">${fmt(a.date)} — ${fmt(a.endDate)} (${calcNights(a.date,a.endDate)||'?'}d)</span></div>`:a.date?`<div class="eg"><span class="ek">Date</span><span class="ev">${fmt(a.date)}</span></div>`:''}
@@ -2401,7 +2623,7 @@ function rTrans(t){
   ${dupBannerHtml(t,'transport')}
   ${sorted.length?sorted.map(x=>`
     <div class="entry">
-      <div class="entry-top"><h4>${esc(x.type||'')} ${esc(x.name||'Transport')}${x.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div style="display:flex;gap:4px">${x.appleUid?`<button class="btn btn-ghost" data-action="apple-detach" data-eid="${x.id}" title="Make it a separate Apple event again">Detach</button>`:''}<button class="btn btn-ghost" data-action="edit-trans" data-eid="${x.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="del-trans" data-eid="${x.id}">Del</button></div></div>
+      <div class="entry-top"><h4>${esc(x.type||'')} ${esc(x.name||'Transport')}${x.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div class="entry-acts"><button class="btn btn-ghost" data-action="edit-trans" data-eid="${x.id}">Edit</button><details class="more-menu"><summary aria-label="More actions" title="More actions">⋯</summary><div class="mm">${x.appleUid?`<button  data-action="apple-detach" data-eid="${x.id}" title="Make it a separate Apple event again">Detach from Apple Calendar</button>`:''}<button class="mm-del" data-action="del-trans" data-eid="${x.id}">Delete</button></div></details></div></div>
       <div class="entry-grid">
         ${x.location?`<div class="eg"><span class="ek">Location</span><span class="ev">${esc(x.location)}</span></div>`:''}
         ${x.date?`<div class="eg"><span class="ek">Date</span><span class="ev">${fmt(x.date)}</span></div>`:''}
@@ -2447,7 +2669,7 @@ function rTimeline(t){
   let lastDate='';
   return `<h3 style="font-size:14px;margin-bottom:12px">Itinerary Timeline</h3><div class="timeline">${items.map(it=>{
     const showDate=it.date!==lastDate;lastDate=it.date;
-    return `${showDate?`<div class="tl-date" style="margin-top:${showDate&&lastDate?'8':'0'}px">${fmt(it.date)} · ${dayN(it.date)}</div>`:''}<div class="tl-item tl-${it.type}"><div class="tl-content"><div style="display:flex;justify-content:space-between;align-items:center"><h4>${esc(it.label)}</h4>${it.cost?`<span style="font-size:11px;font-weight:600;color:var(--green)">${it.cost}</span>`:''}</div>${it.sub?`<div class="tl-sub">${esc(it.sub)}</div>`:''}</div></div>`;
+    return `${showDate?`<div class="tl-date" style="margin-top:${showDate&&lastDate?'8':'0'}px">${fmt(it.date)} · ${dayN(it.date)}</div>`:''}<div class="tl-item tl-${it.type}"><div class="tl-content"><div style="display:flex;justify-content:space-between;align-items:center"><h4>${esc(it.label)}</h4>${it.cost?`<span style="font-size:11px;font-weight:600;color:var(--text2)">${it.cost}</span>`:''}</div>${it.sub?`<div class="tl-sub">${esc(it.sub)}</div>`:''}</div></div>`;
   }).join('')}</div>`;
 }
 
@@ -2732,7 +2954,7 @@ function vBudget(){
   ft.forEach(t=>['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>{if(e.cost&&parseFloat(e.cost)){const c=e.currency||baseCur();byCur[c]=(byCur[c]||0)+parseFloat(e.cost);byCat[k]+=toBase(e.cost,c,e.rateToSGD);}})));
   const wc=ft.filter(t=>eCost(t)>0).sort((a,b)=>eCost(b)-eCost(a));
   const total=ft.reduce((s,t)=>s+eCost(t),0);
-  const catColors={flights:'#4da0d0',hotels:'#5aad6a',activities:'#d49650',transport:'#b07cc8'};
+  const catColors={flights:'#8e7cf0',hotels:'#30d158',activities:'#ff9f0a',transport:'#bf5af2'};
   const maxCat=Math.max(...Object.values(byCat),1);
   return `
   <div class="page-header"><div><h2>Budget</h2><div class="subtitle">Spending overview</div></div><div>${tpHtml()}</div></div>
@@ -2838,8 +3060,8 @@ function buildICSCal(evts,stable){
       ].join('\r\n'));
     });
   });
-  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Holiday Tracker//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',
-    'X-WR-CALNAME:Holiday Tracker','X-WR-TIMEZONE:'+homeTz(),...events,'END:VCALENDAR'].join('\r\n');
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//The Planner//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',
+    'X-WR-CALNAME:'+APP_NAME,'X-WR-TIMEZONE:'+homeTz(),...events,'END:VCALENDAR'].join('\r\n');
 }
 function buildICSFeed(){
   // Exclude Apple-sourced events from the outbound feed — they already live
@@ -3523,7 +3745,7 @@ function genItineraryPDF(t,opts){
   let y=0,pg=1;
   const fmtD2=d=>d?new Date(d+'T00:00:00').toLocaleDateString(dloc(),{day:'numeric',month:'short',year:'numeric'}):'';
   const fmtDL=d=>d?new Date(d+'T00:00:00').toLocaleDateString(dloc(),{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'';
-  const addFoot=()=>{doc.setFontSize(7);doc.setTextColor(160);doc.text('Generated by Holiday Tracker',M,290);doc.text('Page '+pg,W-M,290,{align:'right'});doc.setTextColor(0);};
+  const addFoot=()=>{doc.setFontSize(7);doc.setTextColor(160);doc.text('Generated by '+APP_NAME,M,290);doc.text('Page '+pg,W-M,290,{align:'right'});doc.setTextColor(0);};
   const np=()=>{addFoot();doc.addPage();y=15;pg++;};
   const ck=h=>{if(y+h>278)np();};
 
@@ -4711,10 +4933,10 @@ function _layoutFnDateTimes(txt){
   }
   return legs;
 }
-// L. This app's own itinerary PDF ("Generated by Holiday Tracker"): "Day 1 — Wednesday, 1 July 2026 … FLIGHT Scoot TR278
+// L. This app's own itinerary PDF ("Generated by The Planner", formerly "Holiday Tracker"): "Day 1 — Wednesday, 1 July 2026 … FLIGHT Scoot TR278
 //    Route: Singapore to Jakarta Depart: 6:15 pm Arrive: 7:15 pm PNR: MGH6MH Cost: SGD 175.2"
 function _layoutTrackerExport(txt){
-  if(!/Generated by Holiday Tracker/.test(txt))return [];
+  if(!/Generated by (?:Holiday Tracker|The Planner)\b/.test(txt))return [];
   // Older exports drew "→" as "!’" and letter-spaced the route: "S i n g a p o r e  !’    J a k a r t a"
   const unspace=x=>x.replace(/!’|!'/g,' to ').split(/\s{2,}/).map(w=>/^(?:\S )+\S$/.test(w.trim())?w.trim().replace(/ /g,''):w).join(' ').replace(/\s+/g,' ').trim();
   const days=[...txt.matchAll(/Day\s+\d+\s+—\s+\w+,\s+(\d{1,2}\s+\w+\s+\d{4})/g)].map(x=>({pos:x.index,date:(_findDates(x[1])[0]||{}).date}));
@@ -5612,11 +5834,15 @@ document.addEventListener('drop',e=>{
   showAttachApple(id,t.dataset.dropEv);
 });
 
+document.addEventListener('click',e=>{document.querySelectorAll('details.more-menu[open]').forEach(d=>{if(!d.contains(e.target)||e.target.closest('.mm [data-action]'))d.removeAttribute('open');});});
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-action]');if(!el)return;
   const a=el.dataset.action,ev=S.events.find(t=>t.id===S.tid);
   switch(a){
     case 'nav':nav(el.dataset.to);break;
+    case 'more-sheet':showMoreSheet();break;
+    case 'nav-more':xm();nav(el.dataset.to);break;
+    case 'more-theme':xm();toggleTheme();render();break;
     case 'view':nav('detail',{tid:el.dataset.id,tab:'timeline'});break;
     case 'add-event':fEvent();break;
     case 'apple-attach':showAttachApple(el.dataset.id);break;
