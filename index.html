@@ -496,6 +496,60 @@ td.mg-l{color:var(--text3);white-space:nowrap;padding-top:9px}
 .guide-body li{margin:0 0 6px}
 .guide-body p{margin:0 0 8px}
 .guide-note{font-size:11.5px;color:var(--text3);margin-top:8px!important}
+/* Calendar: month bars, list view, day details */
+.cal-tools{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--glass-border);border-radius:8px;overflow:hidden}
+.seg button{background:none;border:0;color:var(--text2);font:inherit;font-size:12px;padding:6px 10px;cursor:pointer}
+.seg button.on{background:var(--primary);color:#fff}
+.calm{border:1px solid var(--glass-border);border-radius:var(--radius);overflow:hidden;background:var(--border)}
+.calm-head{display:grid;grid-template-columns:var(--cal-cols);gap:1px;background:var(--border)}
+.calm-hc{position:relative;background:var(--bg2);padding:8px 4px;text-align:center;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;user-select:none}
+.calm-hc.wk{color:var(--accent)}
+.calm-hc .ch-short{display:none}
+.calm-rh{position:absolute;top:0;right:-5px;width:10px;height:100%;cursor:col-resize;z-index:3}
+.calm-rh::after{content:'';position:absolute;left:4px;top:25%;height:50%;width:2px;border-radius:1px;background:var(--glass-border);opacity:0;transition:opacity .15s}
+.calm-hc:hover .calm-rh::after,.calm-rh:hover::after{opacity:1;background:var(--primary)}
+.calm-week{display:grid;column-gap:1px;row-gap:2px;min-height:96px;border-top:1px solid var(--border);background:var(--border)}
+.calm-bg{background:var(--bg);cursor:pointer;transition:background .15s;z-index:0}
+.calm-bg:hover{background:var(--card-hover)}
+.calm-bg.other{background:var(--bg2);opacity:.55}
+.calm-bg.today{box-shadow:inset 0 0 0 2px var(--primary)}
+.calm-top{position:relative;z-index:1;padding:4px 6px 2px;min-width:0;cursor:pointer}
+.calm-top.other{opacity:.45}
+.calm-num{font-weight:600;font-size:12px}
+.calm-num.wk{color:var(--accent)}
+.calm-top .d-ph{display:block;font-size:9px;font-weight:600;margin-top:2px;padding:1px 4px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.calm-top .cal-clash{top:6px;right:6px}
+.cal-leave-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--purple);margin-left:5px;vertical-align:middle}
+.calm-bar{position:relative;z-index:2;margin:0 3px;padding:2px 6px;border-radius:5px;font-size:11px;font-weight:500;color:#fff;line-height:1.35;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.calm-bar:hover{filter:brightness(1.12)}
+.calm-bar.cont0{margin-left:0;border-top-left-radius:0;border-bottom-left-radius:0}
+.calm-bar.cont1{margin-right:0;border-top-right-radius:0;border-bottom-right-radius:0}
+.calm.all .calm-bar{white-space:normal;overflow-wrap:anywhere}
+.calm.all .calm-top .d-ph{white-space:normal}
+.calm-more{position:relative;z-index:2;font-size:10px;font-weight:600;color:var(--primary);padding:0 6px;cursor:pointer;align-self:start}
+.calm-more:hover{text-decoration:underline}
+.calL{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--glass-border);border-radius:var(--radius);overflow:hidden}
+.calL-day{display:flex;gap:12px;padding:10px 12px;background:var(--bg);cursor:pointer}
+.calL-day.today{box-shadow:inset 3px 0 0 var(--primary)}
+.calL-date{width:44px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;line-height:1.2}
+.calL-date b{font-size:18px}.calL-date span{font-size:10px;color:var(--text3);text-transform:uppercase}
+.calL-items{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.calL-ev{display:flex;gap:10px;align-items:center;cursor:pointer;min-width:0}
+.calL-bar{width:4px;align-self:stretch;min-height:28px;border-radius:2px;flex-shrink:0}
+.calL-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.calL-meta{font-size:11px;color:var(--text3)}
+@media(max-width:700px){
+  .calm-hc .ch-full{display:none}.calm-hc .ch-short{display:inline}
+  .calm-rh{display:none}
+  .calm-week{min-height:72px}
+  .calm-top{padding:3px 3px 1px}
+  .calm-num{font-size:11px}
+  .calm-top .d-ph{font-size:7px;padding:1px 2px}
+  .calm-bar{font-size:9px;padding:1px 3px;margin:0 1px;border-radius:3px}
+  .calm-more{font-size:9px;padding:0 2px}
+  .cal-tools{margin-left:0;width:100%}
+}
 </style>
 <script>
 const _m={name:'Holiday Tracker',short_name:'HoliTracker',start_url:'.',display:'standalone',background_color:'#0a0a0f',theme_color:'#0a0a0f',icons:[{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%236c8cff'/%3E%3Cpath d='M350 200l-85-85-85 85M265 115v200M145 340h222' stroke='white' stroke-width='36' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E",sizes:'512x512',type:'image/svg+xml'}]};
@@ -936,7 +990,10 @@ function holidaysFor(cc,y){
     fetch(`https://date.nager.at/api/v3/PublicHolidays/${y}/${cc}`).then(r=>r.ok?r.json():[]).then(list=>{
       phCache()[key]={at:Date.now(),list:(list||[]).filter(h=>!h.types||h.types.includes('Public')||h.types.includes('Bank')).map(h=>({d:h.date,n:h.localName&&h.localName!==h.name?`${h.name}`:h.name,s:h.global===false&&h.counties?h.counties:'all'}))};
       try{localStorage.setItem('htPH',JSON.stringify(_phCache));}catch(e){}
-      try{render();}catch(e){}
+      // Only redraw pages that show holidays, and never while someone is typing (it would wipe the field)
+      const typing=document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+      const modalOpen=document.getElementById('mbg')&&document.getElementById('mbg').classList.contains('open');
+      if(['calendar','leave'].includes(S.v)&&!typing&&!modalOpen)try{render();}catch(e){}
     }).catch(()=>{}).finally(()=>_phPending.delete(key));
   }
   return [];
@@ -1469,17 +1526,22 @@ function acctPayload(){const d=syncData();delete d.trips;return d;}
 function normEvents(r){return(r.events||r.trips||[]).map(t=>t.category?t:{...t,category:'trip',requiresLeave:true});}
 function hasLocalData(){return(S.events||[]).length>0;}
 
-async function acctFetch(){
-  const{data,error}=await sbClient().from('user_data').select('data,modified_ms').eq('user_id',_acct.id).maybeSingle();
+async function acctFetch(uid){
+  uid=uid||(_acct&&_acct.id);if(!uid)return null;
+  const{data,error}=await sbClient().from('user_data').select('data,modified_ms').eq('user_id',uid).maybeSingle();
   if(error)throw error;
   return data;
 }
+// A sync started for one person must never touch the screen after they've signed out or switched account
+const _stillMe=me=>!!(_acct&&_acct.id===me);
 async function acctPush(){
   if(!_acct||_acctBusy||_appErrorState)return;
+  const me=_acct.id;
   document.querySelectorAll('.sync-dot').forEach(d=>d.classList.add('syncing'));
   try{
     // Same merge-before-push as the gist sync: never drop countries or the Apple link another device added
     const row=await acctFetch().catch(()=>null);
+    if(!_stillMe(me))return;
     // Another device saved something newer: take that first instead of overwriting it with older data
     if(row&&(row.modified_ms||0)>(S.lastModified||0)){document.querySelectorAll('.sync-dot').forEach(d=>d.classList.remove('syncing'));await acctPull();return;}
     if(row&&row.data){
@@ -1487,7 +1549,7 @@ async function acctPush(){
       if(r.visitedCountries&&r.visitedCountries.length){const l=new Set(S.visitedCountries||[]);r.visitedCountries.forEach(x=>l.add(x));S.visitedCountries=[...l];}
       mergeAppleCalUrl(r);
     }
-    const{error}=await sbClient().from('user_data').upsert({user_id:_acct.id,data:acctPayload(),modified_ms:S.lastModified||Date.now()});
+    const{error}=await sbClient().from('user_data').upsert({user_id:me,data:acctPayload(),modified_ms:S.lastModified||Date.now()});
     if(error)throw error;
     const c=getSyncConfig();c.lastPush=Date.now();setSyncConfig(c);
     updateSyncStatus('Saved to your account just now');
@@ -1497,9 +1559,10 @@ async function acctPush(){
 }
 async function acctPull(quiet){
   if(!_acct||_acctBusy)return false;
+  const me=_acct.id;
   try{
     const row=await acctFetch();
-    if(!row||!row.data)return false;
+    if(!_stillMe(me)||!row||!row.data)return false;
     const r=row.data;let changed=mergeAppleCalUrl(r);
     if(r.visitedCountries&&r.visitedCountries.length){const l=new Set(S.visitedCountries||[]);const n=l.size;r.visitedCountries.forEach(x=>l.add(x));if(l.size>n){S.visitedCountries=[...l];changed=true;}}
     const rm=row.modified_ms||r.lastModified||0;
@@ -1510,7 +1573,9 @@ async function acctPull(quiet){
       S.lastModified=rm;changed=true;
     }
     const sbApple=await acctAppleFeed();
+    if(!_stillMe(me))return false;
     const apple=(await gistFeedSync(!changed,sbApple.used))||sbApple.changed;
+    if(!_stillMe(me))return false;
     if(changed||apple){try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}applyTheme();render();if(!quiet)updateSyncStatus('Pulled latest from your account');return true;}
     updateSyncStatus('Up to date');return false;
   }catch(e){console.error('Account pull failed:',e);updateSyncStatus('Sync error: '+(e.message||e));return false;}
@@ -1522,7 +1587,9 @@ async function acctPull(quiet){
 async function acctAppleFeed(){
   if(!_acct)return{used:false,changed:false};
   try{
-    const{data,error}=await sbClient().from('apple_feed').select('ics,fetched_at,requested_at,last_error').eq('user_id',_acct.id).maybeSingle();
+    const me=_acct.id;
+    const{data,error}=await sbClient().from('apple_feed').select('ics,fetched_at,requested_at,last_error').eq('user_id',me).maybeSingle();
+    if(!_stillMe(me))return{used:false,changed:false};
     if(error){window._appleFeedInfo=null;return{used:false,changed:false};}// not set up yet: fall back to the gist
     window._appleFeedInfo=data||null;
     if(!data||!data.ics)return{used:false,changed:false};
@@ -1578,11 +1645,13 @@ async function acctOnSignIn(user){
     const mt=getSyncConfig().migratedTo;
     if(!owner&&mt&&mt!==user.id){wipeLocalData();S=defS();}
     const unclaimed=!localStorage.getItem(OWNER_KEY)&&hasLocalData();// from before accounts existed, or used signed-out
-    const row=await acctFetch();
+    const row=await acctFetch(user.id);
+    if(!_stillMe(user.id))return;
     if(owner===user.id){_acctBusy=false;await acctPull(true);return;}
     if(unclaimed){
       // Bring in the newest copy from the old GitHub sync first, so nothing made on another device is missed
       if(getSyncConfig().token&&!getSyncConfig().retired){try{await pullFromGist();}catch(e){}}
+      if(!_stillMe(user.id))return;
       const n=(S.events||[]).length,remoteN=row&&row.data?normEvents(row.data).length:0;
       const choice=await acctAsk(row&&row.data
         ?{title:'Add this device\'s data to your account?',body:`This device has <b>${n} event${n===1?'':'s'}</b> that aren't saved to any account. Your account already has <b>${remoteN}</b>.<br><br><b>Add them</b> to combine both (nothing is lost). <b>Don't add</b> keeps a backup on this device and shows only your account's data.`,yes:'Add them',no:"Don't add",warn:true}
@@ -1959,7 +2028,8 @@ function render(){
   if(S.v==='countries')setTimeout(renderWorldMap,100);
   initPdfJs();
 }
-function nav(v,x){S.v=v;if(x)Object.assign(S,x);saveS();render();window.scrollTo(0,0);}
+// Changing page is view state: saved on this device, not counted as an edit to sync
+function nav(v,x){S.v=v;if(x)Object.assign(S,x);saveUI();render();window.scrollTo(0,0);}
 
 // ===== DASHBOARD =====
 function vDash(){
@@ -2299,85 +2369,143 @@ function rTimeline(t){
 }
 
 // ===== CALENDAR =====
-function vCal(){
-  const y=S.calY||2026,m=S.calM!=null?S.calM:new Date().getMonth();
-  const mn=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const first=new Date(y,m,1),last=new Date(y,m+1,0);
-  const ws=P().weekStart??1,startDay=((first.getDay()-ws+7)%7)+1;// 1 = first column
-  const daysInMonth=last.getDate();
-  const today=ymd(new Date());
-  // Build leave days set using centralized PH data
-  const leaveDays=new Set();
+// Month view: each event is drawn once per week as a bar across its days (no repeated names), stacked in
+// lanes. Compact shows a few lanes and "+N more"; "Show all" grows rows to fit everything. Tap a day for
+// its full list. Column widths can be dragged (saved on this device). List view suits phones.
+const CAL_UI_KEY='htCalUI';
+function calUI(){try{return JSON.parse(localStorage.getItem(CAL_UI_KEY)||'{}');}catch(e){return{};}}
+function setCalUI(patch){try{localStorage.setItem(CAL_UI_KEY,JSON.stringify({...calUI(),...patch}));}catch(e){}}
+// View-only state (month shown): saved on this device without counting as an edit to sync
+function saveUI(){try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}}
+function calLeaveDays(){
+  const set=new Set();
   S.events.forEach(t=>{
-    if(t.requiresLeave===false)return;
-    const ts=t.startDate,te=t.endDate;if(!ts||!te)return;
-    let cur=new Date(ts+'T00:00:00');const end=new Date(te+'T00:00:00');
-    while(cur<=end){
-      const ds=ymd(cur);const dow=cur.getDay();
-      if(!isWeekendDow(dow)&&!isWorkPH(ds))leaveDays.add(ds);
-      cur.setDate(cur.getDate()+1);
-    }
+    if(t.requiresLeave===false||!t.startDate||!t.endDate)return;
+    let cur=new Date(t.startDate+'T00:00:00');const end=new Date(t.endDate+'T00:00:00');
+    while(cur<=end){const ds=ymd(cur);if(!isWeekendDow(cur.getDay())&&!isWorkPH(ds))set.add(ds);cur.setDate(cur.getDate()+1);}
   });
-  // Build calendar grid
-  let cells='';
-  const prevLast=new Date(y,m,0).getDate();
-  for(let i=startDay-2;i>=0;i--){
-    const d=prevLast-i;
-    cells+=`<div class="cal-day other"><div class="d-num">${d}</div></div>`;
-  }
-  for(let d=1;d<=daysInMonth;d++){
-    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday=ds===today;
-    const dow=new Date(y,m,d).getDay();
-    const isWknd=isWeekendDow(dow);
-    const phs=getPH(ds);
-    const eventsOn=tpFilter(S.events).filter(t=>t.startDate<=ds&&t.endDate>=ds);
-    const isApplied=getAppliedForDate(ds,y);
-    const dayHasClash=eventsOn.length>=2&&eventsOn.some(ev=>findClashes(ev,ev.id).filter(c=>c.severity==='time').length>0);
-    cells+=`<div class="cal-day${isToday?' today':''}" style="position:relative" data-date="${ds}">
-      ${dayHasClash?'<div class="cal-clash" title="Time clash on this day"></div>':''}
-      <div class="d-num${isWknd?' weekend':''}">${d}</div>
-      ${phs.map(ph=>`<div class="d-ph ph-c${ph.ci}" title="${esc(phLabel(ph.country))}: ${esc(ph.n)}${ph.states!=='all'?' ('+fmtStates(ph.states)+')':''}">${esc(ph.n)}</div>`).join('')}
-      ${leaveDays.has(ds)?`<div class="d-leave" style="font-size:8px;color:var(--purple);font-weight:500">${isApplied?'Applied':'Leave'}</div>`:''}
-      ${eventsOn.slice(0,2).map(t=>`<div class="cal-trip" style="background:${eColor(t)}" data-action="view" data-id="${t.id}" title="${esc(t.name)}">${esc(t.name)}</div>`).join('')}
-      ${eventsOn.length>2?`<div style="font-size:8px;color:var(--text3)">+${eventsOn.length-2}</div>`:''}
-    </div>`;
-  }
-  const totalCells=(startDay-1)+daysInMonth;
-  const remaining=(7-totalCells%7)%7;
-  for(let i=1;i<=remaining;i++){
-    cells+=`<div class="cal-day other"><div class="d-num">${i}</div></div>`;
-  }
-  // Collect PH in this month for legend
-  const monthPHs=[];
-  for(let d=1;d<=daysInMonth;d++){
-    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    getPH(ds).forEach(ph=>monthPHs.push({...ph,d:ds}));
-  }
-  return `
-  <div class="page-header"><div><h2>Calendar</h2><div class="subtitle">${mn[m]} ${y}</div></div><div>${tpHtml()}</div></div>
-  <div class="page-content">
-    <div class="cal-nav">
-      <button class="btn btn-s" data-action="cal-prev">← Prev</button>
+  return set;
+}
+const _calEvRange=t=>{const a=t.startDate,b=t.endDate&&t.endDate>=t.startDate?t.endDate:t.startDate;return[a,b];};
+function vCal(){
+  const y=S.calY||new Date().getFullYear(),m=S.calM!=null?S.calM:new Date().getMonth();
+  const mn=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const ui=calUI(),mode=ui.view==='list'?'list':'month',showAll=!!ui.all;
+  const ws=P().weekStart??1,today=ymd(new Date());
+  const first=new Date(y,m,1),last=new Date(y,m+1,0);
+  const evs=tpFilter(S.events).filter(t=>t.startDate);
+  const leaveDays=calLeaveDays();
+  const nav=`<div class="cal-nav">
+      <button class="btn btn-s" data-action="cal-prev" aria-label="Previous month">←</button>
       <h3>${mn[m]} ${y}</h3>
-      <button class="btn btn-s" data-action="cal-next">Next →</button>
+      <button class="btn btn-s" data-action="cal-next" aria-label="Next month">→</button>
       <button class="btn btn-ghost" data-action="cal-today">Today</button>
-    </div>
-    <div class="cal-grid">
-      ${[0,1,2,3,4,5,6].map(k=>{const d=(ws+k)%7,n=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d];return `<div class="cal-head"><span class="ch-full">${n}</span><span class="ch-short" style="display:none">${n.slice(0,2)}</span></div>`;}).join('')}
-      ${cells}
-    </div>
-    <div class="ph-legend">
-      ${(P().holidays||[]).map((cc,ci)=>`<div class="ph-legend-item"><div class="ph-dot c${ci}"></div><span style="font-weight:600">${cc}</span> ${esc(phLabel(cc))}${phAvailable(cc)?'':' <span style="color:var(--text3)">(add holidays in Leave)</span>'}</div>`).join('')}
+      <div class="cal-tools">
+        <div class="seg" role="group" aria-label="View"><button class="${mode==='month'?'on':''}" data-action="cal-view" data-v="month">Month</button><button class="${mode==='list'?'on':''}" data-action="cal-view" data-v="list">List</button></div>
+        ${mode==='month'?`<div class="seg" role="group" aria-label="Density"><button class="${!showAll?'on':''}" data-action="cal-all" data-v="0">Compact</button><button class="${showAll?'on':''}" data-action="cal-all" data-v="1">Show all</button></div>`:''}
+      </div>
+    </div>`;
+  const legend=`<div class="ph-legend">
+      ${(P().holidays||[]).map((cc,ci)=>`<div class="ph-legend-item"><div class="ph-dot c${ci}"></div>${esc(phLabel(cc))}</div>`).join('')}
       ${(P().customHolidays||[]).length?'<div class="ph-legend-item"><div class="ph-dot c9"></div>My holidays</div>':''}
-      <a href="#" data-action="go-prefs" style="font-size:11px;color:var(--primary)">Change holiday calendars</a>
-    </div>
-    ${monthPHs.length?`<div class="card" style="margin-top:12px"><div class="card-header"><h3>Public Holidays This Month</h3></div><div class="card-body" style="padding:8px 16px">${monthPHs.map(ph=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--glass-border);font-size:12px"><div style="display:flex;align-items:center;gap:8px"><span class="d-ph ph-c${ph.ci}" style="display:inline-block;margin:0">${ph.country==='MINE'?'Mine':ph.country}</span><span>${esc(ph.n)}</span></div><div style="display:flex;align-items:center;gap:8px"><span style="color:var(--text3);font-size:11px">${ph.states!=='all'?esc(fmtStates(ph.states)):''}</span><span style="color:var(--text3)">${fmt(ph.d)}</span></div></div>`).join('')}</div></div>`:''}
-    <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
-      ${tpFilter(S.events).filter(t=>{const ts=new Date(t.startDate),te=new Date(t.endDate);return(ts.getFullYear()===y&&ts.getMonth()===m)||(te.getFullYear()===y&&te.getMonth()===m)||(ts<=first&&te>=last);}).map(t=>`<div style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer" data-action="view" data-id="${t.id}"><div style="width:10px;height:10px;border-radius:3px;background:${eColor(t)}"></div>${esc(t.name)}</div>`).join('')}
-    </div>
+      <div class="ph-legend-item"><span class="cal-leave-dot"></span>Leave day</div>
+      <a href="#" data-action="go-prefs" style="font-size:11px;color:var(--primary)">Holiday calendars</a>
+    </div>`;
+  const header=`<div class="page-header"><div><h2>Calendar</h2><div class="subtitle">${mn[m]} ${y}</div></div><div>${tpHtml()}</div></div>`;
+  if(mode==='list')return `${header}<div class="page-content">${nav}${vCalList(y,m,evs,leaveDays)}${legend}</div>`;
+
+  // Weeks covering the month, starting on the chosen weekday
+  const gridStart=new Date(first);gridStart.setDate(1-((first.getDay()-ws+7)%7));
+  const weeks=[];for(let d=new Date(gridStart);d<=last||weeks.length<4;){const wk=[];for(let k=0;k<7;k++){wk.push(ymd(d));d.setDate(d.getDate()+1);}weeks.push(wk);if(d>last&&weeks.length>=4)break;}
+  const maxLanes=showAll?99:(window.innerWidth<700?2:3);
+  const cols=Array.isArray(ui.cols)&&ui.cols.length===7?ui.cols:[1,1,1,1,1,1,1];
+  const colTpl=cols.map(w=>`minmax(0,${w}fr)`).join(' ');
+  const dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const head=`<div class="calm-head">${[0,1,2,3,4,5,6].map(k=>{const d=(ws+k)%7;return `<div class="calm-hc${isWeekendDow(d)?' wk':''}"><span class="ch-full">${dn[d]}</span><span class="ch-short">${dn[d].slice(0,2)}</span>${k<6?`<span class="calm-rh" data-col="${k}" title="Drag to resize · double-click to reset"></span>`:''}</div>`;}).join('')}</div>`;
+  const body=weeks.map(wk=>{
+    const wS=wk[0],wE=wk[6];
+    // Segments of events touching this week, longest first so long trips keep a steady lane
+    const segs=evs.map(t=>{const[a,b]=_calEvRange(t);if(b<wS||a>wE)return null;const s=a<wS?wS:a,e=b>wE?wE:b;return{t,c0:wk.indexOf(s),c1:wk.indexOf(e),cont0:a<wS,cont1:b>wE,len:(new Date(b)-new Date(a))};}).filter(Boolean)
+      .sort((p,q)=>q.len-p.len||p.c0-q.c0||String(p.t.name).localeCompare(String(q.t.name)));
+    const lanes=[];segs.forEach(sg=>{let L=0;while(lanes[L]&&lanes[L].some(o=>!(sg.c1<o.c0||sg.c0>o.c1)))L++;(lanes[L]=lanes[L]||[]).push(sg);sg.lane=L;});
+    const nL=Math.min(lanes.length,maxLanes);
+    const hidden=[0,1,2,3,4,5,6].map(c=>segs.filter(sg=>sg.lane>=nL&&sg.c0<=c&&sg.c1>=c).length);
+    const anyHidden=hidden.some(Boolean);
+    const rows=`auto ${nL?`repeat(${nL},minmax(18px,auto))`:''} ${anyHidden?'auto':''} minmax(6px,1fr)`;
+    const cells=wk.map((ds,c)=>{
+      const d=new Date(ds+'T00:00:00'),other=d.getMonth()!==m,phs=getPH(ds),isLeave=leaveDays.has(ds),applied=isLeave&&getAppliedForDate(ds);
+      const evOn=evs.filter(t=>{const[a,b]=_calEvRange(t);return a<=ds&&b>=ds;});
+      const clash=evOn.length>=2&&evOn.some(ev=>findClashes(ev,ev.id).filter(x=>x.severity==='time').length>0);
+      return `<div class="calm-bg${other?' other':''}${ds===today?' today':''}" style="grid-column:${c+1};grid-row:1/-1" data-action="cal-day" data-date="${ds}" title="${esc(fmt(ds))}${evOn.length?' · '+evOn.length+' event'+(evOn.length>1?'s':''):''} · click for details"></div>
+      <div class="calm-top${other?' other':''}" style="grid-column:${c+1};grid-row:1" data-action="cal-day" data-date="${ds}">
+        <span class="calm-num${isWeekendDow(d.getDay())?' wk':''}">${d.getDate()}</span>${isLeave?`<span class="cal-leave-dot" title="${applied?'Leave applied':'Leave needed'}"></span>`:''}${clash?'<span class="cal-clash" title="Time clash on this day"></span>':''}
+        ${phs.map(ph=>`<div class="d-ph ph-c${ph.ci}" title="${esc(phLabel(ph.country))}: ${esc(ph.n)}${ph.states!=='all'?' ('+esc(fmtStates(ph.states))+')':''}">${esc(ph.n)}</div>`).join('')}
+      </div>`;
+    }).join('');
+    const bars=segs.filter(sg=>sg.lane<nL).map(sg=>{const t=sg.t,[a,b]=_calEvRange(t);
+      return `<div class="calm-bar${sg.cont0?' cont0':''}${sg.cont1?' cont1':''}" style="grid-column:${sg.c0+1}/${sg.c1+2};grid-row:${sg.lane+2};background:${eColor(t)}" data-action="view" data-id="${t.id}" title="${esc(t.name)} · ${esc(fmt(a))}${b!==a?' – '+esc(fmt(b)):''}">${sg.cont0?'‹ ':''}${esc(t.name)}${sg.cont1?' ›':''}</div>`;}).join('');
+    const more=anyHidden?hidden.map((n,c)=>n?`<div class="calm-more" style="grid-column:${c+1};grid-row:${nL+2}" data-action="cal-day" data-date="${wk[c]}">+${n} more</div>`:'').join(''):'';
+    return `<div class="calm-week" style="grid-template-columns:${colTpl};grid-template-rows:${rows}">${cells}${bars}${more}</div>`;
+  }).join('');
+  return `${header}<div class="page-content">${nav}
+    <div class="calm${showAll?' all':''}" id="calm" style="--cal-cols:${colTpl}">${head}${body}</div>
+    ${legend}
+    ${(()=>{const phs=[];for(let d=1;d<=last.getDate();d++){const ds=ymd(new Date(y,m,d));getPH(ds).forEach(ph=>phs.push({...ph,d:ds}));}
+      return phs.length?`<details class="card cal-ph-list" style="margin-top:12px"${window.innerWidth>=700?' open':''}><summary class="card-header" style="cursor:pointer"><h3>Public holidays this month (${phs.length})</h3></summary><div class="card-body" style="padding:8px 16px">${phs.map(ph=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--glass-border);font-size:12px"><div style="display:flex;align-items:center;gap:8px;min-width:0"><span class="d-ph ph-c${ph.ci}" style="display:inline-block;margin:0">${ph.country==='MINE'?'Mine':ph.country}</span><span>${esc(ph.n)}</span></div><span style="color:var(--text3);font-size:11px;white-space:nowrap">${ph.states!=='all'?esc(fmtStates(ph.states))+' · ':''}${fmt(ph.d)}</span></div>`).join('')}</div></details>`:'';})()}
   </div>`;
 }
+// List view: every day of the month that has something on it, in order
+function vCalList(y,m,evs,leaveDays){
+  const last=new Date(y,m+1,0).getDate(),rows=[];
+  const mS=ymd(new Date(y,m,1)),mE=ymd(new Date(y,m,last));
+  const ongoing=evs.filter(t=>{const[a,b]=_calEvRange(t);return a<mS&&b>=mS;});
+  if(ongoing.length)rows.push(`<div class="calL-day"><div class="calL-date"><b>Continuing</b><span>from earlier</span></div><div class="calL-items">${ongoing.map(t=>calItemHtml(t)).join('')}</div></div>`);
+  for(let d=1;d<=last;d++){
+    const ds=ymd(new Date(y,m,d)),dt=new Date(ds+'T00:00:00');
+    const starts=evs.filter(t=>t.startDate===ds),phs=getPH(ds);
+    if(!starts.length&&!phs.length)continue;
+    rows.push(`<div class="calL-day${ds===ymd(new Date())?' today':''}" data-action="cal-day" data-date="${ds}"><div class="calL-date"><b>${dt.getDate()}</b><span>${dt.toLocaleDateString(dloc(),{weekday:'short'})}</span></div><div class="calL-items">
+      ${phs.map(ph=>`<div class="d-ph ph-c${ph.ci}" style="display:inline-block">${esc(ph.n)}</div>`).join(' ')}
+      ${starts.map(t=>calItemHtml(t)).join('')}</div></div>`);
+  }
+  return `<div class="calL">${rows.join('')||'<div class="empty" style="padding:24px"><p style="font-size:12px">Nothing planned this month</p></div>'}</div>`;
+}
+function calItemHtml(t){
+  const[a,b]=_calEvRange(t),n=days(a,b);
+  return `<div class="calL-ev" data-action="view" data-id="${t.id}"><span class="calL-bar" style="background:${eColor(t)}"></span><div style="min-width:0"><div class="calL-name">${esc(t.name)}</div><div class="calL-meta">${esc(fmtS(a))}${b!==a?' – '+esc(fmtS(b))+' · '+n+' days':''}${(t.locations||[]).length?' · '+esc(t.locations.slice(0,3).join(', ')):''}</div></div></div>`;
+}
+// Everything on one day: holidays, leave, and each event with that day's bookings
+function showCalDay(ds){
+  const evs=tpFilter(S.events).filter(t=>{const[a,b]=_calEvRange(t);return t.startDate&&a<=ds&&b>=ds;});
+  const phs=getPH(ds),leave=calLeaveDays().has(ds),applied=leave&&getAppliedForDate(ds);
+  const timeOf=v=>{if(!v||!/T\d/.test(v))return '';const t=v.split('T')[1].slice(0,5);return t==='00:00'?'':t;};
+  const bookings=t=>{
+    const out=[];
+    (t.flights||[]).forEach(f=>{const d=(f.departureTime||'').slice(0,10),ad=(f.arrivalTime||'').slice(0,10);if(d===ds||ad===ds)out.push(`✈ ${esc(f.flightNumber||f.airline||'Flight')} ${esc(f.from||'')}${f.to?' → '+esc(f.to):''}${d===ds&&timeOf(f.departureTime)?' · departs '+timeOf(f.departureTime):''}${d!==ds&&ad===ds&&timeOf(f.arrivalTime)?' · arrives '+timeOf(f.arrivalTime):''}`);});
+    (t.hotels||[]).forEach(h=>{if(h.checkIn===ds)out.push(`🏨 Check in: ${esc(h.name||'Hotel')}`);else if(h.checkOut===ds)out.push(`🏨 Check out: ${esc(h.name||'Hotel')}`);});
+    (t.activities||[]).forEach(a=>{const e=a.endDate||a.date;if(a.date&&a.date<=ds&&e>=ds)out.push(`🎯 ${esc(a.name||'Activity')}${a.date===ds&&a.time?' · '+esc(a.time):''}`);});
+    (t.transport||[]).forEach(x=>{if(x.date===ds)out.push(`🚌 ${esc(x.name||x.type||'Transport')}${x.time?' · '+esc(x.time):''}`);});
+    return out;
+  };
+  const body=`${phs.length||leave?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${phs.map(ph=>`<span class="d-ph ph-c${ph.ci}" style="font-size:11px;padding:3px 8px">${esc(ph.n)}${ph.country!=='MINE'?' · '+esc(phLabel(ph.country)):''}</span>`).join('')}${leave?`<span class="d-ph" style="font-size:11px;padding:3px 8px;background:var(--purple-dim);color:var(--purple)">${applied?'Leave applied':'Leave day'}</span>`:''}</div>`:''}
+    ${evs.length?evs.map(t=>{const[a,b]=_calEvRange(t),bk=bookings(t);return `<div class="calL-ev" data-action="view" data-id="${t.id}" style="align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--glass-border)"><span class="calL-bar" style="background:${eColor(t)}"></span><div style="min-width:0;flex:1"><div class="calL-name" style="white-space:normal">${esc(t.name)}</div><div class="calL-meta">${esc(fmt(a))}${b!==a?' – '+esc(fmt(b)):''}</div>${bk.length?`<div style="margin-top:6px;font-size:12px;line-height:1.6;color:var(--text2)">${bk.join('<br>')}</div>`:''}</div><span style="color:var(--text3);font-size:12px">›</span></div>`;}).join('')
+      :'<p style="font-size:12px;color:var(--text3)">Nothing planned on this day.</p>'}
+    <button class="btn btn-s" data-action="cal-add-on" data-date="${ds}" style="margin-top:12px;font-size:12px">+ New event on this day</button>`;
+  modal(esc(new Date(ds+'T00:00:00').toLocaleDateString(dloc(),{weekday:'long',day:'numeric',month:'long',year:'numeric'})),body,null,{noSave:true});
+}
+// Drag the edge between two day names to make columns wider/narrower (saved on this device)
+document.addEventListener('pointerdown',e=>{
+  const h=e.target.closest&&e.target.closest('.calm-rh');if(!h)return;
+  e.preventDefault();
+  const grid=document.getElementById('calm');if(!grid)return;
+  const k=parseInt(h.dataset.col),ui=calUI(),cols=Array.isArray(ui.cols)&&ui.cols.length===7?[...ui.cols]:[1,1,1,1,1,1,1];
+  const total=grid.getBoundingClientRect().width,sum=cols.reduce((a,b)=>a+b,0),startX=e.clientX,a0=cols[k],b0=cols[k+1];
+  const apply=()=>{const tpl=cols.map(w=>`minmax(0,${w}fr)`).join(' ');grid.querySelectorAll('.calm-week').forEach(w=>w.style.gridTemplateColumns=tpl);grid.querySelector('.calm-head').style.gridTemplateColumns=tpl;};
+  const mv=ev=>{const dfr=(ev.clientX-startX)/total*sum;const a=Math.max(.35,Math.min(a0+b0-.35,a0+dfr));cols[k]=+a.toFixed(3);cols[k+1]=+(a0+b0-a).toFixed(3);apply();};
+  const up=()=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);setCalUI({cols});};
+  document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);
+});
+document.addEventListener('dblclick',e=>{if(e.target.closest&&e.target.closest('.calm-rh')){setCalUI({cols:null});render();}});
 
 // ===== LEAVE =====
 // Calculate total workdays needed for all events in a year (event days - weekends - SG PH)
@@ -3475,9 +3603,9 @@ function modal(title,body,onSave,opts){
   const saveLabel=opts.saveLabel||'Save';
   const saveCls=opts.danger?'btn btn-d':'btn btn-p';
   const o=document.getElementById('mbg');
-  o.innerHTML=`<div class="modal"><div class="modal-head"><h3>${title}</h3><button class="modal-x" data-action="xm">×</button></div><div class="modal-body">${body}</div><div class="modal-foot"><button class="btn btn-s" data-action="xm">Cancel</button><button class="${saveCls}" id="msave">${saveLabel}</button></div></div>`;
+  o.innerHTML=`<div class="modal"><div class="modal-head"><h3>${title}</h3><button class="modal-x" data-action="xm">×</button></div><div class="modal-body">${body}</div><div class="modal-foot"><button class="btn btn-s" data-action="xm">${opts.noSave?'Close':'Cancel'}</button>${opts.noSave?'':`<button class="${saveCls}" id="msave">${saveLabel}</button>`}</div></div>`;
   o.classList.add('open');
-  if(onSave)document.getElementById('msave').onclick=()=>{const r=onSave();if(r===false)return;xm();};
+  if(onSave&&!opts.noSave)document.getElementById('msave').onclick=()=>{const r=onSave();if(r===false)return;xm();};
   o.onclick=e=>{if(e.target===o)xm();};
   o.querySelectorAll('.dz').forEach(setupDZ);
   setupDZTabs(o);
@@ -3947,6 +4075,7 @@ function showSmartUpload(){
       const tab=type==='flight'?'flights':type==='hotel'?'hotels':type==='activity'?'activities':'transport';
       toast(type==='flight'?`${legs.length} flight${legs.length>1?'s':''} added to ${ev.name}`:'Added to '+ev.name);
       window._suParsed=null;window._suTextHook=null;window._suDocHook=null;window._suDocs=[];
+      saveS();
       nav('detail',{tid:ev.id,tab});
   });
   const dz=document.querySelector(`[data-dz="${dzid}"]`);
@@ -5440,9 +5569,13 @@ document.addEventListener('click',e=>{
     case 'edit-trans':{if(ev){const x=ev.transport.find(x=>x.id===el.dataset.eid);if(x)fTrans(ev,x);}break;}
     case 'del-trans':{if(ev){const eid=el.dataset.eid;const entry=ev.transport.find(x=>x.id===eid);if(entry){const idx=ev.transport.indexOf(entry);ev.transport.splice(idx,1);saveS();render();toastUndo('Transport deleted',()=>{ev.transport.splice(idx,0,entry);saveS();render();});}}}break;
     case 'xm':xm();break;
-    case 'cal-prev':if(S.calM===0){S.calM=11;S.calY--;}else S.calM--;saveS();render();break;
-    case 'cal-next':if(S.calM===11){S.calM=0;S.calY++;}else S.calM++;saveS();render();break;
-    case 'cal-today':{const now=new Date();S.calM=now.getMonth();S.calY=now.getFullYear();saveS();render();break;}
+    case 'cal-prev':if(S.calM===0){S.calM=11;S.calY--;}else S.calM--;saveUI();render();break;
+    case 'cal-next':if(S.calM===11){S.calM=0;S.calY++;}else S.calM++;saveUI();render();break;
+    case 'cal-today':{const now=new Date();S.calM=now.getMonth();S.calY=now.getFullYear();saveUI();render();break;}
+    case 'cal-view':setCalUI({view:el.dataset.v});render();break;
+    case 'cal-all':setCalUI({all:el.dataset.v==='1'});render();break;
+    case 'cal-day':showCalDay(el.dataset.date);break;
+    case 'cal-add-on':{const ds=el.dataset.date;xm();fEvent();const mm=document.querySelector('#mbg .modal');['sd','ed'].forEach(n=>{const i=mm&&mm.querySelector(`[name=${n}]`);if(i){i.value=ds;i.dispatchEvent(new Event('change'));}});break;}
     case 'ics-upcoming':exportUpcomingICS();break;
     case 'ics-all':generateICS();break;
     case 'copy-cal-url':{
