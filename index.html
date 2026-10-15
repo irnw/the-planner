@@ -3553,6 +3553,10 @@ function vSettings(){
       ${(()=>{const url=calFeedUrl();const sc=getSyncConfig();
         if(!sc.token&&_acct)return `${url?`<p style="font-size:11px;color:var(--text3);margin-bottom:10px">Your calendar feed (subscribe once in Apple Calendar). It's republished from the device connected to GitHub (your Mac) whenever anything changes.</p>
         <div style="display:flex;gap:6px;align-items:center;margin-bottom:12px"><input class="fc" readonly value="${esc(url)}" id="cal-feed-url" style="flex:1;min-width:0;font-size:11px;font-family:monospace" onclick="this.select()"><button class="btn btn-p" data-action="copy-cal-url" style="white-space:nowrap">Copy URL</button></div>
+        <details style="font-size:12px;color:var(--text2);margin:-4px 0 12px"><summary style="cursor:pointer;color:var(--primary)">Publish the feed from this device</summary>
+          <p style="font-size:11px;color:var(--text3);margin:8px 0">Changes you make here update your Apple Calendar feed if this device has your GitHub key (the token with “gist” access you used before). Without it, the feed updates whenever a device with the key opens The Planner.</p>
+          <div style="display:flex;gap:6px;align-items:center"><input class="fc" id="feed-token" type="password" placeholder="ghp_… or github_pat_…" autocomplete="off" style="flex:1;min-width:0;font-size:12px"><button class="btn btn-p" data-action="feed-token-save" style="white-space:nowrap;font-size:12px">Save key</button></div>
+        </details>
         <div style="border-top:1px solid var(--border);margin:12px 0"></div>`:'<p style="font-size:11px;color:var(--text3);margin-bottom:10px">Tracker → Apple Calendar (a feed of your trips) is coming soon. You can already bring your Apple Calendar events in:</p>'}
         <div style="font-size:12px;font-weight:600;margin-bottom:6px">Inbound: Apple Calendar → Tracker</div>
         <p style="font-size:11px;color:var(--text3);margin-bottom:10px">In Apple Calendar, right-click (or tap ⓘ on) the calendar → turn on <b>Public Calendar</b> → copy the link, then paste it here. New and changed events appear within about 10 minutes.</p>
@@ -5892,6 +5896,15 @@ document.addEventListener('click',e=>{
     case 'cal-add-on':{const ds=el.dataset.date;xm();fEvent();const mm=document.querySelector('#mbg .modal');['sd','ed'].forEach(n=>{const i=mm&&mm.querySelector(`[name=${n}]`);if(i){i.value=ds;i.dispatchEvent(new Event('change'));}});break;}
     case 'ics-upcoming':exportUpcomingICS();break;
     case 'ics-all':generateICS();break;
+    case 'feed-token-save':{
+      // Only the calendar feed uses this key: it never pulls or overwrites trip data (the old GitHub sync stays retired)
+      const tok=(document.getElementById('feed-token')||{}).value.trim(),f=S.calFeed;
+      if(!tok||!f||!f.gistId){toast('Paste your GitHub key first');break;}
+      setSyncConfig({token:tok,gistId:f.gistId,gistOwner:f.owner,retired:true});
+      gistAPI('/gists/'+f.gistId).then(()=>gistFeedSync(false)).then(()=>{toast('Saved: this device now publishes your calendar feed');render();})
+        .catch(e=>{setSyncConfig({});toast('That key could not open your feed: '+(e.message||e));render();});
+      break;
+    }
     case 'copy-cal-url':{
       const inp=document.getElementById('cal-feed-url');
       if(inp){navigator.clipboard.writeText(inp.value).then(()=>toast('Feed URL copied — paste it into Calendar subscription')).catch(()=>{inp.select();document.execCommand('copy');toast('Feed URL copied');});}
