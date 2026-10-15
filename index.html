@@ -608,10 +608,15 @@ td.mg-l{color:var(--text3);white-space:nowrap;padding-top:9px}
 .calL-day.today{box-shadow:inset 3px 0 0 var(--primary)}
 .calL-date{width:44px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;line-height:1.2}
 .calL-date b{font-size:18px}.calL-date span{font-size:10px;color:var(--text3);text-transform:uppercase}
+.calL-date.cont{justify-content:center;gap:1px}.calL-date.cont span{font-size:9px;letter-spacing:.4px;line-height:1.3}
+.calL-phs{display:flex;flex-wrap:wrap;gap:6px}
+.calL-ph{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;line-height:1.3;max-width:100%}
+.calL-ph em{font-style:normal;font-weight:500;font-size:9px;opacity:.7}
 .calL-items{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
 .calL-ev{display:flex;gap:10px;align-items:center;cursor:pointer;min-width:0}
 .calL-bar{width:4px;align-self:stretch;min-height:28px;border-radius:2px;flex-shrink:0}
 .calL-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.calL-meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .calL-meta{font-size:11px;color:var(--text3)}
 @media(max-width:700px){
   .calm-hc .ch-full{display:none}.calm-hc .ch-short{display:inline}
@@ -2537,20 +2542,23 @@ function vCalList(y,m,evs,leaveDays){
   const last=new Date(y,m+1,0).getDate(),rows=[];
   const mS=ymd(new Date(y,m,1)),mE=ymd(new Date(y,m,last));
   const ongoing=evs.filter(t=>{const[a,b]=_calEvRange(t);return a<mS&&b>=mS;});
-  if(ongoing.length)rows.push(`<div class="calL-day"><div class="calL-date"><b>Continuing</b><span>from earlier</span></div><div class="calL-items">${ongoing.map(t=>calItemHtml(t)).join('')}</div></div>`);
+  if(ongoing.length)rows.push(`<div class="calL-day"><div class="calL-date cont"><span>From</span><span>earlier</span></div><div class="calL-items">${ongoing.map(t=>calItemHtml(t)).join('')}</div></div>`);
   for(let d=1;d<=last;d++){
     const ds=ymd(new Date(y,m,d)),dt=new Date(ds+'T00:00:00');
     const starts=evs.filter(t=>t.startDate===ds),phs=getPH(ds);
     if(!starts.length&&!phs.length)continue;
     rows.push(`<div class="calL-day${ds===ymd(new Date())?' today':''}" data-action="cal-day" data-date="${ds}"><div class="calL-date"><b>${dt.getDate()}</b><span>${dt.toLocaleDateString(dloc(),{weekday:'short'})}</span></div><div class="calL-items">
-      ${phs.map(ph=>`<div class="d-ph ph-c${ph.ci}" style="display:inline-block">${esc(ph.n)}</div>`).join(' ')}
+      ${phs.length?`<div class="calL-phs">${phs.map(ph=>`<span class="calL-ph d-ph ph-c${ph.ci}" title="${esc(phLabel(ph.country))}${ph.states!=='all'?' ('+esc(fmtStates(ph.states))+')':''}">${esc(ph.n)}<em>${ph.country==='MINE'?'Mine':esc(ph.country)}</em></span>`).join('')}</div>`:''}
       ${starts.map(t=>calItemHtml(t)).join('')}</div></div>`);
   }
   return `<div class="calL">${rows.join('')||'<div class="empty" style="padding:24px"><p style="font-size:12px">Nothing planned this month</p></div>'}</div>`;
 }
 function calItemHtml(t){
   const[a,b]=_calEvRange(t),n=days(a,b);
-  return `<div class="calL-ev" data-action="view" data-id="${t.id}"><span class="calL-bar" style="background:${eColor(t)}"></span><div style="min-width:0"><div class="calL-name">${esc(t.name)}</div><div class="calL-meta">${esc(fmtS(a))}${b!==a?' – '+esc(fmtS(b))+' · '+n+' days':''}${(t.locations||[]).length?' · '+esc(t.locations.slice(0,3).join(', ')):''}</div></div></div>`;
+  return `<div class="calL-ev" data-action="view" data-id="${t.id}"><span class="calL-bar" style="background:${eColor(t)}"></span><div style="min-width:0"><div class="calL-name">${esc(t.name)}</div><div class="calL-meta">${(()=>{const pl=(t.locations||[]).filter(l=>l&&l.length<=40).slice(0,2).join(', ');
+    // A single-day event sits next to its date already: show its time instead of repeating the date
+    const when=b!==a?fmtS(a)+' – '+fmtS(b)+' · '+n+' days':(t.startTime?t.startTime+(t.endTime&&t.endTime!==t.startTime?'–'+t.endTime:''):'');
+    return esc([when,pl].filter(Boolean).join(' · '))||'&nbsp;';})()}</div></div></div>`;
 }
 // Everything on one day: holidays, leave, and each event with that day's bookings
 function showCalDay(ds){
