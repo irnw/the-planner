@@ -1509,19 +1509,39 @@ async function acctPull(quiet){
       S.leave=r.leave||S.leave;S.rates=r.rates||S.rates;S.ratesUpdated=r.ratesUpdated||S.ratesUpdated;S.theme=r.theme||S.theme;if(r.prefs)S.prefs=r.prefs;if(r.calFeed)S.calFeed=r.calFeed;
       S.lastModified=rm;changed=true;
     }
-    const apple=await gistFeedSync(!changed);
+    const sbApple=await acctAppleFeed();
+    const apple=(await gistFeedSync(!changed,sbApple.used))||sbApple.changed;
     if(changed||apple){try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}applyTheme();render();if(!quiet)updateSyncStatus('Pulled latest from your account');return true;}
     updateSyncStatus('Up to date');return false;
   }catch(e){console.error('Account pull failed:',e);updateSyncStatus('Sync error: '+(e.message||e));return false;}
 }
 // Until Apple Calendar moves to the server, a device that still has the GitHub token keeps the
 // calendar feed (out) and the Apple import (in) going through the gist. The data file there is retired.
+// Apple Calendar copy fetched by Supabase every 10 min (supabase/apple_feed.sql). When present it's the
+// only inbound source, so two copies of different ages can't make events flicker in and out.
+async function acctAppleFeed(){
+  if(!_acct)return{used:false,changed:false};
+  try{
+    const{data,error}=await sbClient().from('apple_feed').select('ics,fetched_at,requested_at,last_error').eq('user_id',_acct.id).maybeSingle();
+    if(error){window._appleFeedInfo=null;return{used:false,changed:false};}// not set up yet: fall back to the gist
+    window._appleFeedInfo=data||null;
+    if(!data||!data.ics)return{used:false,changed:false};
+    return{used:true,changed:importAppleCalendar(data.ics)};
+  }catch(e){return{used:false,changed:false};}
+}
+function appleFeedStatusHtml(){
+  const f=window._appleFeedInfo;if(!f)return '';
+  const ago=t=>{if(!t)return '';const m=Math.round((Date.now()-new Date(t))/6e4);return m<1?'just now':m<60?m+' min ago':Math.round(m/60)+' h ago';};
+  if(f.last_error)return `<div style="font-size:10px;color:var(--orange);margin-top:6px">Couldn't fetch your Apple Calendar: ${esc(f.last_error)}${f.fetched_at?` (last good copy ${ago(f.fetched_at)})`:''}. Check the link is a <b>Public Calendar</b> link from Apple Calendar.</div>`;
+  if(f.fetched_at)return `<div style="font-size:10px;color:var(--text3);margin-top:6px">Checked for changes ${ago(f.fetched_at)} (every 10 minutes)</div>`;
+  return '<div style="font-size:10px;color:var(--text3);margin-top:6px">First check within 10 minutes</div>';
+}
 let _anonAppleAt=0;
-async function gistFeedSync(pullOnly){
+async function gistFeedSync(pullOnly,skipApple){
   const c=getSyncConfig();
   if(!c.token||!c.gistId){
     // No GitHub link on this device (e.g. your phone): read the Apple import from the account's feed, at most every 10 min
-    const f=_acct&&S.calFeed;if(!f||!f.gistId||Date.now()-_anonAppleAt<6e5)return false;
+    const f=_acct&&S.calFeed;if(skipApple||!f||!f.gistId||Date.now()-_anonAppleAt<6e5)return false;
     _anonAppleAt=Date.now();
     try{const r=await fetch('https://api.github.com/gists/'+f.gistId,{headers:{Accept:'application/vnd.github.v3+json'}});if(!r.ok)return false;
       const g=await r.json();return importAppleCalendar(g.files&&g.files[APPLE_ICS_FILE]?g.files[APPLE_ICS_FILE].content:'');}catch(e){return false;}
@@ -1529,7 +1549,7 @@ async function gistFeedSync(pullOnly){
   try{
     const g=await gistAPI('/gists/'+c.gistId);
     if(_acct&&c.gistOwner&&(!S.calFeed||S.calFeed.gistId!==c.gistId||S.calFeed.owner!==c.gistOwner)){S.calFeed={gistId:c.gistId,owner:c.gistOwner};saveS();}
-    const changed=importAppleCalendar(g.files&&g.files[APPLE_ICS_FILE]?g.files[APPLE_ICS_FILE].content:'');
+    const changed=skipApple?false:importAppleCalendar(g.files&&g.files[APPLE_ICS_FILE]?g.files[APPLE_ICS_FILE].content:'');
     if(!pullOnly){
       const files={[ICS_FILE]:{content:buildICSFeed()}};
       // The Apple import job reads the iCloud link from the gist's data file: keep it current after the move
@@ -3095,12 +3115,13 @@ function vSettings(){
     </div></div>`}
     <div class="card" style="margin-bottom:16px"><div class="card-header"><h3>Apple Calendar (iCloud) Sync</h3></div><div class="card-body">
       ${(()=>{const url=calFeedUrl();const sc=getSyncConfig();
-        if(!sc.token&&url&&_acct)return `<p style="font-size:11px;color:var(--text3);margin-bottom:10px">Your calendar feed (subscribe once in Apple Calendar). It's republished from the device connected to GitHub (your Mac) whenever anything changes.</p>
+        if(!sc.token&&_acct)return `${url?`<p style="font-size:11px;color:var(--text3);margin-bottom:10px">Your calendar feed (subscribe once in Apple Calendar). It's republished from the device connected to GitHub (your Mac) whenever anything changes.</p>
         <div style="display:flex;gap:6px;align-items:center;margin-bottom:12px"><input class="fc" readonly value="${esc(url)}" id="cal-feed-url" style="flex:1;min-width:0;font-size:11px;font-family:monospace" onclick="this.select()"><button class="btn btn-p" data-action="copy-cal-url" style="white-space:nowrap">Copy URL</button></div>
-        <div style="border-top:1px solid var(--border);margin:12px 0"></div>
+        <div style="border-top:1px solid var(--border);margin:12px 0"></div>`:'<p style="font-size:11px;color:var(--text3);margin-bottom:10px">Tracker → Apple Calendar (a feed of your trips) is coming soon. You can already bring your Apple Calendar events in:</p>'}
         <div style="font-size:12px;font-weight:600;margin-bottom:6px">Inbound: Apple Calendar → Tracker</div>
+        <p style="font-size:11px;color:var(--text3);margin-bottom:10px">In Apple Calendar, right-click (or tap ⓘ on) the calendar → turn on <b>Public Calendar</b> → copy the link, then paste it here. New and changed events appear within about 10 minutes.</p>
         <div style="display:flex;gap:6px;align-items:center"><input class="fc" id="apple-cal-url" placeholder="webcal://p##-caldav.icloud.com/published/2/…" value="${esc(S.appleCalUrl||'')}" style="flex:1;min-width:0;font-size:11px;font-family:monospace"><button class="btn btn-p" data-action="save-apple-cal-url" style="white-space:nowrap">Save</button></div>
-        ${(S.events||[]).some(e=>e.source==='apple')?`<div style="font-size:10px;color:var(--green);margin-top:6px">${(S.events||[]).filter(e=>e.source==='apple').length} event(s) currently imported from Apple Calendar</div>`:''}`;
+        ${(S.events||[]).some(e=>e.source==='apple')?`<div style="font-size:10px;color:var(--green);margin-top:6px">${(S.events||[]).filter(e=>e.source==='apple').length} event(s) currently imported from Apple Calendar</div>`:''}${appleFeedStatusHtml()}`;
         if(!sc.token&&!url)return acctEnabled()?'<p style="font-size:11px;color:var(--text3)">Apple Calendar sync for accounts is coming soon. Until then you can download a calendar file below (Calendar Export).</p>':'<p style="font-size:11px;color:var(--text3)">Connect cloud sync above first — the calendar feed is published alongside your sync data.</p>';
         if(!url)return '<p style="font-size:11px;color:var(--text3)">Feed will be available after the next sync completes. Make any change (or click below) to publish it.</p><button class="btn btn-s" data-action="publish-feed" style="margin-top:8px">Publish Calendar Feed Now</button>';
         return `
@@ -3125,7 +3146,7 @@ function vSettings(){
           <input class="fc" id="apple-cal-url" placeholder="webcal://p##-caldav.icloud.com/published/2/…" value="${esc(S.appleCalUrl||'')}" style="flex:1;font-size:11px;font-family:monospace">
           <button class="btn btn-p" data-action="save-apple-cal-url" style="white-space:nowrap">Save</button>
         </div>
-        ${(S.events||[]).some(e=>e.source==='apple')?`<div style="font-size:10px;color:var(--green);margin-top:6px">${(S.events||[]).filter(e=>e.source==='apple').length} event(s) currently imported from Apple Calendar</div>`:''}`;})()}
+        ${(S.events||[]).some(e=>e.source==='apple')?`<div style="font-size:10px;color:var(--green);margin-top:6px">${(S.events||[]).filter(e=>e.source==='apple').length} event(s) currently imported from Apple Calendar</div>`:''}${appleFeedStatusHtml()}`;})()}
     </div></div>
     <div class="card" style="margin-bottom:16px"><div class="card-header"><h3>Calendar Export (one-off)</h3></div><div class="card-body">
       <p style="font-size:11px;color:var(--text3);margin-bottom:12px">Download a static .ics snapshot with built-in reminders (7 days and 1 day before). Import into Outlook, Google Calendar, or Apple Calendar. Unlike the subscription above, this won't update after changes.</p>
@@ -5439,9 +5460,10 @@ document.addEventListener('click',e=>{
       if(!inp)break;
       const url=inp.value.trim();
       if(url&&!/^(webcal|https):\/\//.test(url)){toast('URL should start with webcal:// or https://');break;}
+      if(url&&_acct&&!/^(webcal|https):\/\/p\d+-caldav\.icloud\.com(:443)?\/published\//i.test(url)){toast('That isn\'t an Apple Calendar public link (it should look like webcal://p…-caldav.icloud.com/published/…)');break;}
       S.appleCalUrl=url;S.appleCalUrlAt=Date.now();
       saveS();render();
-      toast(url?'Apple Calendar URL saved — first import within ~30 min':'Apple Calendar import disabled');
+      toast(url?(_acct?'Apple Calendar link saved: events appear within about 10 minutes':'Apple Calendar URL saved — first import within ~30 min'):'Apple Calendar import disabled');
       break;
     }
     case 'export':{const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a2=document.createElement('a');a2.href=URL.createObjectURL(b);a2.download='holiday-tracker.json';a2.click();toast('Exported');break;}
