@@ -1064,14 +1064,22 @@ body.sb-collapsed .topbar{left:68px}
 .trip-card.ec.past{opacity:.7}
 .trip-card.ec:hover{background:var(--card-hover)}
 .trip-card.ec:hover .trip-name{color:var(--primary-deep)}
-/* Calendar month/year pickers: look like the title, clearly clickable */
-.cal-picker{display:flex;align-items:center;gap:6px;min-width:0!important}
-.cp{position:relative;display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 10px;border:1px solid transparent;border-radius:999px;cursor:pointer;transition:border-color .15s,background .15s}
-.cp span{font-family:var(--serif);font-weight:700;font-size:19px;letter-spacing:-.01em;color:var(--text);border-bottom:1px dashed var(--line-strong);line-height:1.2}
-.cp svg{width:15px;height:15px;color:var(--primary-deep);flex-shrink:0}
-.cp:hover,.cp:focus-within{border-color:var(--line-strong);background:var(--primary-dim)}
-.cp:hover span{border-bottom-color:transparent}
-.cp select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px;border:none;appearance:none;-webkit-appearance:none}
+/* Calendar month/year pickers: quiet title-style buttons that open a small grid */
+.cal-picker{display:flex;align-items:center;gap:4px;min-width:0!important}
+.cp{position:relative}
+.cp>button{display:inline-flex;align-items:center;gap:5px;padding:4px 8px 4px 10px;background:none;border:1px solid transparent;border-radius:999px;cursor:pointer;color:var(--text);font:inherit;transition:border-color .15s,background .15s}
+.cp>button span{font-family:var(--serif);font-weight:700;font-size:17px;letter-spacing:-.01em;line-height:1.2}
+.cp>button svg{width:13px;height:13px;color:var(--primary-deep);transition:transform .15s}
+.cp>button:hover,.cp.open>button{border-color:var(--line-strong);background:var(--primary-dim)}
+.cp.open>button svg{transform:rotate(180deg)}
+.cp-pop{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:60;background:var(--surface-2,var(--card));border:1px solid var(--line);box-shadow:0 14px 36px rgba(17,17,17,.12);padding:8px;grid-template-columns:repeat(3,1fr);gap:2px}
+.cp.open .cp-pop{display:grid}
+.cp-months{width:204px}
+.cp-years{width:204px;max-height:220px;overflow:auto}
+.cp-pop button{background:none;border:none;padding:8px 0;font-family:var(--font);font-size:9.6px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--text2);cursor:pointer;border-radius:999px}
+.cp-pop button:hover{color:var(--primary-deep);background:var(--primary-dim)}
+.cp-pop button.on{background:var(--primary-deep);color:var(--on-primary)}
+.cp-pop button.now:not(.on){color:var(--primary-deep)}
 @keyframes sheetIn{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 .more-list{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line)}
 .more-list button{display:flex;align-items:center;gap:12px;padding:15px 16px;background:none;border:0;border-top:1px solid var(--line);color:var(--text);font:inherit;font-size:17px;text-align:left;cursor:pointer}
@@ -1539,7 +1547,8 @@ function holidaysFor(cc,y){
       // Only redraw pages that show holidays, and never while someone is typing (it would wipe the field)
       const typing=document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
       const modalOpen=document.getElementById('mbg')&&document.getElementById('mbg').classList.contains('open');
-      if(['calendar','leave'].includes(S.v)&&!typing&&!modalOpen)try{render();}catch(e){}
+      const pickerOpen=!!document.querySelector('.cp.open');
+      if(['calendar','leave'].includes(S.v)&&!typing&&!modalOpen&&!pickerOpen)try{render();}catch(e){}
     }).catch(()=>{}).finally(()=>_phPending.delete(key));
   }
   return [];
@@ -3014,7 +3023,14 @@ function vCal(){
   const leaveDays=calLeaveDays();
   const nav=`<div class="cal-nav">
       <button class="btn btn-s" data-action="cal-prev" aria-label="Previous month">←</button>
-      <h3 class="cal-picker"><label class="cp"><select data-action="cal-month" aria-label="Month">${mn.map((n,i)=>`<option value="${i}"${i===m?' selected':''}>${n}</option>`).join('')}</select><span>${mn[m]}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></label><label class="cp"><select data-action="cal-year" aria-label="Year">${(()=>{const ys=S.events.map(t=>parseInt((t.startDate||'').slice(0,4))).filter(Boolean),now=new Date().getFullYear(),lo=Math.min(now-5,...ys,y),hi=Math.max(now+5,...ys,y),o=[];for(let k=hi;k>=lo;k--)o.push(`<option value="${k}"${k===y?' selected':''}>${k}</option>`);return o.join('');})()}</select><span>${y}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></label></h3>
+      <h3 class="cal-picker">${(()=>{
+        const ys=S.events.map(t=>parseInt((t.startDate||'').slice(0,4))).filter(Boolean),now=new Date().getFullYear(),lo=Math.min(now-5,...ys,y),hi=Math.max(now+5,...ys,y),years=[];for(let k=lo;k<=hi;k++)years.push(k);
+        const chev='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
+        return `<div class="cp" data-cp="month"><button type="button" data-action="cal-pick" data-k="month" aria-haspopup="true" aria-label="Choose month"><span>${mn[m]}</span>${chev}</button>
+          <div class="cp-pop cp-months" role="menu">${mn.map((n,i)=>`<button type="button" class="${i===m?'on':''}" data-action="cal-set" data-k="month" data-v="${i}">${n.slice(0,3)}</button>`).join('')}</div></div>
+          <div class="cp" data-cp="year"><button type="button" data-action="cal-pick" data-k="year" aria-haspopup="true" aria-label="Choose year"><span>${y}</span>${chev}</button>
+          <div class="cp-pop cp-years" role="menu">${years.map(k=>`<button type="button" class="${k===y?'on':''}${k===now?' now':''}" data-action="cal-set" data-k="year" data-v="${k}">${k}</button>`).join('')}</div></div>`;
+      })()}</h3>
       <button class="btn btn-s" data-action="cal-next" aria-label="Next month">→</button>
       <button class="btn btn-ghost" data-action="cal-today">Today</button>
       <div class="cal-tools">
@@ -6216,6 +6232,8 @@ document.addEventListener('click',e=>{
     case 'cal-prev':if(S.calM===0){S.calM=11;S.calY--;}else S.calM--;saveUI();render();break;
     case 'cal-next':if(S.calM===11){S.calM=0;S.calY++;}else S.calM++;saveUI();render();break;
     case 'cal-today':{const now=new Date();S.calM=now.getMonth();S.calY=now.getFullYear();saveUI();render();break;}
+    case 'cal-pick':{e.stopPropagation();const cp=el.closest('.cp'),was=cp.classList.contains('open');document.querySelectorAll('.cp.open').forEach(x=>x.classList.remove('open'));if(!was)cp.classList.add('open');break;}
+    case 'cal-set':{if(el.dataset.k==='month')S.calM=parseInt(el.dataset.v);else S.calY=parseInt(el.dataset.v);saveUI();render();break;}
     case 'cal-view':setCalUI({view:el.dataset.v});render();break;
     case 'cal-all':setCalUI({all:el.dataset.v==='1'});render();break;
     case 'cal-day':showCalDay(el.dataset.date);break;
@@ -6389,12 +6407,12 @@ document.addEventListener('keydown',e=>{
   else if(e.key==='Enter'){const sel=items[cur>=0?cur:0];if(sel)sel.click();}
   else if(e.key==='Escape'){inp.value='';renderSearchResults();inp.blur();}
 });
+document.addEventListener('click',e=>{if(!e.target.closest('.cp'))document.querySelectorAll('.cp.open').forEach(x=>x.classList.remove('open'));});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.cp.open').forEach(x=>x.classList.remove('open'));});
 document.addEventListener('click',e=>{const box=document.getElementById('gs-results');if(box&&!e.target.closest('.tb-search'))box.classList.remove('on');});
 document.addEventListener('focusin',e=>{if(e.target&&e.target.id==='gsearch'&&e.target.value.trim().length>=2)renderSearchResults();});
 document.addEventListener('change',e=>{
   const t=e.target;
-  if(t.dataset&&t.dataset.action==='cal-month'){S.calM=parseInt(t.value);saveUI();render();return;}
-  if(t.dataset&&t.dataset.action==='cal-year'){S.calY=parseInt(t.value);saveUI();render();return;}
   if(t.dataset&&t.dataset.action==='ev-cat'){S._catFilter=t.value;saveUI();render();return;}
   if(t.dataset&&t.dataset.action==='ev-year'){S.tfY=t.value?parseInt(t.value):null;saveUI();render();return;}
   if(t.dataset&&t.dataset.action==='ev-apple'){setListUI({apple:t.checked});render();return;}
