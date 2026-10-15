@@ -949,6 +949,85 @@ input[type=checkbox],input[type=radio]{accent-color:var(--primary-deep)}
 .mt-flag{width:16px;height:12px;object-fit:cover;border-radius:2px;box-shadow:0 0 0 1px var(--line);flex-shrink:0}
 .mt-name{font-family:var(--font);font-weight:500;font-size:12px;color:var(--text);line-height:1.4}
 .mt-sub{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text2);margin-top:3px}
+/* ===== Layout v4: editorial sidebar (collapsible) + top bar with search, sync and theme ===== */
+.sidebar{position:fixed!important;top:0;bottom:0;left:0;right:auto!important;width:232px!important;height:100vh!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:0!important;padding:22px 14px 16px!important;background:var(--bg)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-right:1px solid var(--line)!important;border-bottom:none!important;z-index:110;transition:width .2s ease}
+.sidebar-brand{padding:4px 10px 0!important;display:flex;align-items:center;min-height:34px}
+.sidebar .wordmark{font-size:23px}
+.monogram{display:none;font-family:var(--serif);font-weight:700;font-size:20px;letter-spacing:-.04em;color:var(--text)}
+.monogram em{font-style:normal;color:var(--primary)}
+.sidebar .nav{display:flex!important;flex:1;flex-direction:column!important;justify-content:flex-start!important;align-items:stretch!important;gap:2px!important;margin-top:30px;padding:0!important}
+.sidebar .nav-item{display:flex!important;align-items:center;gap:12px;padding:10px 12px!important;border-radius:0;font-size:9.6px!important;letter-spacing:.18em;text-transform:uppercase;color:var(--text)!important;position:relative;white-space:nowrap}
+.sidebar .nav-item svg{display:block!important;width:17px;height:17px;flex-shrink:0;color:var(--text2);stroke-width:1.6}
+.sidebar .nav-item:hover{color:var(--primary-deep)!important;background:var(--primary-dim)!important}
+.sidebar .nav-item:hover svg{color:var(--primary-deep)}
+.sidebar .nav-item.active{color:var(--primary-deep)!important;background:var(--primary-dim)!important}
+.sidebar .nav-item.active svg{color:var(--primary-deep)}
+.sidebar .nav-item.active::after{content:'';position:absolute;left:0;top:8px;bottom:8px;width:2px;height:auto;right:auto;background:var(--primary-deep)}
+.sb-collapse{display:flex;align-items:center;gap:12px;background:none;border:none;border-top:1px solid var(--line);padding:14px 12px 4px;color:var(--text2);font:inherit;font-size:9.6px;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;width:100%}
+.sb-collapse svg{width:17px;height:17px;flex-shrink:0;transition:transform .2s}
+.sb-collapse:hover{color:var(--primary-deep)}
+/* Collapsed: a slim icon rail */
+.sidebar.collapsed{width:68px!important;padding-left:10px!important;padding-right:10px!important}
+.sidebar.collapsed .wordmark{display:none}
+.sidebar.collapsed .monogram{display:block}
+.sidebar.collapsed .sidebar-brand{justify-content:center;padding:4px 0 0!important}
+.sidebar.collapsed .nav-item{justify-content:center;padding:11px 0!important}
+.sidebar.collapsed .nav-item span,.sidebar.collapsed .sb-collapse span{display:none}
+.sidebar.collapsed .sb-collapse{justify-content:center;padding-left:0;padding-right:0}
+.sidebar.collapsed .sb-collapse svg{transform:rotate(180deg)}
+.main{margin-left:232px!important;padding-top:64px!important;transition:margin-left .2s ease}
+.main.sidebar-collapsed{margin-left:68px!important}
+/* Top bar */
+.topbar{position:fixed;top:0;left:232px;right:0;height:64px;display:flex;align-items:center;justify-content:flex-end;gap:20px;padding:0 40px;background:var(--header-bg);backdrop-filter:saturate(140%) blur(14px);-webkit-backdrop-filter:saturate(140%) blur(14px);border-bottom:1px solid var(--line);z-index:100;transition:left .2s ease}
+body.sb-collapsed .topbar{left:68px}
+.tb-brand{display:none;cursor:pointer;margin-right:auto}
+.tb-brand .wordmark{font-size:21px}
+.tb-search{position:relative;display:flex;align-items:center;width:min(380px,40vw)}
+.tb-search>svg{position:absolute;left:14px;width:15px;height:15px;color:var(--text2);pointer-events:none}
+.tb-search input{width:100%;background:var(--input-bg);border:1px solid var(--line);border-radius:999px;padding:9px 40px 9px 38px;font:inherit;font-size:13.5px;color:var(--text);outline:none;-webkit-appearance:none;appearance:none}
+.tb-search input::-webkit-search-cancel-button{display:none}
+.tb-search input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-dim)}
+.tb-search kbd{position:absolute;right:12px;font-family:var(--font);font-size:10px;color:var(--text3);border:1px solid var(--line);border-radius:5px;padding:1px 6px;pointer-events:none}
+.tb-search input:focus~kbd{display:none}
+.gs-results{display:none;position:absolute;top:calc(100% + 8px);left:0;right:0;background:var(--surface-2,var(--card));border:1px solid var(--line);box-shadow:0 20px 50px rgba(17,17,17,.16);max-height:420px;overflow:auto;z-index:130}
+.gs-results.on{display:block}
+.gs-item{display:flex;flex-direction:column;gap:3px;padding:12px 16px;border-bottom:1px solid var(--line);cursor:pointer}
+.gs-item:last-child{border-bottom:none}
+.gs-item.sel,.gs-item:hover{background:var(--primary-dim)}
+.gs-kick{font-size:8.6px;letter-spacing:.18em;text-transform:uppercase;color:var(--purple);font-weight:500}
+.gs-name{font-family:var(--serif);font-weight:700;font-size:15px;color:var(--text)}
+.gs-why{font-size:12px;color:var(--text2)}
+.gs-empty{padding:14px 16px;font-size:13px;color:var(--text2)}
+.tb-sync .sync-dot{display:inline-flex;font-size:9.5px;text-transform:uppercase;letter-spacing:.16em;color:var(--text3);background:none!important;padding:0}
+.tb-theme{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:none;border:none;color:var(--text);cursor:pointer}
+.tb-theme:hover{background:var(--primary-dim);color:var(--primary-deep)}
+.tb-theme svg{width:18px;height:18px}
+.sidebar-footer{display:none!important}
+/* Signature */
+.sig{max-width:1360px;margin:0 auto;padding:8px 48px 96px;text-align:right;font-size:11px;color:var(--text3);letter-spacing:.02em}
+.sig a{color:var(--primary-deep);font-weight:500}
+.sig a:hover{text-decoration:underline}
+/* User Guide page: the guide fills the page */
+.guide-page #guide-card{border:none!important;background:transparent!important}
+.guide-page #guide-card>.card-header{display:none}
+.guide-page .guide{padding:0!important;max-width:760px}
+.guide-page .guide-sec summary{font-family:var(--serif);font-size:16px;font-weight:700;padding:16px 0}
+.guide-page .guide-body{font-size:14px}
+/* Phones: no sidebar; top bar with wordmark, search and theme; bottom tab bar */
+@media(max-width:860px){
+  .sidebar{display:none!important}
+  .main,.main.sidebar-collapsed{margin-left:0!important;padding-top:58px!important}
+  .topbar,body.sb-collapsed .topbar{left:0;height:58px;padding:0 14px;gap:10px}
+  .tb-brand{display:block}
+  .tb-brand .wordmark{font-size:19px}
+  .tb-search{width:auto;flex:1;max-width:220px}
+  .tb-search input{padding:8px 12px 8px 32px;font-size:16px}
+  .tb-search>svg{left:11px}
+  .tb-search kbd{display:none}
+  .tb-sync{display:none}
+  .gs-results{position:fixed;top:58px;left:0;right:0;max-height:70vh}
+  .sig{padding:8px 18px 150px}
+}
 @keyframes sheetIn{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 .more-list{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line)}
 .more-list button{display:flex;align-items:center;gap:12px;padding:15px 16px;background:none;border:0;border-top:1px solid var(--line);color:var(--text);font:inherit;font-size:17px;text-align:left;cursor:pointer}
@@ -1189,7 +1268,8 @@ const NAVS=[
   {id:'leave',label:'Leave',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/><path d="M9 16l2 2 4-4"/></svg>'},
   {id:'budget',label:'Budget',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>'},
   {id:'countries',label:'Countries',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>'},
-  {id:'settings',label:'Settings',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'}
+  {id:'settings',label:'Settings',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'},
+  {id:'guide',label:'User Guide',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20V3H6.5A2.5 2.5 0 004 5.5v14z"/><path d="M8 7h8M8 11h6"/></svg>'},
 ];
 
 // ===== PUBLIC HOLIDAYS (SG + MY) =====
@@ -2201,7 +2281,14 @@ function vAccountCard(){
       </form>
       <p id="acct-msg" style="font-size:11px;color:var(--text3);margin:10px 0 0;line-height:1.5"></p></div></div>`;
 }
-// ===== USER GUIDE (Settings) =====
+// ===== USER GUIDE (its own page) =====
+function vGuidePage(){
+  return `<div class="page-header"><div><h2>User Guide</h2><div class="subtitle">How to get the most out of ${APP_NAME}</div></div></div>
+  <div class="page-content guide-page">${vGuideCard()}</div>`;
+}
+// Signature at the bottom right of every page
+function signatureHtml(){return `<div class="sig">designed and created by <a href="https://www.instagram.com/irn.w" target="_blank" rel="noopener noreferrer">@irn.w</a></div>`;}
+
 function vGuideCard(){
   const sec=(title,body,open)=>`<details class="guide-sec"${open?' open':''}><summary>${title}</summary><div class="guide-body">${body}</div></details>`;
   const ol=items=>`<ol>${items.map(i=>`<li>${i}</li>`).join('')}</ol>`;
@@ -2389,12 +2476,14 @@ function toggleSidebarCollapse(){
   const main=document.getElementById('app');
   sb.classList.toggle('collapsed');
   main.classList.toggle('sidebar-collapsed');
+  document.body.classList.toggle('sb-collapsed',sb.classList.contains('collapsed'));
   localStorage.setItem('ht-sidebar-collapsed',sb.classList.contains('collapsed')?'1':'');
 }
 function restoreSidebarState(){
   if(localStorage.getItem('ht-sidebar-collapsed')==='1'){
     document.getElementById('sidebar').classList.add('collapsed');
     document.getElementById('app').classList.add('sidebar-collapsed');
+    document.body.classList.add('sb-collapsed');
   }
 }
 function syncIndicatorHtml(){
@@ -2424,25 +2513,63 @@ function renderTabbar(){
 }
 function showMoreSheet(){
   const item=id=>{const n=NAVS.find(x=>x.id===id);return `<button data-action="nav-more" data-to="${id}">${n.icon}<span>${n.label}</span><span class="chev">›</span></button>`;};
-  modal('More',`<div class="more-list">${['budget','countries','settings'].map(item).join('')}</div>
+  modal('More',`<div class="more-list">${['budget','countries','settings','guide'].map(item).join('')}</div>
     <div class="more-list" style="margin-top:14px"><button data-action="more-theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><span>${S.theme==='dark'?'Light appearance':'Dark appearance'}</span></button></div>`,null,{noSave:true});
 }
 function renderSidebar(){
   try{renderTabbar();}catch(e){}
   const isDark=S.theme==='dark';
   document.getElementById('sidebar').innerHTML=`
-    <button class="sidebar-collapse-btn" onclick="toggleSidebarCollapse()" title="Toggle sidebar">&#8249;</button>
-    <div class="sidebar-brand" data-action="nav" data-to="dashboard" title="${APP_TAGLINE}"><span class="wordmark">The <em>Planner</em></span></div></div>
+    <div class="sidebar-brand" data-action="nav" data-to="dashboard" title="${APP_TAGLINE}"><span class="wordmark">The <em>Planner</em></span><span class="monogram">T<em>P</em></span></div>
     <div class="nav">
-      <div class="nav-section">Menu</div>
-      ${NAVS.map((n,i)=>`<div class="nav-item${S.v===n.id||(S.v==='detail'&&n.id==='events')?' active':''}" data-action="nav" data-to="${n.id}" role="button" tabindex="0" aria-label="${n.label} (${i+1})">${n.icon}<span>${n.label}</span><span class="kbd" style="margin-left:auto">${i+1}</span></div>`).join('')}
+      ${NAVS.map((n,i)=>`<div class="nav-item${S.v===n.id||(S.v==='detail'&&n.id==='events')?' active':''}" data-action="nav" data-to="${n.id}" role="button" tabindex="0" title="${n.label}" aria-label="${n.label}">${n.icon}<span>${n.label}</span></div>`).join('')}
     </div>
-    <div class="sidebar-footer">
-      ${syncIndicatorHtml()}
-      <div class="theme-toggle" onclick="toggleTheme()">
-        ${isDark?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg> Light Mode':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg> Dark Mode'}
-      </div>
-    </div>`;
+    <button class="sb-collapse" onclick="toggleSidebarCollapse()" title="Collapse or expand the sidebar" aria-label="Collapse or expand the sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg><span>Collapse</span></button>`;
+  renderTopbar();
+}
+// Top bar: search, sync status, light/dark. Built once so typing in search is never wiped by a re-render.
+function renderTopbar(){
+  let tb=document.getElementById('topbar');
+  if(!tb){
+    tb=document.createElement('header');tb.id='topbar';tb.className='topbar';
+    tb.innerHTML=`<div class="tb-brand" data-action="nav" data-to="dashboard"><span class="wordmark">The <em>Planner</em></span></div>
+      <div class="tb-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="gsearch" type="search" placeholder="Search trips, places, bookings…" autocomplete="off" aria-label="Search"><kbd>/</kbd><div class="gs-results" id="gs-results" role="listbox"></div></div>
+      <div class="tb-sync"></div><button class="tb-theme" onclick="toggleTheme();renderTopbar()" aria-label="Switch light/dark"></button>`;
+    document.body.appendChild(tb);
+    if(window.innerWidth<=860)tb.querySelector('#gsearch').placeholder='Search';
+  }
+  tb.querySelector('.tb-sync').innerHTML=syncIndicatorHtml();
+  tb.querySelector('.tb-theme').innerHTML=S.theme==='dark'
+    ?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>'
+    :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>';
+}
+// Global search: events by name, place, notes, and their bookings (flight numbers, references, hotels, activities)
+function globalSearch(q){
+  q=q.trim().toLowerCase();if(q.length<2)return [];
+  const hit=v=>v&&String(v).toLowerCase().includes(q);
+  const out=[];
+  (S.events||[]).forEach(t=>{
+    let why='';
+    if(!hit(t.name)){
+      const loc=(t.locations||[]).find(hit);
+      const f=(t.flights||[]).find(x=>hit(x.flightNumber)||hit(x.pnr)||hit(x.airline)||hit(x.from)||hit(x.to));
+      const h=(t.hotels||[]).find(x=>hit(x.name)||hit(x.bookingNumber));
+      const a=(t.activities||[]).find(x=>hit(x.name)||hit(x.location)||hit(x.bookingDetails));
+      const x=(t.transport||[]).find(y=>hit(y.name)||hit(y.bookingDetails));
+      why=loc?loc:f?`Flight ${f.flightNumber||f.airline||''}${f.pnr&&hit(f.pnr)?' · '+f.pnr:''}`:h?`Hotel · ${h.name}`:a?`Activity · ${a.name}`:x?`Transport · ${x.name}`:hit(t.notes)?'In notes':null;
+      if(why===null)return;
+    }
+    out.push({t,why});
+  });
+  const st={active:0,upcoming:1,completed:2};
+  return out.sort((a,b)=>st[eventStatus(a.t)]-st[eventStatus(b.t)]||(eventStatus(a.t)==='completed'?b.t.startDate.localeCompare(a.t.startDate):a.t.startDate.localeCompare(b.t.startDate))).slice(0,8);
+}
+function renderSearchResults(){
+  const inp=document.getElementById('gsearch'),box=document.getElementById('gs-results');if(!inp||!box)return;
+  const q=inp.value,res=globalSearch(q);
+  if(q.trim().length<2){box.classList.remove('on');box.innerHTML='';return;}
+  box.innerHTML=res.length?res.map((r,i)=>`<div class="gs-item${i===0?' sel':''}" data-action="gs-open" data-id="${r.t.id}" role="option"><span class="gs-kick">${esc(r.t.source==='apple'?'Apple Calendar':catLabel(r.t.category||'trip'))} · ${esc(rangeText(r.t))}</span><span class="gs-name">${esc(r.t.name)}</span>${r.why?`<span class="gs-why">${esc(r.why)}</span>`:''}</div>`).join(''):`<div class="gs-empty">No matches for “${esc(q.trim())}”</div>`;
+  box.classList.add('on');
 }
 
 function render(){
@@ -2458,8 +2585,10 @@ function render(){
       case 'budget':a.innerHTML=vBudget();break;
       case 'countries':a.innerHTML=vCountries();break;
       case 'settings':a.innerHTML=vSettings();break;
+      case 'guide':a.innerHTML=vGuidePage();break;
       default:a.innerHTML=vDash();
     }
+    a.insertAdjacentHTML('beforeend',signatureHtml());
   }catch(e){console.error('View error:',e);_appErrorState=true;stopSyncPolling();a.innerHTML='<div style="padding:40px;color:#ff6b6b"><h2>Error</h2><pre style="margin-top:12px;font-size:12px;white-space:pre-wrap;color:#e8e9ed">'+e.message+'\n'+e.stack+'</pre><p style="margin-top:8px;font-size:11px;color:var(--text3)">Sync has been paused to prevent data loss.</p><button onclick="localStorage.removeItem(\'htV4\');localStorage.removeItem(\'htV3\');location.reload()" style="margin-top:16px;padding:8px 16px;background:#6c8cff;color:#fff;border:none;border-radius:8px;cursor:pointer">Reset &amp; Reload</button></div>';}
   try{bind();}catch(e){console.error('Bind error:',e);}
   if(S.v==='countries')setTimeout(renderWorldMap,100);
@@ -3653,11 +3782,10 @@ function renderWorldMap(){
 // ===== SETTINGS =====
 function vSettings(){
   return `
-  <div class="page-header"><div><h2>Settings</h2><div class="subtitle">Account, guide, rates & data</div></div></div>
+  <div class="page-header"><div><h2>Settings</h2><div class="subtitle">Account, region, rates & data</div></div></div>
   <div class="page-content">
     ${vAccountCard()}
     ${vPrefsCard()}
-    ${vGuideCard()}
     <div class="card" style="margin-bottom:16px"><div class="card-header"><h3>Exchange Rates (to ${baseCur()})</h3><button class="btn btn-s" onclick="fetchLiveRates().then(()=>render())">↻ Refresh Rates</button></div><div class="card-body">
       <p style="font-size:11px;color:var(--text3);margin-bottom:12px">How much 1 unit of each currency is worth in ${baseCur()}. Rates refresh automatically; edit one to override it. Every currency is supported. These are the ones in your trips plus common ones.</p>
       <p style="font-size:11px;color:var(--text3);margin:-6px 0 12px;padding:8px 10px;border-left:2px solid var(--orange);background:rgba(251,146,60,.06);border-radius:4px">⚠ ${ratesCaveat()}</p>
@@ -5994,6 +6122,7 @@ document.addEventListener('click',e=>{
   const a=el.dataset.action,ev=S.events.find(t=>t.id===S.tid);
   switch(a){
     case 'nav':nav(el.dataset.to);break;
+    case 'gs-open':{const i=document.getElementById('gsearch');if(i){i.value='';i.blur();}renderSearchResults();nav('detail',{tid:el.dataset.id,tab:'timeline'});break;}
     case 'more-sheet':showMoreSheet();break;
     case 'nav-more':xm();nav(el.dataset.to);break;
     case 'more-theme':xm();toggleTheme();render();break;
@@ -6111,7 +6240,7 @@ document.addEventListener('click',e=>{
     case 'acct-signout':acctSignOut();break;
     case 'acct-delete':acctDelete();break;
     case 'acct-change-pw':acctShowNewPassword();break;
-    case 'open-guide':nav('settings');setTimeout(()=>{const g=document.getElementById('guide-card');if(g){g.querySelector('details')?.setAttribute('open','');g.scrollIntoView({behavior:'smooth'});}},50);break;
+    case 'open-guide':nav('guide');break;
     case 'go-account':nav('settings');setTimeout(()=>{const g=document.getElementById('acct-card');if(g){g.scrollIntoView({behavior:'smooth'});document.getElementById('acct-email')?.focus();}},50);break;
     case 'link-device':linkDevice();break;
     case 'sync-push':pushToGist().then(()=>toast('Pushed to cloud'));break;
@@ -6203,6 +6332,16 @@ document.addEventListener('change',e=>{
   if(e.target.matches('[data-action="tp-to"]')){S._tpTo=e.target.value;saveS();render();}
 });
 
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='gsearch')renderSearchResults();});
+document.addEventListener('keydown',e=>{
+  const inp=document.getElementById('gsearch');if(!inp||e.target!==inp)return;
+  const items=[...document.querySelectorAll('#gs-results .gs-item')],cur=items.findIndex(x=>x.classList.contains('sel'));
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!items.length)return;const n=(cur+(e.key==='ArrowDown'?1:-1)+items.length)%items.length;items.forEach((x,i)=>x.classList.toggle('sel',i===n));}
+  else if(e.key==='Enter'){const sel=items[cur>=0?cur:0];if(sel)sel.click();}
+  else if(e.key==='Escape'){inp.value='';renderSearchResults();inp.blur();}
+});
+document.addEventListener('click',e=>{const box=document.getElementById('gs-results');if(box&&!e.target.closest('.tb-search'))box.classList.remove('on');});
+document.addEventListener('focusin',e=>{if(e.target&&e.target.id==='gsearch'&&e.target.value.trim().length>=2)renderSearchResults();});
 document.addEventListener('change',e=>{
   const t=e.target;
   if(t.dataset&&t.dataset.action==='ev-cat'){S._catFilter=t.value;saveUI();render();return;}
@@ -6251,7 +6390,7 @@ document.addEventListener('keydown',e=>{
   else if(e.key==='6')nav('settings');
   else if(e.key==='n'&&!e.ctrlKey&&!e.metaKey)fEvent();
   else if(e.key==='u'&&!e.ctrlKey&&!e.metaKey)showSmartUpload();
-  else if(e.key==='/'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();const si=document.querySelector('[data-action="search-events"]');if(si)si.focus();else nav('events');}
+  else if(e.key==='/'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();const si=document.getElementById('gsearch');if(si)si.focus();}
 });
 
 // Hamburger
