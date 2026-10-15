@@ -1028,6 +1028,16 @@ body.sb-collapsed .topbar{left:68px}
   .gs-results{position:fixed;top:58px;left:0;right:0;max-height:70vh}
   .sig{padding:8px 18px 150px}
 }
+/* Narrower sidebar; minimalist round arrow on its edge (middle) to collapse/expand */
+.sidebar{width:196px!important;padding:22px 10px 16px!important}
+.sidebar .wordmark{font-size:21px}
+.sidebar .nav-item{gap:10px;padding:10px 10px!important}
+.main{margin-left:196px!important}
+.topbar{left:196px}
+.sb-collapse{position:absolute;top:50%;right:-13px;transform:translateY(-50%);width:26px;height:26px;padding:0!important;border-radius:999px;border:1px solid var(--line)!important;background:var(--bg)!important;color:var(--text2);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(17,17,17,.08);z-index:120}
+.sb-collapse:hover{color:var(--primary-deep);border-color:var(--primary)!important}
+.sb-collapse svg{width:14px;height:14px}
+.sidebar.collapsed .sb-collapse{padding:0!important;justify-content:center}
 @keyframes sheetIn{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 .more-list{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line)}
 .more-list button{display:flex;align-items:center;gap:12px;padding:15px 16px;background:none;border:0;border-top:1px solid var(--line);color:var(--text);font:inherit;font-size:17px;text-align:left;cursor:pointer}
@@ -2524,7 +2534,7 @@ function renderSidebar(){
     <div class="nav">
       ${NAVS.map((n,i)=>`<div class="nav-item${S.v===n.id||(S.v==='detail'&&n.id==='events')?' active':''}" data-action="nav" data-to="${n.id}" role="button" tabindex="0" title="${n.label}" aria-label="${n.label}">${n.icon}<span>${n.label}</span></div>`).join('')}
     </div>
-    <button class="sb-collapse" onclick="toggleSidebarCollapse()" title="Collapse or expand the sidebar" aria-label="Collapse or expand the sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg><span>Collapse</span></button>`;
+    <button class="sb-collapse" onclick="toggleSidebarCollapse()" title="Collapse or expand the sidebar" aria-label="Collapse or expand the sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>`;
   renderTopbar();
 }
 // Top bar: search, sync status, light/dark. Built once so typing in search is never wiped by a re-render.
