@@ -1042,6 +1042,28 @@ body.sb-collapsed .topbar{left:68px}
 .tb-search{flex:0 0 240px!important;width:240px!important;max-width:240px!important}
 .gs-results{min-width:380px;left:auto;right:0}
 @media(max-width:860px){.tb-search{flex:1 1 auto!important;width:auto!important;max-width:220px!important}.gs-results{min-width:0}}
+/* Featured trip: a softly tinted panel with a lavender rule, set apart from the lists below */
+.hero{position:relative;background:color-mix(in srgb,var(--primary) 7%,var(--card))!important;border:1px solid var(--line-strong)!important;border-left:2px solid var(--primary-deep)!important;padding:22px 26px!important;overflow:hidden}
+[data-theme="dark"] .hero{background:color-mix(in srgb,var(--primary) 9%,var(--bg))!important}
+.hero:hover{background:color-mix(in srgb,var(--primary) 11%,var(--card))!important}
+[data-theme="dark"] .hero:hover{background:color-mix(in srgb,var(--primary) 13%,var(--bg))!important}
+.hero.live::after{content:'';position:absolute;left:0;bottom:0;height:2px;width:var(--prog,0%);background:var(--primary);opacity:.85}
+/* Compact event cards: 4+ per row */
+.trip-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))!important;gap:10px!important;margin-top:14px;align-items:start}
+.trip-card.ec .trip-body{padding:14px 16px 13px}
+.trip-card.ec .trip-name{font-size:15px;line-height:1.3;margin:4px 0 4px}
+.ec-kick{font-size:8.6px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;color:var(--purple)}
+.trip-card.ec.apple .ec-kick{color:var(--text3)}
+.trip-card.ec.apple .trip-name{font-weight:600;font-size:14px}
+.ec-dates{font-size:11.5px;color:var(--text2)}
+.ec-places{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.ec-places .tag{font-size:.58rem;padding:2px 8px}
+.ec-foot{display:flex;align-items:center;gap:12px;margin-top:10px;font-size:11.5px;color:var(--text2)}
+.ec-cost{color:var(--text)}
+.ec-add{position:static!important;transform:none!important;margin-left:auto;width:24px!important;height:24px!important;font-size:14px!important}
+.trip-card.ec.past{opacity:.7}
+.trip-card.ec:hover{background:var(--card-hover)}
+.trip-card.ec:hover .trip-name{color:var(--primary-deep)}
 @keyframes sheetIn{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 .more-list{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line)}
 .more-list button{display:flex;align-items:center;gap:12px;padding:15px 16px;background:none;border:0;border-top:1px solid var(--line);color:var(--text);font:inherit;font-size:17px;text-align:left;cursor:pointer}
@@ -2720,7 +2742,8 @@ function vDash(){
   const heroHtml=hero?(()=>{const t=hero,st=eventStatus(t),fl=(t.flights||[]).length,ho=(t.hotels||[]).length,ac=(t.activities||[]).length,cost=eCost(t),ps=eventPaymentStatus(t);
     const facts=[fl?`<i class="ic ic-fl"></i>${fl} flight${fl>1?'s':''}`:'',ho?`<i class="ic ic-ho"></i>${ho} hotel${ho>1?'s':''}`:'',ac?`<i class="ic ic-ac"></i>${ac} activit${ac>1?'ies':'y'}`:'',cost?fmtM(cost,baseCur()):'',ps?`<span style="color:${ps.color}">${ps.status==='paid'?'✓':'●'} ${esc(ps.label)}</span>`:''].filter(Boolean);
     const dl=daysUntil(t.startDate);
-    return `<div class="hero" data-action="view" data-id="${t.id}" data-drop-ev="${t.id}" style="--c:${eColor(t)}">
+    const prog=st==='active'?Math.min(100,Math.round((Math.abs(dl)+1)/days(t.startDate,t.endDate)*100)):0;
+    return `<div class="hero${st==='active'?' live':''}" data-action="view" data-id="${t.id}" data-drop-ev="${t.id}" style="--c:${eColor(t)};--prog:${prog}%">
       <div class="hero-k">${st==='active'?'Happening now':'Next up'}</div>
       <div class="hero-row"><div style="min-width:0"><div class="hero-name">${esc(t.name)}</div><div class="hero-meta">${esc(rangeText(t))} · ${days(t.startDate,t.endDate)} days${(t.locations||[]).length?' · '+esc(t.locations.slice(0,3).join(', ')):''}</div></div>
         <div class="hero-cd">${st==='active'?`<b>Day ${Math.abs(dl)+1}</b><span>of ${days(t.startDate,t.endDate)}</span>`:dl===0?'<b>Today</b>':`<b>${dl}</b><span>day${dl!==1?'s':''} to go</span>`}</div></div>
@@ -2779,22 +2802,19 @@ function vEvents(){
 }
 
 function eventCardHtml(t){
-  const st=eventStatus(t);
-  const cc=catColor(t.category||'trip');
-  const isApple=t.source==='apple';
-  return`<div class="trip-card" data-action="view" data-id="${t.id}" ${isApple?`draggable="true" data-apple-drag="${t.id}" title="Drag onto an event to add it there"`:`data-drop-ev="${t.id}"`}>
-    <div class="trip-accent" style="background:${cc}"></div>
+  // Compact card: category kicker, title, short dates, only the facts that exist
+  const isApple=t.source==='apple',st=eventStatus(t),n=days(t.startDate,t.endDate);
+  const fl=(t.flights||[]).length,ho=(t.hotels||[]).length,cost=eCost(t);
+  const timeClash=findClashes(t,t.id).filter(c=>c.severity==='time');
+  const places=(t.locations||[]).filter(l=>l&&l.length<=30).slice(0,3);
+  return`<div class="trip-card ec${isApple?' apple':''}${st==='completed'?' past':''}" data-action="view" data-id="${t.id}" ${isApple?`draggable="true" data-apple-drag="${t.id}" title="${esc(t.name)} · drag onto a trip to add it there"`:`data-drop-ev="${t.id}" title="${esc(t.name)}"`}>
+    <div class="trip-accent" style="background:${eColor(t)}"></div>
     <div class="trip-body">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div class="trip-name">${esc(t.name)}</div><div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${clashBadgeHtml(t,true)}${t.source==='apple'?'<span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border)">&#63743; Apple</span>':''}<span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span></div></div>
-      <div class="trip-dates"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>${fmt(t.startDate)} — ${fmt(t.endDate)}</div>
-      <div class="trip-locs">${t.locations.filter(l=>l.length<=40).slice(0,3).map(l=>`<span class="loc">${esc(l)}</span>`).join('')}${(t.countries||[]).length?t.countries.slice(0,4).map(cid=>`<span class="country-tag">${esc(COUNTRY_DATA[cid]||cid)}</span>`).join('')+(t.countries.length>4?`<span class="country-tag">+${t.countries.length-4}</span>`:''):''}</div>
-      <div class="trip-foot">
-        <span><b>${days(t.startDate,t.endDate)}</b> day${days(t.startDate,t.endDate)>1?'s':''}</span>
-        ${(t.flights||[]).length?`<span><b>${(t.flights||[]).length}</b> flight${(t.flights||[]).length>1?'s':''}</span>`:''}
-        ${(t.hotels||[]).length?`<span><b>${(t.hotels||[]).length}</b> hotel${(t.hotels||[]).length>1?'s':''}</span>`:''}
-        ${eCost(t)?`<span style="color:var(--green)"><b>${fmtM(eCost(t),'')}</b> ${baseCur()}</span>`:''}
-        ${isApple?`<button class="btn btn-ghost apple-attach-btn" data-action="apple-attach" data-id="${t.id}">+ Add to event…</button>`:''}
-      </div>
+      <div class="ec-kick">${isApple?'Apple Calendar':esc(catLabel(t.category||'trip'))}${timeClash.length?` <span class="evr-warn clash-link" data-action="show-clash" data-id="${t.id}" title="Time clash with ${esc(timeClash.map(c=>c.event.name).join(', '))}">⚠</span>`:''}</div>
+      <div class="trip-name">${esc(t.name)}</div>
+      <div class="ec-dates">${esc(rangeText(t))}${n>1?' · '+n+' days':''}</div>
+      ${places.length?`<div class="ec-places">${places.map(l=>`<span class="tag">${esc(l)}</span>`).join('')}</div>`:''}
+      ${fl||ho||cost||isApple?`<div class="ec-foot">${fl?`<span><i class="ic ic-fl"></i>${fl}</span>`:''}${ho?`<span><i class="ic ic-ho"></i>${ho}</span>`:''}${cost?`<span class="ec-cost">${fmtM(cost,baseCur())}</span>`:''}${isApple?`<button class="evr-add ec-add" data-action="apple-attach" data-id="${t.id}" title="Add to a trip">+</button>`:''}</div>`:''}
     </div>
   </div>`;
 }
