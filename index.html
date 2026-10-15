@@ -179,8 +179,9 @@ textarea.fc{resize:vertical;min-height:50px}
 .cal-day .d-num{font-weight:600;margin-bottom:2px;font-size:12px}
 .cal-day .d-num.weekend{color:var(--accent)}
 .cal-day .d-ph{font-size:8px;font-weight:600;margin-bottom:1px;padding:1px 4px;border-radius:3px;display:inline-block;max-width:100%;line-height:1.25;white-space:normal;overflow-wrap:break-word}
-.cal-day .d-ph.ph-sg{background:var(--sg-dim);color:var(--sg)}
-.cal-day .d-ph.ph-my{background:var(--my-dim);color:var(--my)}
+.cal-day .d-ph.ph-sg,.d-ph.ph-c0{background:var(--sg-dim);color:var(--sg)}
+.cal-day .d-ph.ph-my,.d-ph.ph-c1{background:var(--my-dim);color:var(--my)}
+.d-ph.ph-c2{background:rgba(245,158,11,.15);color:#f59e0b}.d-ph.ph-c3{background:rgba(34,197,94,.15);color:#22c55e}.d-ph.ph-c4,.d-ph.ph-c5{background:rgba(148,163,184,.18);color:var(--text2)}.d-ph.ph-c9{background:rgba(236,72,153,.15);color:#ec4899}
 .cal-trip{font-size:9px;padding:1px 4px;border-radius:3px;margin-bottom:1px;line-height:1.3;white-space:normal;overflow-wrap:break-word;hyphens:manual;cursor:pointer;font-weight:500;color:#fff}
 
 /* ========== LEAVE ========== */
@@ -439,7 +440,7 @@ td.mg-l{color:var(--text3);white-space:nowrap;padding-top:9px}
 .ph-legend{display:flex;gap:16px;margin-top:16px;padding:12px 16px;background:var(--card);border:1px solid var(--glass-border);border-radius:8px;font-size:11px;flex-wrap:wrap}
 .ph-legend-item{display:flex;align-items:center;gap:6px}
 .ph-dot{width:8px;height:8px;border-radius:50%}
-.ph-dot.sg{background:var(--sg)}.ph-dot.my{background:var(--my)}
+.ph-dot.sg,.ph-dot.c0{background:var(--sg)}.ph-dot.my,.ph-dot.c1{background:var(--my)}.ph-dot.c2{background:#f59e0b}.ph-dot.c3{background:#22c55e}.ph-dot.c4,.ph-dot.c5{background:var(--text3)}.ph-dot.c9{background:#ec4899}
 
 /* ========== LEAVE APPLIED TABLE ========== */
 .la-table{width:100%;font-size:12px;border-collapse:collapse}
@@ -845,34 +846,189 @@ MY:{
 ]
 }
 };
-// Helper: get all PH for a date (returns [{n, country, states}])
-function getPH(dateStr){
-  const y=parseInt(dateStr.slice(0,4)),res=[];
-  const sgList=(PH_DATA.SG[y]||[]);
-  sgList.forEach(h=>{if(h.d===dateStr)res.push({n:h.n,country:'SG'});});
-  const myList=(PH_DATA.MY[y]||[]);
-  myList.forEach(h=>{if(h.d===dateStr)res.push({n:h.n,country:'MY',states:h.s});});
-  return res;
-}
-// Helper: is date a PH in SG?
-function isSGPH(dateStr){return(PH_DATA.SG[parseInt(dateStr.slice(0,4))]||[]).some(h=>h.d===dateStr);}
-// Helper: is date a national MY PH?
-function isMYPH(dateStr){return(PH_DATA.MY[parseInt(dateStr.slice(0,4))]||[]).some(h=>h.d===dateStr&&h.s==='all');}
 // Helper: format MY states for display
 function fmtStates(s){return s==='all'?'National':Array.isArray(s)?s.join(', '):s;}
+
+// ===== REGION & PREFERENCES =====
+// Everything that used to assume Singapore: currency, holidays, time zone, weekend, week start, date style.
+// Stored in S.prefs (synced with the account). Missing prefs on existing data = Singapore defaults (unchanged behaviour).
+const COUNTRY_CURRENCY=(()=>{const m={};`AD:EUR AE:AED AF:AFN AG:XCD AI:XCD AL:ALL AM:AMD AO:AOA AR:ARS AT:EUR AU:AUD AW:AWG AX:EUR AZ:AZN BA:BAM BB:BBD BD:BDT BE:EUR BF:XOF BG:BGN BH:BHD BI:BIF BJ:XOF BL:EUR BM:BMD BN:BND BO:BOB BQ:USD BR:BRL BS:BSD BT:BTN BW:BWP BY:BYN BZ:BZD CA:CAD CC:AUD CD:CDF CF:XAF CG:XAF CH:CHF CI:XOF CK:NZD CL:CLP CM:XAF CN:CNY CO:COP CR:CRC CU:CUP CV:CVE CW:ANG CX:AUD CY:EUR CZ:CZK DE:EUR DJ:DJF DK:DKK DM:XCD DO:DOP DZ:DZD EC:USD EE:EUR EG:EGP ER:ERN ES:EUR ET:ETB FI:EUR FJ:FJD FK:FKP FM:USD FO:DKK FR:EUR GA:XAF GB:GBP GD:XCD GE:GEL GF:EUR GG:GBP GH:GHS GI:GIP GL:DKK GM:GMD GN:GNF GP:EUR GQ:XAF GR:EUR GT:GTQ GU:USD GW:XOF GY:GYD HK:HKD HN:HNL HR:EUR HT:HTG HU:HUF ID:IDR IE:EUR IL:ILS IM:GBP IN:INR IQ:IQD IR:IRR IS:ISK IT:EUR JE:GBP JM:JMD JO:JOD JP:JPY KE:KES KG:KGS KH:KHR KI:AUD KM:KMF KN:XCD KR:KRW KW:KWD KY:KYD KZ:KZT LA:LAK LB:LBP LC:XCD LI:CHF LK:LKR LR:LRD LS:LSL LT:EUR LU:EUR LV:EUR LY:LYD MA:MAD MC:EUR MD:MDL ME:EUR MF:EUR MG:MGA MH:USD MK:MKD ML:XOF MM:MMK MN:MNT MO:MOP MP:USD MQ:EUR MR:MRU MS:XCD MT:EUR MU:MUR MV:MVR MW:MWK MX:MXN MY:MYR MZ:MZN NA:NAD NC:XPF NE:XOF NF:AUD NG:NGN NI:NIO NL:EUR NO:NOK NP:NPR NR:AUD NU:NZD NZ:NZD OM:OMR PA:PAB PE:PEN PF:XPF PG:PGK PH:PHP PK:PKR PL:PLN PM:EUR PN:NZD PR:USD PS:ILS PT:EUR PW:USD PY:PYG QA:QAR RE:EUR RO:RON RS:RSD RU:RUB RW:RWF SA:SAR SB:SBD SC:SCR SD:SDG SE:SEK SG:SGD SH:SHP SI:EUR SJ:NOK SK:EUR SL:SLE SM:EUR SN:XOF SO:SOS SR:SRD SS:SSP ST:STN SV:USD SX:ANG SY:SYP SZ:SZL TC:USD TD:XAF TG:XOF TH:THB TJ:TJS TK:NZD TL:USD TM:TMT TN:TND TO:TOP TR:TRY TT:TTD TV:AUD TW:TWD TZ:TZS UA:UAH UG:UGX US:USD UY:UYU UZ:UZS VA:EUR VC:XCD VE:VES VG:USD VI:USD VN:VND VU:VUV WF:XPF WS:WST YE:YER YT:EUR ZA:ZAR ZM:ZMW ZW:USD`.split(' ').forEach(p=>{const[c,v]=p.split(':');m[c]=v;});return m;})();
+// Countries the free holiday service (date.nager.at) covers; SG and MY also have built-in data
+const NAGER_COUNTRIES=new Set('AD AG AI AL AM AO AR AT AU AW AX BA BB BD BE BF BG BH BI BJ BL BM BO BQ BR BS BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG ER ES ET FI FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GT GW GY HK HN HR HT HU ID IE IM IQ IS IT JE JM JP KE KH KI KM KN KR KY KZ LC LI LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MN MP MQ MR MS MT MW MX MZ NA NC NE NF NG NI NL NO NR NU NZ PA PE PF PG PH PL PM PN PR PT PW PY RO RS RU RW SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TG TK TN TO TR TT TV TZ UA UG US UY VA VC VE VG VI VN VU WF WS YE ZA ZM ZW'.split(' '));
+const BUILTIN_PH=new Set(['SG','MY']);
+// Countries that write the month first ("Oct 15")
+const MDY_COUNTRIES=new Set(['US','PH','FM','MH','PW','GU','PR','AS','MP','VI','UM','BZ','KY']);
+const _regionName=(()=>{try{const dn=new Intl.DisplayNames(['en'],{type:'region'});return c=>{try{return dn.of(c)||c;}catch(e){return c;}};}catch(e){return c=>c;}})();
+const _currencyName=(()=>{try{const dn=new Intl.DisplayNames(['en'],{type:'currency'});return c=>{try{return dn.of(c)||c;}catch(e){return c;}};}catch(e){return c=>c;}})();
+const ALL_COUNTRIES=Object.keys(COUNTRY_CURRENCY).map(c=>({code:c,name:_regionName(c)})).sort((a,b)=>a.name.localeCompare(b.name));
+const SG_PREFS={country:'SG',currency:'SGD',tz:'Asia/Singapore',holidays:['SG','MY'],workHolidays:'SG',region:'',weekend:[0,6],weekStart:1,dateOrder:'dmy',customHolidays:[]};
+// Weekend and first weekday for a country, from the browser's locale data when available
+function _weekInfo(cc){
+  try{const loc=new Intl.Locale('en-'+cc);const wi=loc.getWeekInfo?loc.getWeekInfo():loc.weekInfo;
+    if(wi&&wi.weekend)return{weekend:wi.weekend.map(d=>d%7),weekStart:(wi.firstDay||1)%7};}catch(e){}
+  const friSat=['SA','KW','QA','BH','OM','JO','IQ','YE','EG','DZ','LY','SD','IL','BD','SY','AF'];
+  const sunFirst=['US','CA','MX','BR','JP','KR','TW','HK','PH','IL','SA','IN','ZA','AU','PE','CO','AR','GT','HN','SV','NI','PA','DO','PR','VE','KE','ZW'];
+  return{weekend:friSat.includes(cc)?[5,6]:cc==='IR'?[5]:[0,6],weekStart:friSat.includes(cc)?6:sunFirst.includes(cc)?0:1};
+}
+const COUNTRY_TZ={SG:'Asia/Singapore',MY:'Asia/Kuala_Lumpur',TH:'Asia/Bangkok',PH:'Asia/Manila',VN:'Asia/Ho_Chi_Minh',KH:'Asia/Phnom_Penh',LA:'Asia/Vientiane',MM:'Asia/Yangon',BN:'Asia/Brunei',HK:'Asia/Hong_Kong',MO:'Asia/Macau',TW:'Asia/Taipei',JP:'Asia/Tokyo',KR:'Asia/Seoul',CN:'Asia/Shanghai',IN:'Asia/Kolkata',LK:'Asia/Colombo',NP:'Asia/Kathmandu',BD:'Asia/Dhaka',PK:'Asia/Karachi',MV:'Indian/Maldives',AE:'Asia/Dubai',SA:'Asia/Riyadh',QA:'Asia/Qatar',KW:'Asia/Kuwait',BH:'Asia/Bahrain',OM:'Asia/Muscat',IL:'Asia/Jerusalem',JO:'Asia/Amman',TR:'Europe/Istanbul',EG:'Africa/Cairo',ZA:'Africa/Johannesburg',KE:'Africa/Nairobi',NG:'Africa/Lagos',MA:'Africa/Casablanca',GB:'Europe/London',IE:'Europe/Dublin',FR:'Europe/Paris',DE:'Europe/Berlin',ES:'Europe/Madrid',IT:'Europe/Rome',NL:'Europe/Amsterdam',BE:'Europe/Brussels',CH:'Europe/Zurich',AT:'Europe/Vienna',SE:'Europe/Stockholm',NO:'Europe/Oslo',DK:'Europe/Copenhagen',FI:'Europe/Helsinki',PL:'Europe/Warsaw',CZ:'Europe/Prague',HU:'Europe/Budapest',PT:'Europe/Lisbon',GR:'Europe/Athens',RO:'Europe/Bucharest',UA:'Europe/Kyiv',NZ:'Pacific/Auckland',FJ:'Pacific/Fiji',AR:'America/Argentina/Buenos_Aires',CL:'America/Santiago',CO:'America/Bogota',PE:'America/Lima'};
+function defaultPrefsFor(cc,tz){
+  cc=(cc||'').toUpperCase();if(!COUNTRY_CURRENCY[cc])cc='US';
+  if(cc==='SG')return{...SG_PREFS,holidays:['SG'],customHolidays:[]};
+  const wi=_weekInfo(cc);
+  return{country:cc,currency:COUNTRY_CURRENCY[cc],tz:COUNTRY_TZ[cc]||tz||Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC',holidays:[cc],workHolidays:cc,region:'',weekend:wi.weekend,weekStart:wi.weekStart,dateOrder:MDY_COUNTRIES.has(cc)?'mdy':'dmy',customHolidays:[]};
+}
+// Best guess for a new visitor: the region in the browser language ("en-AU"), else the time zone's country
+function guessCountry(){
+  try{for(const l of navigator.languages||[navigator.language]){const r=new Intl.Locale(l).maximize().region;if(r&&COUNTRY_CURRENCY[r]&&!/^en-US$/i.test(l))return r;}}catch(e){}
+  const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';
+  const byTz={'Asia/Singapore':'SG','Asia/Kuala_Lumpur':'MY','Asia/Jakarta':'ID','Asia/Makassar':'ID','Asia/Bangkok':'TH','Asia/Manila':'PH','Asia/Ho_Chi_Minh':'VN','Asia/Hong_Kong':'HK','Asia/Taipei':'TW','Asia/Tokyo':'JP','Asia/Seoul':'KR','Asia/Shanghai':'CN','Asia/Kolkata':'IN','Asia/Dubai':'AE','Europe/London':'GB','Europe/Paris':'FR','Europe/Berlin':'DE','Europe/Madrid':'ES','Europe/Rome':'IT','Europe/Amsterdam':'NL','Australia/Sydney':'AU','Australia/Melbourne':'AU','Pacific/Auckland':'NZ','America/New_York':'US','America/Chicago':'US','America/Denver':'US','America/Los_Angeles':'US','America/Toronto':'CA','America/Vancouver':'CA'};
+  return byTz[tz]||'US';
+}
+// Data from before preferences existed keeps the Singapore behaviour; a brand-new user gets a guess from
+// their browser until they choose. Saved on the first save so it never changes underneath them.
+let _guessPrefs=null;
+function P(){if(S.prefs)return S.prefs;if((S.events||[]).length)return SG_PREFS;return _guessPrefs||(_guessPrefs=defaultPrefsFor(guessCountry()));}
+const baseCur=()=>P().currency||'SGD';
+const homeTz=()=>P().tz||'Asia/Singapore';
+const homeTzLabel=()=>{const z=homeTz();return z==='UTC'?'UTC':z.split('/').pop().replace(/_/g,' ');};
+const dloc=()=>P().dateOrder==='mdy'?'en-US':'en-GB';
+const isWeekendDow=dow=>(P().weekend||[0,6]).includes(dow);
+
+// ----- Money: totals in the user's own currency -----
+// Plain-language note on where rates come from and how old they are (shown wherever totals are converted)
+function ratesAsOfText(){
+  if(S.ratesAsOf)return new Date(S.ratesAsOf).toLocaleDateString(dloc(),{day:'numeric',month:'short',year:'numeric'});
+  if(S.ratesUpdated)return new Date(S.ratesUpdated.replace(' ','T')+'Z').toLocaleDateString(dloc(),{day:'numeric',month:'short',year:'numeric'});
+  return '';
+}
+function ratesCaveat(short){
+  const d=ratesAsOfText(),stale=S.ratesAsOf&&Date.now()-S.ratesAsOf>3*864e5;
+  const when=d?`Exchange rates as of <b>${esc(d)}</b>${stale?' <span style="color:var(--orange)">(couldn\'t refresh since then)</span>':''}`:'Using approximate built-in exchange rates (live rates couldn\'t be loaded)';
+  if(short)return `${when}. Converted totals are estimates.`;
+  return `${when}, from open.er-api.com (published once a day; mid-market rates). Converted totals are <b>estimates</b>: a cost may use the rate saved on the day you added it, and your bank or card provider will have charged its own rate and fees. For exact amounts, enter the cost in ${esc(baseCur())} as charged on your statement.`;
+}
+// Stored rates are "SGD per 1 unit" (the original pivot); any base currency is derived from them.
+const rateOf=c=>(S.rates&&S.rates[c])||DRATES[c]||0;
+function toBase(amt,cur,storedRateSGD){
+  const a=parseFloat(amt)||0,b=baseCur();cur=cur||b;
+  if(cur===b)return a;
+  const sgd=a*(storedRateSGD||rateOf(cur)||1);
+  return b==='SGD'?sgd:sgd/(rateOf(b)||1);
+}
+// Currencies offered in pickers: yours first, then ones you've used, then everything with a known rate
+function currencyList(){
+  const used=new Set();(S.events||[]).forEach(t=>['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>{if(e.currency)used.add(e.currency);})));
+  const all=new Set([...Object.keys(DRATES),...Object.keys(S.rates||{}),...Object.values(COUNTRY_CURRENCY)]);
+  const head=[baseCur(),...[...used].filter(c=>c!==baseCur()).sort()];
+  return[...head,...[...all].filter(c=>!head.includes(c)&&/^[A-Z]{3}$/.test(c)).sort()];
+}
+
+// ----- Public holidays: built-in (SG, MY), fetched (date.nager.at, cached), and your own -----
+let _phCache=null;
+function phCache(){if(!_phCache){try{_phCache=JSON.parse(localStorage.getItem('htPH')||'{}');}catch(e){_phCache={};}}return _phCache;}
+const _phPending=new Set();
+function holidaysFor(cc,y){
+  if(BUILTIN_PH.has(cc)&&PH_DATA[cc]&&PH_DATA[cc][y])return PH_DATA[cc][y].map(h=>({d:h.d,n:h.n,s:h.s||'all'}));
+  const key=cc+'-'+y,c=phCache()[key];
+  if(c)return c.list;
+  if(NAGER_COUNTRIES.has(cc)&&!_phPending.has(key)){
+    _phPending.add(key);
+    fetch(`https://date.nager.at/api/v3/PublicHolidays/${y}/${cc}`).then(r=>r.ok?r.json():[]).then(list=>{
+      phCache()[key]={at:Date.now(),list:(list||[]).filter(h=>!h.types||h.types.includes('Public')||h.types.includes('Bank')).map(h=>({d:h.date,n:h.localName&&h.localName!==h.name?`${h.name}`:h.name,s:h.global===false&&h.counties?h.counties:'all'}))};
+      try{localStorage.setItem('htPH',JSON.stringify(_phCache));}catch(e){}
+      try{render();}catch(e){}
+    }).catch(()=>{}).finally(()=>_phPending.delete(key));
+  }
+  return [];
+}
+const phAvailable=cc=>BUILTIN_PH.has(cc)||NAGER_COUNTRIES.has(cc);
+// All holidays on a date for the calendars you follow: [{n,country,states,ci}] (ci = colour index)
+function getPH(dateStr){
+  const y=parseInt(dateStr.slice(0,4)),res=[];
+  (P().holidays||[]).forEach((cc,ci)=>holidaysFor(cc,y).forEach(h=>{if(h.d===dateStr)res.push({n:h.n,country:cc,states:h.s,ci});}));
+  (P().customHolidays||[]).forEach(h=>{if(h.d===dateStr)res.push({n:h.n,country:'MINE',states:'all',ci:9});});
+  return res;
+}
+// Days off at work: national holidays of your work country (plus your state/region's), and your own holidays
+function isWorkPH(dateStr){
+  const p=P(),cc=p.workHolidays,y=parseInt(dateStr.slice(0,4));
+  if((p.customHolidays||[]).some(h=>h.d===dateStr))return true;
+  if(!cc)return false;
+  return holidaysFor(cc,y).some(h=>h.d===dateStr&&(h.s==='all'||(p.region&&Array.isArray(h.s)&&h.s.includes(p.region))));
+}
+const isWorkday=ds=>{const dow=new Date(ds+'T00:00:00').getDay();return !isWeekendDow(dow)&&!isWorkPH(ds);};
+// Regions/states that some holidays of a country apply to (for the optional region picker)
+function regionsFor(cc){const y=new Date().getFullYear(),s=new Set();[y,y+1].forEach(yy=>holidaysFor(cc,yy).forEach(h=>{if(Array.isArray(h.s))h.s.forEach(x=>s.add(x));}));return[...s].sort();}
+const phLabel=cc=>cc==='MINE'?'My holidays':_regionName(cc);
+// ----- Settings: Region & Preferences -----
+const _tzList=(()=>{try{return Intl.supportedValuesOf('timeZone');}catch(e){return['UTC','Asia/Singapore','Asia/Kuala_Lumpur','Asia/Jakarta','Asia/Bangkok','Asia/Manila','Asia/Hong_Kong','Asia/Tokyo','Asia/Seoul','Asia/Kolkata','Asia/Dubai','Europe/London','Europe/Paris','Europe/Berlin','Australia/Sydney','Pacific/Auckland','America/New_York','America/Chicago','America/Denver','America/Los_Angeles'];}})();
+function vPrefsCard(){
+  const p=P(),opt=(v,l,sel)=>`<option value="${esc(v)}"${v===sel?' selected':''}>${esc(l)}</option>`;
+  const dn=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const regions=p.workHolidays?regionsFor(p.workHolidays):[];
+  const sample=new Date(2026,9,15).toLocaleDateString(dloc(),{day:'numeric',month:'short',year:'numeric'});
+  return `<div class="card" id="prefs-card" style="margin-bottom:16px"><div class="card-header"><h3>Region &amp; Preferences</h3></div><div class="card-body">
+    <p style="font-size:11px;color:var(--text3);margin:0 0 12px">Choosing your home country fills in the rest. Change anything that doesn't suit you.</p>
+    <div class="fg">
+      <div class="fi"><label>Home country</label><select class="fc" data-pref="country">${ALL_COUNTRIES.map(c=>opt(c.code,c.name,p.country)).join('')}</select></div>
+      <div class="fi"><label>Your currency <span style="font-weight:400;color:var(--text3)">(totals &amp; budget)</span></label><select class="fc" data-pref="currency">${currencyList().map(c=>opt(c,c+' · '+_currencyName(c),p.currency)).join('')}</select></div>
+      <div class="fi"><label>Home time zone <span style="font-weight:400;color:var(--text3)">(flight times also shown in it)</span></label><select class="fc" data-pref="tz">${(_tzList.includes(p.tz)?_tzList:[p.tz,..._tzList]).map(z=>opt(z,z.replace(/_/g,' '),p.tz)).join('')}</select></div>
+      <div class="fi"><label>Date style</label><select class="fc" data-pref="dateOrder">${opt('dmy','15 Oct 2026 (day first)',p.dateOrder)}${opt('mdy','Oct 15, 2026 (month first)',p.dateOrder)}</select></div>
+      <div class="fi"><label>Week starts on</label><select class="fc" data-pref="weekStart">${[1,0,6].map(d=>opt(String(d),dn[d],String(p.weekStart??1))).join('')}</select></div>
+      <div class="fi"><label>Weekend days</label><div style="display:flex;flex-wrap:wrap;gap:4px 10px;padding:6px 0">${[1,2,3,4,5,6,0].map(d=>`<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer"><input type="checkbox" data-pref-weekend="${d}"${(p.weekend||[]).includes(d)?' checked':''}>${dn[d].slice(0,3)}</label>`).join('')}</div></div>
+    </div>
+    <div style="border-top:1px solid var(--border);margin:14px 0 10px"></div>
+    <div style="font-size:12px;font-weight:600;margin-bottom:4px">Public holiday calendars</div>
+    <p style="font-size:11px;color:var(--text3);margin:0 0 8px">Shown on the Calendar and Leave pages. Add the countries you work in or often travel to.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${(p.holidays||[]).map((cc,ci)=>`<span class="d-ph ph-c${ci}" style="display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:12px;font-size:12px">${esc(phLabel(cc))}${phAvailable(cc)?'':' <span title="Not available automatically: add dates under Leave → My holidays">⚠</span>'}<button type="button" data-action="ph-cal-rm" data-cc="${cc}" style="background:none;border:0;color:inherit;cursor:pointer;font-size:13px;line-height:1" title="Remove">×</button></span>`).join('')||'<span style="font-size:12px;color:var(--text3)">None</span>'}</div>
+    <div class="fg">
+      <div class="fi"><label>Add a country's holidays</label><select class="fc" data-pref="addHolidays"><option value="">Choose a country…</option>${ALL_COUNTRIES.filter(c=>!(p.holidays||[]).includes(c.code)).map(c=>opt(c.code,c.name+(phAvailable(c.code)?'':' (add dates yourself)'),'')).join('')}</select></div>
+      <div class="fi"><label>Days off at work <span style="font-weight:400;color:var(--text3)">(not counted as leave)</span></label><select class="fc" data-pref="workHolidays">${opt('','None',p.workHolidays||'')}${(p.holidays||[]).map(cc=>opt(cc,phLabel(cc)+' holidays',p.workHolidays)).join('')}</select></div>
+      ${regions.length?`<div class="fi"><label>Your state / region <span style="font-weight:400;color:var(--text3)">(adds its regional holidays)</span></label><select class="fc" data-pref="region">${opt('','National holidays only',p.region||'')}${regions.map(r=>opt(r,r,p.region)).join('')}</select></div>`:''}
+    </div>
+    <p style="font-size:11px;color:var(--text3);margin:10px 0 0">Example date: <b>${esc(sample)}</b>. Holiday data: Singapore &amp; Malaysia built in; other countries from the free <a href="https://date.nager.at" target="_blank" rel="noopener" style="color:var(--primary)">Nager.Date</a> service.</p>
+  </div></div>`;
+}
+function setPref(k,v){
+  const p=S.prefs=JSON.parse(JSON.stringify(P()));
+  if(k==='country'){
+    const d=defaultPrefsFor(v,p.tz);
+    Object.assign(p,{country:v,tz:d.tz,currency:d.currency,weekend:d.weekend,weekStart:d.weekStart,dateOrder:d.dateOrder,workHolidays:v,region:''});
+    p.holidays=[v,...(p.holidays||[]).filter(c=>c!==v)].slice(0,6);
+    toast(`Set ${d.currency}, ${phLabel(v)} holidays and local date style. Adjust below if needed.`);
+  }else if(k==='addHolidays'){if(v&&!p.holidays.includes(v))p.holidays.push(v);}
+  else if(k==='weekStart')p.weekStart=parseInt(v);
+  else if(k==='workHolidays'){p.workHolidays=v;p.region='';}
+  else p[k]=v;
+  saveS();render();
+}
+function setWeekend(d,on){const p=S.prefs=JSON.parse(JSON.stringify(P()));const w=new Set(p.weekend||[]);on?w.add(d):w.delete(d);p.weekend=[...w].sort();saveS();render();}
+// First visit with nothing saved yet: confirm the guessed region in one step
+function maybeAskRegion(){
+  let asked=false;try{asked=!!localStorage.getItem('htRegionAsked');}catch(e){}
+  if(S.prefs&&S.prefs._confirmed||(S.events||[]).length||asked||window._regionAsked)return;
+  window._regionAsked=true;try{localStorage.setItem('htRegionAsked','1');}catch(e){}
+  const g=P();
+  modal('Welcome to Holiday Tracker',`<p style="font-size:13px;color:var(--text2);line-height:1.6;margin:0 0 12px">Where are you based? This sets your currency, public holidays, weekend and date style. You can change it any time in <b>Settings → Region &amp; Preferences</b>.</p>
+    <div class="fi"><label>Home country</label><select class="fc" id="welcome-cc">${ALL_COUNTRIES.map(c=>`<option value="${c.code}"${c.code===g.country?' selected':''}>${esc(c.name)}</option>`).join('')}</select></div>`,()=>{
+    const cc=document.getElementById('welcome-cc').value;
+    S.prefs={...defaultPrefsFor(cc),_confirmed:true};saveS();render();
+    toast(`Set up for ${phLabel(cc)}: ${S.prefs.currency}, local holidays and date style`);
+  },{saveLabel:'Continue'});
+}
 
 // ===== UTILS (must be before STATE since importEvents uses uid) =====
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const esc=s=>{const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;};
-const fmt=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
-const fmtS=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'—';
-const dayN=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short'}):'';
+const fmt=d=>d?new Date(d+'T00:00:00').toLocaleDateString(dloc(),{day:'numeric',month:'short',year:'numeric'}):'—';
+const fmtS=d=>d?new Date(d+'T00:00:00').toLocaleDateString(dloc(),{day:'numeric',month:'short'}):'—';
+const dayN=d=>d?new Date(d+'T00:00:00').toLocaleDateString(dloc(),{weekday:'short'}):'';
 const days=(a,b)=>!a||!b?0:Math.max(0,Math.ceil((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/864e5)+1);
 const nights=(a,b)=>Math.max(0,days(a,b)-1);
 const toSGD=(amt,cur,storedRate)=>(parseFloat(amt)||0)*(storedRate||S.rates[cur]||1);
 const snapRate=(cur)=>S.rates[cur]||DRATES[cur]||1;
 const fmtM=(n,c)=>(c||'')+' '+(parseFloat(n)||0).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
-const fmtDT=dt=>{if(!dt)return '—';try{const d=new Date(dt.includes('T')?dt:dt.replace(' ','T'));if(isNaN(d))return esc(dt);return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+', '+d.toLocaleTimeString('en-GB',{hour:'numeric',minute:'2-digit',hour12:true});}catch(e){return esc(dt);}};
+const fmtDT=dt=>{if(!dt)return '—';try{const d=new Date(dt.includes('T')?dt:dt.replace(' ','T'));if(isNaN(d))return esc(dt);return d.toLocaleDateString(dloc(),{weekday:'short',day:'numeric',month:'short'})+', '+d.toLocaleTimeString(dloc(),{hour:'numeric',minute:'2-digit',hour12:true});}catch(e){return esc(dt);}};
 function eventStatus(t){const td=ymd(new Date());if(t.startDate<=td&&t.endDate>=td)return 'active';if(t.startDate>td)return 'upcoming';return 'completed';}
 
 // ===== TIME PERIOD FILTER =====
@@ -929,7 +1085,7 @@ function loadS(){
   }
   return defS();
 }
-function saveS(){S.lastModified=Date.now();try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}debouncedSync();}
+function saveS(){if(!S.prefs)S.prefs=JSON.parse(JSON.stringify(P()));S.lastModified=Date.now();try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}debouncedSync();}
 
 // ===== GIST SYNC =====
 const GIST_FILE='holiday-tracker-data.json';
@@ -994,8 +1150,8 @@ async function gistAPI(path,opts={}){
 
 function syncData(){
   // Extract only the data fields worth syncing (not UI state like current view)
-  const {events,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified,visitedCountries,appleCalUrl,appleCalUrlAt}=S;const trips=events;
-  return {events,trips,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified,visitedCountries:visitedCountries||[],appleCalUrl:appleCalUrl||'',appleCalUrlAt:appleCalUrlAt||0};
+  const {events,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified,visitedCountries,appleCalUrl,appleCalUrlAt,prefs,calFeed}=S;const trips=events;
+  return {events,trips,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified,visitedCountries:visitedCountries||[],appleCalUrl:appleCalUrl||'',appleCalUrlAt:appleCalUrlAt||0,...(prefs?{prefs}:{}),...(calFeed?{calFeed}:{})};
 }
 
 // Apple Calendar URL is merged by its own timestamp (not lastModified), so a device
@@ -1022,7 +1178,7 @@ async function pushToGist(retried){
   if((S.events||[]).length===0){console.warn('Push blocked: empty events array');return;}
   document.querySelectorAll('.sync-dot').forEach(d=>d.classList.add('syncing'));
   // Before pushing, merge remote visitedCountries so we never overwrite with fewer
-  try{if(c.gistId){const g=await gistAPI('/gists/'+c.gistId);if(g&&g.files&&g.files[GIST_FILE]){const r=JSON.parse(g.files[GIST_FILE].content);if(r.migratedToAccount){c.retired=true;setSyncConfig(c);updateSyncStatus('Your data has moved to an account — sign in under Settings → Your Account');document.querySelectorAll('.sync-dot').forEach(d=>d.classList.remove('syncing'));render();return;}if(r.visitedCountries&&r.visitedCountries.length){const local=new Set(S.visitedCountries||[]);r.visitedCountries.forEach(x=>local.add(x));S.visitedCountries=[...local];}mergeAppleCalUrl(r);}}}catch(e){/* non-fatal */}
+  try{if(c.gistId){const g=await gistAPI('/gists/'+c.gistId);if(g&&g.files&&g.files[GIST_FILE]){const r=JSON.parse(g.files[GIST_FILE].content);if(r.migratedToAccount){c.retired=true;c.migratedTo=r.migratedTo;setSyncConfig(c);updateSyncStatus('Your data has moved to an account — sign in under Settings → Your Account');document.querySelectorAll('.sync-dot').forEach(d=>d.classList.remove('syncing'));render();return;}if(r.visitedCountries&&r.visitedCountries.length){const local=new Set(S.visitedCountries||[]);r.visitedCountries.forEach(x=>local.add(x));S.visitedCountries=[...local];}mergeAppleCalUrl(r);}}}catch(e){/* non-fatal */}
   const payload={description:GIST_DESC,files:{[GIST_FILE]:{content:JSON.stringify(syncData(),null,2)},[ICS_FILE]:{content:buildICSFeed()}}};
   try{
     let resp;
@@ -1074,7 +1230,7 @@ async function pullFromGist(retried){
     // One-time privacy migration: if the sync gist is still public, recreate it as secret
     if(gist.public===true&&!window._gistMigrating){window._gistMigrating=true;ensureGistSecret(c.gistId).finally(()=>{window._gistMigrating=false;});}
     const remote=JSON.parse(gist.files[GIST_FILE].content);
-    if(remote.migratedToAccount&&!c.retired){c.retired=true;setSyncConfig(c);updateSyncStatus('Your data has moved to an account — sign in under Settings → Your Account');render();return false;}
+    if(remote.migratedToAccount&&!c.retired){c.retired=true;c.migratedTo=remote.migratedTo;setSyncConfig(c);updateSyncStatus('Your data has moved to an account — sign in under Settings → Your Account');render();return false;}
     // Always merge visitedCountries via union regardless of lastModified
     let vcChanged=mergeAppleCalUrl(remote);
     if(remote.visitedCountries&&remote.visitedCountries.length){const local=new Set(S.visitedCountries||[]);const before=local.size;remote.visitedCountries.forEach(c=>local.add(c));if(local.size>before){S.visitedCountries=[...local];vcChanged=true;}}
@@ -1085,7 +1241,7 @@ async function pullFromGist(retried){
       S.leave=remote.leave||S.leave;
       S.rates=remote.rates||S.rates;
       S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
-      S.theme=remote.theme||S.theme;
+      S.theme=remote.theme||S.theme;if(remote.prefs)S.prefs=remote.prefs;
       S.lastModified=remote.lastModified;
       try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
       importAppleCalendar(gist.files[APPLE_ICS_FILE]?gist.files[APPLE_ICS_FILE].content:'');
@@ -1119,7 +1275,7 @@ async function fullSync(retried){
     else{const found=await findExistingGist();if(found){c.gistId=found.id;setSyncConfig(c);gist=await gistAPI('/gists/'+found.id);}}
     if(gist&&gist.files&&gist.files[GIST_FILE]){
       const remote=JSON.parse(gist.files[GIST_FILE].content);
-      if(remote.migratedToAccount){c.retired=true;setSyncConfig(c);updateSyncStatus('Your data has moved to an account — sign in under Settings → Your Account');render();return;}
+      if(remote.migratedToAccount){c.retired=true;c.migratedTo=remote.migratedTo;setSyncConfig(c);updateSyncStatus('Your data has moved to an account — sign in under Settings → Your Account');render();return;}
       // Always merge visitedCountries via union regardless of lastModified
       if(remote.visitedCountries&&remote.visitedCountries.length){const local=new Set(S.visitedCountries||[]);remote.visitedCountries.forEach(c=>local.add(c));S.visitedCountries=[...local];}
       if(remote.lastModified&&remote.lastModified>S.lastModified){
@@ -1128,7 +1284,7 @@ async function fullSync(retried){
         S.events=mergeEvents(S.events||[],remoteEvts);
         S.leave=remote.leave||S.leave;
         S.rates=remote.rates||S.rates;S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
-        S.theme=remote.theme||S.theme;
+        S.theme=remote.theme||S.theme;if(remote.prefs)S.prefs=remote.prefs;
         S.lastModified=remote.lastModified;
         try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
         applyTheme();render();
@@ -1171,7 +1327,7 @@ async function connectSync(){
       const remoteEvts=(remote.events||remote.trips||[]).map(t=>t.category?t:{...t,category:'trip',requiresLeave:true});
       S.events=mergeEvents(S.events||[],remoteEvts);S.leave=remote.leave||S.leave;
       S.rates=remote.rates||S.rates;S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
-      S.theme=remote.theme||S.theme;S.lastModified=remote.lastModified||Date.now();
+      S.theme=remote.theme||S.theme;if(remote.prefs)S.prefs=remote.prefs;S.lastModified=remote.lastModified||Date.now();
       try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
       applyTheme();render();
       updateSyncStatus('Connected & synced (pulled '+remote.events.length+' events)');
@@ -1214,7 +1370,7 @@ async function pullGistAnon(gistId){
     const remote=JSON.parse(gist.files[GIST_FILE].content);
     S.events=remote.events||[];S.leave=remote.leave||{};
     S.rates=remote.rates||S.rates;S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
-    S.theme=remote.theme||S.theme;S.lastModified=remote.lastModified||Date.now();
+    S.theme=remote.theme||S.theme;if(remote.prefs)S.prefs=remote.prefs;S.lastModified=remote.lastModified||Date.now();
     try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
     applyTheme();render();
     toast('Loaded '+S.events.length+' events from cloud (read-only)');
@@ -1272,7 +1428,7 @@ async function connectSyncFromDash(){
       const remote=JSON.parse(gist.files[GIST_FILE].content);
       S.events=(remote.events||remote.trips||[]).map(t=>t.category?t:{...t,category:'trip',requiresLeave:true});S.leave=remote.leave||S.leave;
       S.rates=remote.rates||S.rates;S.ratesUpdated=remote.ratesUpdated||S.ratesUpdated;
-      S.theme=remote.theme||S.theme;S.lastModified=remote.lastModified||Date.now();
+      S.theme=remote.theme||S.theme;if(remote.prefs)S.prefs=remote.prefs;S.lastModified=remote.lastModified||Date.now();
       try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
       applyTheme();
       toast('Connected & synced '+remote.events.length+' events from cloud');
@@ -1350,29 +1506,43 @@ async function acctPull(quiet){
     if(rm>(S.lastModified||0)){
       backupBeforeSync();
       S.events=mergeEvents(S.events||[],normEvents(r));
-      S.leave=r.leave||S.leave;S.rates=r.rates||S.rates;S.ratesUpdated=r.ratesUpdated||S.ratesUpdated;S.theme=r.theme||S.theme;
+      S.leave=r.leave||S.leave;S.rates=r.rates||S.rates;S.ratesUpdated=r.ratesUpdated||S.ratesUpdated;S.theme=r.theme||S.theme;if(r.prefs)S.prefs=r.prefs;if(r.calFeed)S.calFeed=r.calFeed;
       S.lastModified=rm;changed=true;
     }
-    const apple=await gistFeedSync(true);
+    const apple=await gistFeedSync(!changed);
     if(changed||apple){try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}applyTheme();render();if(!quiet)updateSyncStatus('Pulled latest from your account');return true;}
     updateSyncStatus('Up to date');return false;
   }catch(e){console.error('Account pull failed:',e);updateSyncStatus('Sync error: '+(e.message||e));return false;}
 }
 // Until Apple Calendar moves to the server, a device that still has the GitHub token keeps the
 // calendar feed (out) and the Apple import (in) going through the gist. The data file there is retired.
+let _anonAppleAt=0;
 async function gistFeedSync(pullOnly){
-  const c=getSyncConfig();if(!c.token||!c.gistId)return false;
+  const c=getSyncConfig();
+  if(!c.token||!c.gistId){
+    // No GitHub link on this device (e.g. your phone): read the Apple import from the account's feed, at most every 10 min
+    const f=_acct&&S.calFeed;if(!f||!f.gistId||Date.now()-_anonAppleAt<6e5)return false;
+    _anonAppleAt=Date.now();
+    try{const r=await fetch('https://api.github.com/gists/'+f.gistId,{headers:{Accept:'application/vnd.github.v3+json'}});if(!r.ok)return false;
+      const g=await r.json();return importAppleCalendar(g.files&&g.files[APPLE_ICS_FILE]?g.files[APPLE_ICS_FILE].content:'');}catch(e){return false;}
+  }
   try{
     const g=await gistAPI('/gists/'+c.gistId);
+    if(_acct&&c.gistOwner&&(!S.calFeed||S.calFeed.gistId!==c.gistId||S.calFeed.owner!==c.gistOwner)){S.calFeed={gistId:c.gistId,owner:c.gistOwner};saveS();}
     const changed=importAppleCalendar(g.files&&g.files[APPLE_ICS_FILE]?g.files[APPLE_ICS_FILE].content:'');
-    if(!pullOnly)await gistAPI('/gists/'+c.gistId,{method:'PATCH',body:JSON.stringify({files:{[ICS_FILE]:{content:buildICSFeed()}}})});
+    if(!pullOnly){
+      const files={[ICS_FILE]:{content:buildICSFeed()}};
+      // The Apple import job reads the iCloud link from the gist's data file: keep it current after the move
+      try{const d=JSON.parse(g.files[GIST_FILE].content);if(d.migratedToAccount&&(d.appleCalUrl||'')!==(S.appleCalUrl||'')){d.appleCalUrl=S.appleCalUrl||'';d.appleCalUrlAt=S.appleCalUrlAt||0;files[GIST_FILE]={content:JSON.stringify(d,null,2)};}}catch(e){}
+      await gistAPI('/gists/'+c.gistId,{method:'PATCH',body:JSON.stringify({files})});
+    }
     return changed;
   }catch(e){console.warn('Calendar feed sync failed:',e);return false;}
 }
 // Leave a note in the old gist so devices not yet signed in stop syncing there (their pushes are refused)
 async function retireGist(){
   const c=getSyncConfig();if(!c.token||!c.gistId)return;
-  const d={...syncData(),migratedToAccount:true,migratedAt:new Date().toISOString()};
+  const d={...syncData(),migratedToAccount:true,migratedTo:_acct&&_acct.id,migratedAt:new Date().toISOString()};
   await gistAPI('/gists/'+c.gistId,{method:'PATCH',body:JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(d,null,2)}}})});
   c.retired=true;setSyncConfig(c);
 }
@@ -1384,7 +1554,10 @@ async function acctOnSignIn(user){
     const owner=localStorage.getItem(OWNER_KEY);
     // Data cached here belongs to a different account: remove it before loading this one
     if(owner&&owner!==user.id){wipeLocalData();S=defS();}
-    const unclaimed=!owner&&hasLocalData();// from before accounts existed, or used signed-out
+    // This device's data came from a GitHub sync that was already moved into a different account: not this person's
+    const mt=getSyncConfig().migratedTo;
+    if(!owner&&mt&&mt!==user.id){wipeLocalData();S=defS();}
+    const unclaimed=!localStorage.getItem(OWNER_KEY)&&hasLocalData();// from before accounts existed, or used signed-out
     const row=await acctFetch();
     if(owner===user.id){_acctBusy=false;await acctPull(true);return;}
     if(unclaimed){
@@ -1392,10 +1565,10 @@ async function acctOnSignIn(user){
       if(getSyncConfig().token&&!getSyncConfig().retired){try{await pullFromGist();}catch(e){}}
       const n=(S.events||[]).length,remoteN=row&&row.data?normEvents(row.data).length:0;
       const choice=await acctAsk(row&&row.data
-        ?{title:'Add this device\'s data to your account?',body:`This device has <b>${n} event${n===1?'':'s'}</b> that aren't saved to any account. Your account already has <b>${remoteN}</b>.<br><br><b>Add them</b> to combine both (nothing is lost). <b>Don't add</b> keeps a backup on this device and shows only your account's data.`,yes:'Add them',no:"Don't add"}
-        :{title:'Move your existing data into your account?',body:`This device has <b>${n} event${n===1?'':'s'}</b>${getSyncConfig().token?' (including everything from your GitHub sync)':''}. Move it into your new account so it's private to you and available on any device you sign in to.<br><br>A backup copy stays on this device${getSyncConfig().token?' and in your GitHub gist':''} until you're sure everything is there.`,yes:'Move my data',no:'Start empty'});
+        ?{title:'Add this device\'s data to your account?',body:`This device has <b>${n} event${n===1?'':'s'}</b> that aren't saved to any account. Your account already has <b>${remoteN}</b>.<br><br><b>Add them</b> to combine both (nothing is lost). <b>Don't add</b> keeps a backup on this device and shows only your account's data.`,yes:'Add them',no:"Don't add",warn:true}
+        :{title:'Move your existing data into your account?',body:`This device has <b>${n} event${n===1?'':'s'}</b>${getSyncConfig().token?' (including everything from your GitHub sync)':''}. Move it into your new account so it's private to you and available on any device you sign in to.<br><br>A backup copy stays on this device${getSyncConfig().token?' and in your GitHub gist':''} until you're sure everything is there.`,yes:'Move my data',no:'Start empty',warn:true});
       if(choice){
-        if(row&&row.data){S.events=mergeEvents(normEvents(row.data),S.events||[]);S.leave={...(row.data.leave||{}),...(S.leave||{})};}
+        if(row&&row.data){S.events=mergeEvents(normEvents(row.data),S.events||[]);S.leave={...(row.data.leave||{}),...(S.leave||{})};if(!S.prefs&&row.data.prefs)S.prefs=row.data.prefs;}
         S.lastModified=Date.now();
         localStorage.setItem(OWNER_KEY,user.id);
         _acctBusy=false;await acctPush();
@@ -1404,12 +1577,12 @@ async function acctOnSignIn(user){
       }else{
         backupBeforeSync();
         S=defS();
-        if(row&&row.data){S.events=normEvents(row.data);S.leave=row.data.leave||{};S.rates=row.data.rates||S.rates;S.lastModified=row.modified_ms||1;}
+        if(row&&row.data){S.events=normEvents(row.data);S.leave=row.data.leave||{};S.rates=row.data.rates||S.rates;S.prefs=row.data.prefs||S.prefs;S.lastModified=row.modified_ms||1;}
         localStorage.setItem(OWNER_KEY,user.id);try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
       }
     }else{
       localStorage.setItem(OWNER_KEY,user.id);
-      if(row&&row.data){S=defS();S.events=normEvents(row.data);S.leave=row.data.leave||{};S.rates=row.data.rates||S.rates;S.ratesUpdated=row.data.ratesUpdated||'';S.theme=row.data.theme||S.theme;S.visitedCountries=row.data.visitedCountries||[];S.appleCalUrl=row.data.appleCalUrl||'';S.appleCalUrlAt=row.data.appleCalUrlAt||0;S.lastModified=row.modified_ms||1;try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}}
+      if(row&&row.data){S=defS();S.events=normEvents(row.data);S.leave=row.data.leave||{};S.rates=row.data.rates||S.rates;S.ratesUpdated=row.data.ratesUpdated||'';S.theme=row.data.theme||S.theme;S.prefs=row.data.prefs||S.prefs;S.calFeed=row.data.calFeed||null;S.visitedCountries=row.data.visitedCountries||[];S.appleCalUrl=row.data.appleCalUrl||'';S.appleCalUrlAt=row.data.appleCalUrlAt||0;S.lastModified=row.modified_ms||1;try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}}
     }
   }catch(e){console.error('Sign-in sync failed:',e);toast('Signed in, but syncing failed: '+(e.message||e));}
   finally{_acctBusy=false;applyTheme();render();}
@@ -1418,7 +1591,7 @@ async function acctOnSignIn(user){
 function acctAsk(o){
   return new Promise(res=>{
     let done=false;const fin=v=>{if(!done){done=true;res(v);}};
-    modal(esc(o.title),`<p style="font-size:13px;line-height:1.6;color:var(--text2)">${o.body}</p>`,()=>{fin(true);},{saveLabel:o.yes});
+    modal(esc(o.title),`<p style="font-size:13px;line-height:1.6;color:var(--text2)">${o.body}</p>${o.warn?'<p style="font-size:12px;line-height:1.5;color:var(--orange);margin-top:10px">Only do this if this data is <b>yours</b>. On someone else\'s device, choose the other option. Their data stays with them.</p>':''}`,()=>{fin(true);},{saveLabel:o.yes});
     const bg=document.getElementById('mbg');
     bg.querySelectorAll('[data-action="xm"]').forEach(b=>{if(b.classList.contains('btn'))b.textContent=o.no;b.addEventListener('click',()=>fin(false));});
     const obs=new MutationObserver(()=>{if(!bg.classList.contains('open')){obs.disconnect();setTimeout(()=>fin(false),0);}});obs.observe(bg,{attributes:true,attributeFilter:['class']});
@@ -1556,12 +1729,20 @@ function vGuideCard(){
     ${sec('Track payments and your budget',ul([
       'In any booking, fill in <b>Deposit Amount</b> (and its currency) and the <b>Full Payment</b> amount. The card shows what\'s paid and the balance left.',
       'Set a payment due date and the Dashboard reminds you when it\'s coming up.',
-      'Costs in any currency are converted to SGD. Rates update automatically and can be adjusted under <b>Settings → Exchange Rates</b>.',
+      `Enter costs in whatever currency you paid. Totals are converted to your own currency (${esc(baseCur())}). Rates update automatically and can be adjusted under <b>Settings → Exchange Rates</b>.`,
+      'Converted totals are <b>estimates</b>. Rates are published once a day and show the date they\'re from. A cost may keep the rate from the day you added it, and your bank or card will have charged its own rate and fees. For an exact figure, enter the amount from your statement in your own currency.',
       '<b>Budget</b> (in the menu) totals your spending by year, event and category.'
     ]))}
+    ${sec('Your country, currency and holidays',ul([
+      'Go to <b>Settings → Region &amp; Preferences</b> and pick your <b>Home country</b>. Your currency, public holidays, weekend days and date style are filled in for you.',
+      'Change any of them: for example a different currency for your budget, or a Friday–Saturday weekend.',
+      'Add other countries\' public holidays (where you work, or where family lives). They show on the Calendar in different colours.',
+      'Choose which country\'s holidays are <b>days off at work</b>: those days aren\'t counted as leave. If your state or region has extra holidays, pick it there too.',
+      'Holidays for your country not listed? Add them yourself in <b>Leave → My holidays</b>, or import a holiday calendar file (.ics).'
+    ]))}
     ${sec('Calendar, leave and countries',ul([
-      '<b>Calendar</b> shows all your events by month, with public holidays.',
-      '<b>Leave</b> counts the work days each trip uses. Add your yearly allowance there.',
+      '<b>Calendar</b> shows all your events by month, with the public holidays you follow.',
+      '<b>Leave</b> counts the work days each trip uses (skipping your weekend and work holidays). Add your yearly allowance there.',
       '<b>Countries</b> is your travel map: tap a country to mark it visited, tap again to unmark.'
     ]))}
     ${sec('Share or print an itinerary',ol([
@@ -1592,7 +1773,7 @@ function vGuideCard(){
   </div></div>`;
 }
 function defS(){return{v:'dashboard',tid:null,tab:'flights',ly:2026,calY:2026,calM:new Date().getMonth(),tfY:null,theme:null,_themeSet:false,rates:{...DRATES},events:importEvents(),leave:importLeave(),lastModified:1}}
-function eCost(t){let s=0;['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>s+=toSGD(e.cost,e.currency,e.rateToSGD)));return s;}
+function eCost(t){let s=0;['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>s+=toBase(e.cost,e.currency,e.rateToSGD)));return s;}
 function allCost(){return S.events.reduce((s,t)=>s+eCost(t),0);}
 function upcoming(){const td=ymd(new Date());return S.events.filter(t=>t.endDate>=td).sort((a,b)=>a.startDate.localeCompare(b.startDate));}
 function past(){const td=ymd(new Date());return S.events.filter(t=>t.endDate<td).sort((a,b)=>b.startDate.localeCompare(a.startDate));}
@@ -1668,12 +1849,14 @@ async function fetchLiveRates(){
     if(data.result==='success'&&data.rates){
       // API returns how many X per 1 SGD. We store how many SGD per 1 X.
       // So rate = 1 / (data.rates[X])
-      for(const c of CUR){
-        if(c==='SGD')continue;
-        if(data.rates[c])S.rates[c]=parseFloat((1/data.rates[c]).toFixed(6));
+      for(const[c,v]of Object.entries(data.rates)){
+        if(c==='SGD'||!v)continue;
+        S.rates[c]=parseFloat((1/v).toPrecision(6));
       }
       S.ratesUpdated=new Date().toISOString().slice(0,16).replace('T',' ');
-      saveS();
+      if(data.time_last_update_unix)S.ratesAsOf=data.time_last_update_unix*1000;// when the provider published these rates
+      // Every device refreshes rates itself: save locally without marking the data as edited
+      try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
       console.log('Live rates updated:', S.ratesUpdated);
     }
   }catch(e){console.warn('Currency fetch failed, using cached rates:',e.message);}
@@ -1872,7 +2055,7 @@ function vDash(){
             <div class="eg"><span class="ek">Dates</span><span class="ev">${fmtS(t.startDate)}${t.startTime?' '+t.startTime:''} — ${fmtS(t.endDate)}${t.endTime?' '+t.endTime:''}</span></div>
             <div class="eg"><span class="ek">Locations</span><span class="ev">${t.locations.join(', ')}</span></div>
             <div class="eg"><span class="ek">Bookings</span><span class="ev">${(t.flights||[]).length}F · ${(t.hotels||[]).length}H · ${(t.activities||[]).length}A</span></div>
-            ${eCost(t)?`<div class="eg"><span class="ek">Cost</span><span class="ev">${fmtM(eCost(t),'SGD')}</span></div>`:''}
+            ${eCost(t)?`<div class="eg"><span class="ek">Cost</span><span class="ev">${fmtM(eCost(t),baseCur())}</span></div>`:''}
             ${(()=>{const ps=eventPaymentStatus(t);return ps?`<div class="eg"><span class="ek">Payment</span><span class="ev" style="color:${ps.color};font-weight:600;font-size:11px">${ps.status==='paid'?'✓':'⚠'} ${ps.label}</span></div>`:''})()}
             <div class="eg"><span class="ek">Countdown</span><span class="ev" style="font-weight:600;color:${st==='active'?'var(--green)':st==='completed'?'var(--text3)':'var(--primary)'}">${countTxt}</span></div>
             <div class="eg"><span class="ek">Leave</span><span class="ev">${t.requiresLeave===false?'No':'Yes'}</span></div>
@@ -1899,7 +2082,7 @@ function eventCardHtml(t){
         <span><b>${nights(t.startDate,t.endDate)}</b> nights</span>
         <span><b>${(t.flights||[]).length}</b> flights</span>
         <span><b>${(t.hotels||[]).length}</b> hotels</span>
-        ${eCost(t)?`<span style="color:var(--green)"><b>${fmtM(eCost(t),'')}</b> SGD</span>`:''}
+        ${eCost(t)?`<span style="color:var(--green)"><b>${fmtM(eCost(t),'')}</b> ${baseCur()}</span>`:''}
         ${isApple?`<button class="btn btn-ghost apple-attach-btn" data-action="apple-attach" data-id="${t.id}">+ Add to event…</button>`:''}
       </div>
     </div>
@@ -1963,7 +2146,7 @@ function vDetail(){
   <div class="page-content">
     <div class="stats">
       <div class="stat blue"><div class="s-label">Duration</div><div class="s-val">${days(t.startDate,t.endDate)}<span style="font-size:14px;color:var(--text2)"> days</span></div><div class="s-sub">${nights(t.startDate,t.endDate)} nights</div></div>
-      <div class="stat green"><div class="s-label">Total Cost</div><div class="s-val">${fmtM(eCost(t),'')}</div><div class="s-sub">SGD</div></div>
+      <div class="stat green"><div class="s-label">Total Cost</div><div class="s-val">${fmtM(eCost(t),'')}</div><div class="s-sub">${baseCur()}</div></div>
       <div class="stat purple"><div class="s-label">Locations</div><div class="s-val">${t.locations.length}</div><div class="s-sub">${t.locations.join(' · ')}</div></div>
       <div class="stat orange"><div class="s-label">Bookings</div><div class="s-val">${(t.flights||[]).length+(t.hotels||[]).length+(t.activities||[]).length+(t.transport||[]).length}</div></div>
       ${(()=>{const ps=eventPaymentStatus(t);if(!ps)return'';const icon=ps.status==='paid'?'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>':'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';return`<div class="stat" style="border-color:${ps.color}"><div class="s-label">Payment</div><div class="s-val" style="font-size:14px;color:${ps.color};display:flex;align-items:center;gap:6px">${icon} ${ps.label}</div></div>`;})()}
@@ -2069,7 +2252,7 @@ function rAttach(t){
       ${a.thumbData?`<div class="attach-thumb"><img src="${a.thumbData}" alt="${esc(a.name||'')}" loading="lazy"></div>`:`<div class="attach-thumb attach-link-thumb"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--text3)" stroke-width="1.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></div>`}
       <div class="attach-info">
         <div class="attach-name">${esc(a.name||'Attachment')}</div>
-        <div class="attach-meta">${a.addedAt?new Date(a.addedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):''}</div>
+        <div class="attach-meta">${a.addedAt?new Date(a.addedAt).toLocaleDateString(dloc(),{day:'numeric',month:'short',year:'numeric'}):''}</div>
       </div>
       <div class="attach-actions">
         ${a.url?`<a href="${esc(a.url)}" target="_blank" class="btn btn-ghost" style="font-size:10px">Open</a>`:''}
@@ -2082,7 +2265,7 @@ function rAttach(t){
 function rTimeline(t){
   // Collect all entries with dates
   const items=[];
-  (t.flights||[]).forEach(f=>{const d=f.departureTime?(f.departureTime.includes('T')?f.departureTime.split('T')[0]:f.departureTime.split(' ')[0]):'';const fz=flightTzs(f),homeNote=(()=>{const ms=fz.dep&&f.departureTime&&!/T00:00$/.test(f.departureTime)?zonedToUtc(f.departureTime,fz.dep):NaN;return !isNaN(ms)&&tzOffsetMin(ms,fz.dep)!==tzOffsetMin(ms,HOME_TZ)?' · departs '+new Date(ms).toLocaleTimeString('en-GB',{timeZone:HOME_TZ,hour:'numeric',minute:'2-digit',hour12:true})+' '+HOME_TZ_LABEL+' time':'';})();items.push({type:'flight',date:d||t.startDate,time:f.departureTime,label:`${f.airline||''} ${f.flightNumber||''}`.trim()||'Flight',sub:`${f.from||'?'} → ${f.to||'?'}${homeNote}`,cost:f.cost?`${f.currency} ${parseFloat(f.cost).toLocaleString()}`:''});});
+  (t.flights||[]).forEach(f=>{const d=f.departureTime?(f.departureTime.includes('T')?f.departureTime.split('T')[0]:f.departureTime.split(' ')[0]):'';const fz=flightTzs(f),homeNote=(()=>{const ms=fz.dep&&f.departureTime&&!/T00:00$/.test(f.departureTime)?zonedToUtc(f.departureTime,fz.dep):NaN;return !isNaN(ms)&&tzOffsetMin(ms,fz.dep)!==tzOffsetMin(ms,homeTz())?' · departs '+new Date(ms).toLocaleTimeString(dloc(),{timeZone:homeTz(),hour:'numeric',minute:'2-digit',hour12:true})+' '+homeTzLabel()+' time':'';})();items.push({type:'flight',date:d||t.startDate,time:f.departureTime,label:`${f.airline||''} ${f.flightNumber||''}`.trim()||'Flight',sub:`${f.from||'?'} → ${f.to||'?'}${homeNote}`,cost:f.cost?`${f.currency} ${parseFloat(f.cost).toLocaleString()}`:''});});
   (t.hotels||[]).forEach(h=>{items.push({type:'hotel',date:h.checkIn||t.startDate,time:'',label:h.name||'Hotel',sub:`${fmt(h.checkIn)} — ${fmt(h.checkOut)} (${nights(h.checkIn,h.checkOut)}n)`,cost:h.cost?`${h.currency} ${parseFloat(h.cost).toLocaleString()}`:''});});
   (t.activities||[]).forEach(a=>{items.push({type:'activity',date:a.date||t.startDate,time:a.time||'',label:a.name||'Activity',sub:a.location||'',cost:a.cost?`${a.currency} ${parseFloat(a.cost).toLocaleString()}`:''});});
   (t.transport||[]).forEach(x=>{items.push({type:'transport',date:x.date||t.startDate,time:x.time||'',label:`${x.type||''} ${x.name||''}`.trim()||'Transport',sub:x.location||'',cost:x.cost?`${x.currency} ${parseFloat(x.cost).toLocaleString()}`:''});});
@@ -2100,7 +2283,7 @@ function vCal(){
   const y=S.calY||2026,m=S.calM!=null?S.calM:new Date().getMonth();
   const mn=['January','February','March','April','May','June','July','August','September','October','November','December'];
   const first=new Date(y,m,1),last=new Date(y,m+1,0);
-  const startDay=first.getDay()||7;// Mon=1
+  const ws=P().weekStart??1,startDay=((first.getDay()-ws+7)%7)+1;// 1 = first column
   const daysInMonth=last.getDate();
   const today=ymd(new Date());
   // Build leave days set using centralized PH data
@@ -2111,7 +2294,7 @@ function vCal(){
     let cur=new Date(ts+'T00:00:00');const end=new Date(te+'T00:00:00');
     while(cur<=end){
       const ds=ymd(cur);const dow=cur.getDay();
-      if(dow!==0&&dow!==6&&!isSGPH(ds))leaveDays.add(ds);
+      if(!isWeekendDow(dow)&&!isWorkPH(ds))leaveDays.add(ds);
       cur.setDate(cur.getDate()+1);
     }
   });
@@ -2126,7 +2309,7 @@ function vCal(){
     const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isToday=ds===today;
     const dow=new Date(y,m,d).getDay();
-    const isWknd=dow===0||dow===6;
+    const isWknd=isWeekendDow(dow);
     const phs=getPH(ds);
     const eventsOn=tpFilter(S.events).filter(t=>t.startDate<=ds&&t.endDate>=ds);
     const isApplied=getAppliedForDate(ds,y);
@@ -2134,8 +2317,8 @@ function vCal(){
     cells+=`<div class="cal-day${isToday?' today':''}" style="position:relative" data-date="${ds}">
       ${dayHasClash?'<div class="cal-clash" title="Time clash on this day"></div>':''}
       <div class="d-num${isWknd?' weekend':''}">${d}</div>
-      ${phs.map(ph=>`<div class="d-ph ph-${ph.country.toLowerCase()}" title="${esc(ph.n)}${ph.country==='MY'?' ('+fmtStates(ph.states)+')':''}">${esc(ph.n)}</div>`).join('')}
-      ${leaveDays.has(ds)&&!phs.some(p=>p.country==='SG')?`<div class="d-leave" style="font-size:8px;color:var(--purple);font-weight:500">${isApplied?'Applied':'Leave'}</div>`:''}
+      ${phs.map(ph=>`<div class="d-ph ph-c${ph.ci}" title="${esc(phLabel(ph.country))}: ${esc(ph.n)}${ph.states!=='all'?' ('+fmtStates(ph.states)+')':''}">${esc(ph.n)}</div>`).join('')}
+      ${leaveDays.has(ds)?`<div class="d-leave" style="font-size:8px;color:var(--purple);font-weight:500">${isApplied?'Applied':'Leave'}</div>`:''}
       ${eventsOn.slice(0,2).map(t=>`<div class="cal-trip" style="background:${eColor(t)}" data-action="view" data-id="${t.id}" title="${esc(t.name)}">${esc(t.name)}</div>`).join('')}
       ${eventsOn.length>2?`<div style="font-size:8px;color:var(--text3)">+${eventsOn.length-2}</div>`:''}
     </div>`;
@@ -2161,14 +2344,15 @@ function vCal(){
       <button class="btn btn-ghost" data-action="cal-today">Today</button>
     </div>
     <div class="cal-grid">
-      <div class="cal-head"><span class="ch-full">Mon</span><span class="ch-short" style="display:none">Mo</span></div><div class="cal-head"><span class="ch-full">Tue</span><span class="ch-short" style="display:none">Tu</span></div><div class="cal-head"><span class="ch-full">Wed</span><span class="ch-short" style="display:none">We</span></div><div class="cal-head"><span class="ch-full">Thu</span><span class="ch-short" style="display:none">Th</span></div><div class="cal-head"><span class="ch-full">Fri</span><span class="ch-short" style="display:none">Fr</span></div><div class="cal-head"><span class="ch-full">Sat</span><span class="ch-short" style="display:none">Sa</span></div><div class="cal-head"><span class="ch-full">Sun</span><span class="ch-short" style="display:none">Su</span></div>
+      ${[0,1,2,3,4,5,6].map(k=>{const d=(ws+k)%7,n=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d];return `<div class="cal-head"><span class="ch-full">${n}</span><span class="ch-short" style="display:none">${n.slice(0,2)}</span></div>`;}).join('')}
       ${cells}
     </div>
     <div class="ph-legend">
-      <div class="ph-legend-item"><div class="ph-dot sg"></div><span style="font-weight:600">SG</span> Singapore</div>
-      <div class="ph-legend-item"><div class="ph-dot my"></div><span style="font-weight:600">MY</span> Malaysia</div>
+      ${(P().holidays||[]).map((cc,ci)=>`<div class="ph-legend-item"><div class="ph-dot c${ci}"></div><span style="font-weight:600">${cc}</span> ${esc(phLabel(cc))}${phAvailable(cc)?'':' <span style="color:var(--text3)">(add holidays in Leave)</span>'}</div>`).join('')}
+      ${(P().customHolidays||[]).length?'<div class="ph-legend-item"><div class="ph-dot c9"></div>My holidays</div>':''}
+      <a href="#" data-action="go-prefs" style="font-size:11px;color:var(--primary)">Change holiday calendars</a>
     </div>
-    ${monthPHs.length?`<div class="card" style="margin-top:12px"><div class="card-header"><h3>Public Holidays This Month</h3></div><div class="card-body" style="padding:8px 16px">${monthPHs.map(ph=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--glass-border);font-size:12px"><div style="display:flex;align-items:center;gap:8px"><span class="d-ph ph-${ph.country.toLowerCase()}" style="display:inline-block;margin:0">${ph.country}</span><span>${esc(ph.n)}</span></div><div style="display:flex;align-items:center;gap:8px"><span style="color:var(--text3);font-size:11px">${ph.country==='MY'?fmtStates(ph.states):''}</span><span style="color:var(--text3)">${fmt(ph.d)}</span></div></div>`).join('')}</div></div>`:''}
+    ${monthPHs.length?`<div class="card" style="margin-top:12px"><div class="card-header"><h3>Public Holidays This Month</h3></div><div class="card-body" style="padding:8px 16px">${monthPHs.map(ph=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--glass-border);font-size:12px"><div style="display:flex;align-items:center;gap:8px"><span class="d-ph ph-c${ph.ci}" style="display:inline-block;margin:0">${ph.country==='MINE'?'Mine':ph.country}</span><span>${esc(ph.n)}</span></div><div style="display:flex;align-items:center;gap:8px"><span style="color:var(--text3);font-size:11px">${ph.states!=='all'?esc(fmtStates(ph.states)):''}</span><span style="color:var(--text3)">${fmt(ph.d)}</span></div></div>`).join('')}</div></div>`:''}
     <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
       ${tpFilter(S.events).filter(t=>{const ts=new Date(t.startDate),te=new Date(t.endDate);return(ts.getFullYear()===y&&ts.getMonth()===m)||(te.getFullYear()===y&&te.getMonth()===m)||(ts<=first&&te>=last);}).map(t=>`<div style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer" data-action="view" data-id="${t.id}"><div style="width:10px;height:10px;border-radius:3px;background:${eColor(t)}"></div>${esc(t.name)}</div>`).join('')}
     </div>
@@ -2186,7 +2370,7 @@ function calcLeaveDaysForYear(year,useFilter){
     let cur=new Date(t.startDate+'T00:00:00');const end=new Date(t.endDate+'T00:00:00');
     while(cur<=end){
       const ds=ymd(cur);const dow=cur.getDay();
-      if(ds.startsWith(yStr)&&dow!==0&&dow!==6&&!isSGPH(ds))count++;
+      if(ds.startsWith(yStr)&&!isWeekendDow(dow)&&!isWorkPH(ds))count++;
       cur.setDate(cur.getDate()+1);
     }
   });
@@ -2200,8 +2384,7 @@ function calcAppliedDays(year){
     if(!a.from||!a.to)return;
     let cur=new Date(a.from+'T00:00:00');const end=new Date(a.to+'T00:00:00');
     while(cur<=end){
-      const dow=cur.getDay();
-      if(dow!==0&&dow!==6)count+=a.half?0.5:1;
+      if(isWorkday(ymd(cur)))count+=a.half?0.5:1;
       cur.setDate(cur.getDate()+1);
     }
   });
@@ -2248,7 +2431,7 @@ function vLeave(){
     <div class="leave-boxes">
       <div class="lb t-total"><div class="lv">${totals.tot}</div><div class="ll">Balance</div></div>
       <div class="lb t-al"><div class="lv">${totals.al}</div><div class="ll">Annual Leave</div></div>
-      <div class="lb t-ot"><div class="lv">${totals.bp+totals.ot+totals.ph}</div><div class="ll">Carry/OT/PH</div></div>
+      <div class="lb t-ot"><div class="lv">${totals.bp+totals.ot+totals.ph}</div><div class="ll">Carried / In Lieu</div></div>
       <div class="lb" style="background:var(--purple-dim);color:var(--purple)"><div class="lv">${eventWorkdays}</div><div class="ll">From Events</div></div>
       <div class="lb t-applied"><div class="lv">${appliedDays}</div><div class="ll">Applied</div></div>
       <div class="lb t-req"><div class="lv">${leaveRequired}</div><div class="ll">Still Required</div></div>
@@ -2261,7 +2444,7 @@ function vLeave(){
       return `<div class="card" style="margin-bottom:16px;border-color:${projColor}30"><div class="card-body" style="display:flex;align-items:center;gap:12px;padding:12px 16px">
         <div style="font-size:24px">${projected>=0?'✅':'⚠️'}</div>
         <div><div style="font-size:13px;font-weight:600;color:${projColor}">Projected: ${projected>=0?projected+' days surplus':Math.abs(projected)+' days short'}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px">Based on ${totals.tot} total entitlement − ${eventWorkdays} event workdays (excludes weekends & SG PH)</div></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">Based on ${totals.tot} total entitlement − ${eventWorkdays} event workdays (excludes weekends &amp; ${esc(P().workHolidays?phLabel(P().workHolidays):'your')} public holidays)</div></div>
       </div></div>`;
     })():''}
 
@@ -2270,7 +2453,7 @@ function vLeave(){
       <div class="card-body" style="padding:0">
         ${l.applied.length?`<table class="la-table"><thead><tr><th>From</th><th>To</th><th>Days</th><th>Note</th><th></th></tr></thead><tbody>
           ${l.applied.map((a,i)=>{
-            let d=0;if(a.from&&a.to){let c=new Date(a.from+'T00:00:00');const e=new Date(a.to+'T00:00:00');while(c<=e){if(c.getDay()!==0&&c.getDay()!==6)d+=a.half?0.5:1;c.setDate(c.getDate()+1);}}
+            let d=0;if(a.from&&a.to){let c=new Date(a.from+'T00:00:00');const e=new Date(a.to+'T00:00:00');while(c<=e){if(isWorkday(ymd(c)))d+=a.half?0.5:1;c.setDate(c.getDate()+1);}}
             return`<tr><td>${fmt(a.from)}</td><td>${fmt(a.to)}</td><td style="font-weight:600">${d}</td><td style="color:var(--text2)">${esc(a.note||'')}</td><td><button class="btn btn-ghost" style="color:var(--accent);font-size:11px;padding:2px 6px" data-action="del-applied" data-ai="${i}">×</button></td></tr>`;}).join('')}
         </tbody></table>`:`<div class="empty" style="padding:24px"><p style="font-size:12px">No leave applied yet</p><p style="font-size:11px;color:var(--text3)">Track your leave applications to see what's still needed</p></div>`}
       </div>
@@ -2288,18 +2471,20 @@ function vLeave(){
         <div class="fi"><label>End Date</label><input class="fc" type="date" data-lj="${i}" data-jf="endDate" value="${j.endDate||''}" placeholder="Leave blank if current"></div>
         <div class="fi"><label>Annual Leave</label><input class="fc" type="number" data-lj="${i}" data-jf="al" value="${j.al||0}"></div>
         <div class="fi"><label>Carried Over</label><input class="fc" type="number" step="0.5" data-lj="${i}" data-jf="bp" value="${j.bp||0}"></div>
-        <div class="fi"><label>OT Leave</label><input class="fc" type="number" step="0.5" data-lj="${i}" data-jf="ot" value="${j.ot||0}"></div>
-        <div class="fi"><label>PH Substitute</label><input class="fc" type="number" step="0.5" data-lj="${i}" data-jf="ph" value="${j.ph||0}"></div>
+        <div class="fi"><label>Time Off in Lieu <span style="font-weight:400;color:var(--text3)">(overtime)</span></label><input class="fc" type="number" step="0.5" data-lj="${i}" data-jf="ot" value="${j.ot||0}"></div>
+        <div class="fi"><label>Holiday in Lieu <span style="font-weight:400;color:var(--text3)">(worked a holiday)</span></label><input class="fc" type="number" step="0.5" data-lj="${i}" data-jf="ph" value="${j.ph||0}"></div>
         <div class="fi"><label>Days Taken</label><input class="fc" type="number" step="0.5" data-lj="${i}" data-jf="taken" value="${j.taken||0}"></div>
       </div>
     </div></div>`).join('')}
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <div class="card"><div class="card-header"><h3><span style="display:inline-flex;align-items:center;gap:6px"><span class="ph-dot sg" style="width:8px;height:8px;border-radius:50%;background:var(--sg);display:inline-block"></span>Singapore PH ${y}</span></h3></div><div class="card-body" style="padding:8px 16px">
-        ${sgPH.length?sgPH.map(h=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--glass-border);font-size:12px"><span>${esc(h.n)}</span><span style="color:var(--text3)">${fmt(h.d)}</span></div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">No data for this year</div>'}
-      </div></div>
-      <div class="card"><div class="card-header"><h3><span style="display:inline-flex;align-items:center;gap:6px"><span class="ph-dot my" style="width:8px;height:8px;border-radius:50%;background:var(--my);display:inline-block"></span>Malaysia PH ${y}</span></h3></div><div class="card-body" style="padding:8px 16px;max-height:400px;overflow-y:auto">
-        ${myPH.length?myPH.map(h=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--glass-border);font-size:12px"><span>${esc(h.n)}</span><div style="display:flex;gap:8px;align-items:center"><span style="font-size:10px;color:var(--text3);background:var(--my-dim);padding:1px 6px;border-radius:4px">${fmtStates(h.s)}</span><span style="color:var(--text3)">${fmt(h.d)}</span></div></div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">No data for this year</div>'}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+      ${(P().holidays||[]).map((cc,ci)=>{const list=holidaysFor(cc,parseInt(y));const work=cc===P().workHolidays;
+        return `<div class="card"><div class="card-header"><h3><span style="display:inline-flex;align-items:center;gap:6px"><span class="ph-dot c${ci}" style="width:8px;height:8px;border-radius:50%;display:inline-block"></span>${esc(phLabel(cc))} ${y}</span></h3>${work?'<span style="font-size:10px;color:var(--text3)">Not counted as leave</span>':''}</div><div class="card-body" style="padding:8px 16px">
+        ${list.length?list.map(h=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--glass-border);font-size:12px"><span>${esc(h.n)}${h.s!=='all'?` <span style="font-size:10px;color:var(--text3)">(${esc(fmtStates(h.s))})</span>`:''}</span><span style="color:var(--text3);white-space:nowrap">${fmt(h.d)}</span></div>`).join('')
+          :`<div style="font-size:12px;color:var(--text3);padding:8px 0">${phAvailable(cc)?'Loading…':'Holidays for this country aren\'t available automatically. Add them under <b>My holidays</b>.'}</div>`}
+        </div></div>`;}).join('')}
+      <div class="card"><div class="card-header"><h3><span style="display:inline-flex;align-items:center;gap:6px"><span class="ph-dot c9" style="width:8px;height:8px;border-radius:50%;display:inline-block"></span>My holidays</span></h3><div style="display:flex;gap:6px"><button class="btn btn-s" data-action="ph-import" style="font-size:11px">Import .ics</button><button class="btn btn-p" data-action="ph-add" style="font-size:11px">+ Add</button></div></div><div class="card-body" style="padding:8px 16px">
+        ${(P().customHolidays||[]).filter(h=>h.d.startsWith(String(y))).sort((a,b)=>a.d.localeCompare(b.d)).map(h=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--glass-border);font-size:12px"><span>${esc(h.n)}</span><span style="display:flex;gap:8px;align-items:center"><span style="color:var(--text3);white-space:nowrap">${fmt(h.d)}</span><button class="btn btn-ghost" style="color:var(--accent);font-size:11px;padding:2px 6px" data-action="ph-del" data-d="${h.d}" data-n="${esc(h.n)}">✕</button></span></div>`).join('')||'<div style="font-size:12px;color:var(--text3);padding:8px 0">Company days off, local holidays, or a country without automatic holidays. These never count as leave.</div>'}
       </div></div>
     </div>
   </div>`;
@@ -2310,7 +2495,7 @@ function vBudget(){
   const ft=tpFilter(S.events);
   const byCur={};
   const byCat={flights:0,hotels:0,activities:0,transport:0};
-  ft.forEach(t=>['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>{if(e.cost&&parseFloat(e.cost)){const c=e.currency||'SGD';byCur[c]=(byCur[c]||0)+parseFloat(e.cost);byCat[k]+=toSGD(e.cost,c,e.rateToSGD);}})));
+  ft.forEach(t=>['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>{if(e.cost&&parseFloat(e.cost)){const c=e.currency||baseCur();byCur[c]=(byCur[c]||0)+parseFloat(e.cost);byCat[k]+=toBase(e.cost,c,e.rateToSGD);}})));
   const wc=ft.filter(t=>eCost(t)>0).sort((a,b)=>eCost(b)-eCost(a));
   const total=ft.reduce((s,t)=>s+eCost(t),0);
   const catColors={flights:'#4da0d0',hotels:'#5aad6a',activities:'#d49650',transport:'#b07cc8'};
@@ -2319,11 +2504,12 @@ function vBudget(){
   <div class="page-header"><div><h2>Budget</h2><div class="subtitle">Spending overview</div></div><div>${tpHtml()}</div></div>
   <div class="page-content">
     <div class="stats">
-      <div class="stat green"><div class="s-label">Total (SGD)</div><div class="s-val">${fmtM(total,'')}</div></div>
+      <div class="stat green"><div class="s-label">Total (${baseCur()})</div><div class="s-val">${fmtM(total,'')}</div></div>
       ${Object.entries(byCur).map(([c,v])=>`<div class="stat"><div class="s-label">${c}</div><div class="s-val" style="font-size:20px">${parseFloat(v).toLocaleString('en',{minimumFractionDigits:2})}</div></div>`).join('')}
     </div>
+    ${Object.keys(byCur).some(c=>c!==baseCur())?`<p style="font-size:11px;color:var(--text3);margin:-4px 0 14px">⚠ ${ratesCaveat(true)} <a href="#" data-action="go-rates" style="color:var(--primary)">Details</a></p>`:''}
     ${total>0?`<div class="card" style="margin-bottom:16px"><div class="card-header"><h3>By Category</h3></div><div class="card-body">
-      ${Object.entries(byCat).map(([k,v])=>`<div class="budget-bar"><span class="bb-label">${k.charAt(0).toUpperCase()+k.slice(1)}</span><div class="bb-track"><div class="bb-fill" style="width:${(v/maxCat*100).toFixed(1)}%;background:${catColors[k]}"></div></div><span class="bb-val">${fmtM(v,'SGD')}</span></div>`).join('')}
+      ${Object.entries(byCat).map(([k,v])=>`<div class="budget-bar"><span class="bb-label">${k.charAt(0).toUpperCase()+k.slice(1)}</span><div class="bb-track"><div class="bb-fill" style="width:${(v/maxCat*100).toFixed(1)}%;background:${catColors[k]}"></div></div><span class="bb-val">${fmtM(v,baseCur())}</span></div>`).join('')}
     </div></div>`:''}
     <div class="card">
       <div class="card-header"><h3>By Event</h3></div>
@@ -2419,7 +2605,7 @@ function buildICSCal(evts,stable){
     });
   });
   return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Holiday Tracker//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',
-    'X-WR-CALNAME:Holiday Tracker','X-WR-TIMEZONE:Asia/Singapore',...events,'END:VCALENDAR'].join('\r\n');
+    'X-WR-CALNAME:Holiday Tracker','X-WR-TIMEZONE:'+homeTz(),...events,'END:VCALENDAR'].join('\r\n');
 }
 function buildICSFeed(){
   // Exclude Apple-sourced events from the outbound feed — they already live
@@ -2441,8 +2627,10 @@ function exportUpcomingICS(){
 }
 function calFeedUrl(){
   const c=getSyncConfig();
-  if(!c.gistId||!c.gistOwner)return null;
-  return 'https://gist.githubusercontent.com/'+c.gistOwner+'/'+c.gistId+'/raw/'+ICS_FILE;
+  // This device's GitHub link, or (signed in on another device) the one saved in your account
+  const id=c.gistId&&c.gistOwner?c.gistId:_acct&&S.calFeed&&S.calFeed.gistId,own=c.gistId&&c.gistOwner?c.gistOwner:_acct&&S.calFeed&&S.calFeed.owner;
+  if(!id||!own)return null;
+  return 'https://gist.githubusercontent.com/'+own+'/'+id+'/raw/'+ICS_FILE;
 }
 
 // ===== APPLE CALENDAR INBOUND IMPORT =====
@@ -2519,7 +2707,7 @@ function _applyAppleToEntry(kind,e,src){
     // airport's zone. Times are kept as local airport times, like Apple shows them.
     const zoneIn=lab=>{const m=src.notes.match(new RegExp('(?:'+lab+')\\s*[:：][^\\n(]*\\(([A-Za-z]+\\/[A-Za-z_\\/-]+)\\)','i'));return m?m[1]:'';};
     const depTz=zoneIn('Starts?|Depart(?:s|ure)?')||AIRPORT_TZ[codes[0]]||'',arrTz=zoneIn('Ends?|Arriv(?:es|al)?')||AIRPORT_TZ[codes[1]]||'';
-    const calTz=src.startTz||HOME_TZ;
+    const calTz=src.startTz||homeTz();
     const dMs=src.startTime?zonedToUtc(src.startDate+'T'+src.startTime,calTz):NaN,aMs=src.endTime?zonedToUtc((src.endDate||src.startDate)+'T'+src.endTime,src.endTz||calTz):NaN;
     const ls=!isNaN(dMs)&&depTz?(z=>({date:z.slice(0,10),time:z.slice(11)}))(utcToZoned(dMs,depTz)):null;
     const le=!isNaN(aMs)&&arrTz?(z=>({date:z.slice(0,10),time:z.slice(11)}))(utcToZoned(aMs,arrTz)):null;
@@ -2862,10 +3050,12 @@ function vSettings(){
   <div class="page-header"><div><h2>Settings</h2><div class="subtitle">Account, guide, rates & data</div></div></div>
   <div class="page-content">
     ${vAccountCard()}
+    ${vPrefsCard()}
     ${vGuideCard()}
-    <div class="card" style="margin-bottom:16px"><div class="card-header"><h3>Exchange Rates (to SGD)</h3><button class="btn btn-s" onclick="fetchLiveRates().then(()=>render())">↻ Refresh Rates</button></div><div class="card-body">
-      <p style="font-size:11px;color:var(--text3);margin-bottom:12px">How much 1 unit of each currency equals in SGD. ${S.ratesUpdated?'Last updated: '+esc(S.ratesUpdated):'Using default rates.'} Rates auto-refresh on page load.</p>
-      <div class="rate-grid">${CUR.filter(c=>c!=='SGD').map(c=>`<div class="rate-item"><label>${c}</label><input type="number" step="0.0001" value="${S.rates[c]||0}" data-rc="${c}" class="fc" style="width:auto"> SGD</div>`).join('')}</div>
+    <div class="card" style="margin-bottom:16px"><div class="card-header"><h3>Exchange Rates (to ${baseCur()})</h3><button class="btn btn-s" onclick="fetchLiveRates().then(()=>render())">↻ Refresh Rates</button></div><div class="card-body">
+      <p style="font-size:11px;color:var(--text3);margin-bottom:12px">How much 1 unit of each currency is worth in ${baseCur()}. Rates refresh automatically; edit one to override it. Every currency is supported. These are the ones in your trips plus common ones.</p>
+      <p style="font-size:11px;color:var(--text3);margin:-6px 0 12px;padding:8px 10px;border-left:2px solid var(--orange);background:rgba(251,146,60,.06);border-radius:4px">⚠ ${ratesCaveat()}</p>
+      <div class="rate-grid">${(()=>{const b=baseCur(),used=currencyList().slice(1,40),common=['USD','EUR','GBP','JPY','AUD','SGD','MYR','THB','IDR'];return[...new Set([...used,...common])].filter(c=>c!==b&&rateOf(c)).slice(0,30).map(c=>{const v=rateOf(c)/(rateOf(b)||1);return`<div class="rate-item"><label title="${esc(_currencyName(c))}">${c}</label><input type="number" step="any" value="${parseFloat(v.toPrecision(6))}" data-rc="${c}" class="fc" style="width:auto"> ${b}</div>`;}).join('');})()}</div>
     </div></div>
     ${acctEnabled()&&(!getSyncConfig().token||getSyncConfig().retired)?'':`<div class="card" style="margin-bottom:16px"><div class="card-header"><h3>${acctEnabled()?'Old GitHub Sync':'Cloud Sync'}</h3></div><div class="card-body">
       ${acctEnabled()?`<p style="font-size:12px;color:var(--orange);margin:0 0 10px">${_acct?'Your data now syncs through your account. This GitHub link is only used for the Apple Calendar feed until that moves to your account too.':'Sync now works through accounts. Sign in or create your account above: your data here will be moved into it.'}</p>`:''}
@@ -2905,6 +3095,12 @@ function vSettings(){
     </div></div>`}
     <div class="card" style="margin-bottom:16px"><div class="card-header"><h3>Apple Calendar (iCloud) Sync</h3></div><div class="card-body">
       ${(()=>{const url=calFeedUrl();const sc=getSyncConfig();
+        if(!sc.token&&url&&_acct)return `<p style="font-size:11px;color:var(--text3);margin-bottom:10px">Your calendar feed (subscribe once in Apple Calendar). It's republished from the device connected to GitHub (your Mac) whenever anything changes.</p>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:12px"><input class="fc" readonly value="${esc(url)}" id="cal-feed-url" style="flex:1;min-width:0;font-size:11px;font-family:monospace" onclick="this.select()"><button class="btn btn-p" data-action="copy-cal-url" style="white-space:nowrap">Copy URL</button></div>
+        <div style="border-top:1px solid var(--border);margin:12px 0"></div>
+        <div style="font-size:12px;font-weight:600;margin-bottom:6px">Inbound: Apple Calendar → Tracker</div>
+        <div style="display:flex;gap:6px;align-items:center"><input class="fc" id="apple-cal-url" placeholder="webcal://p##-caldav.icloud.com/published/2/…" value="${esc(S.appleCalUrl||'')}" style="flex:1;min-width:0;font-size:11px;font-family:monospace"><button class="btn btn-p" data-action="save-apple-cal-url" style="white-space:nowrap">Save</button></div>
+        ${(S.events||[]).some(e=>e.source==='apple')?`<div style="font-size:10px;color:var(--green);margin-top:6px">${(S.events||[]).filter(e=>e.source==='apple').length} event(s) currently imported from Apple Calendar</div>`:''}`;
         if(!sc.token&&!url)return acctEnabled()?'<p style="font-size:11px;color:var(--text3)">Apple Calendar sync for accounts is coming soon. Until then you can download a calendar file below (Calendar Export).</p>':'<p style="font-size:11px;color:var(--text3)">Connect cloud sync above first — the calendar feed is published alongside your sync data.</p>';
         if(!url)return '<p style="font-size:11px;color:var(--text3)">Feed will be available after the next sync completes. Make any change (or click below) to publish it.</p><button class="btn btn-s" data-action="publish-feed" style="margin-top:8px">Publish Calendar Feed Now</button>';
         return `
@@ -3006,9 +3202,9 @@ function buildItineraryItems(t,opts){
   const dateTo=opts.dateTo||'';
   const inRange=d=>{if(!d)return true;if(dateFrom&&d<dateFrom)return false;if(dateTo&&d>dateTo)return false;return true;};
   const items=[];
-  const fmtD2=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
-  const fmtT2=dt=>{if(!dt)return '';try{const d2=new Date(dt.includes('T')?dt:dt.replace(' ','T'));if(isNaN(d2))return dt;return d2.toLocaleTimeString('en-GB',{hour:'numeric',minute:'2-digit',hour12:true});}catch(e){return dt;}};
-  const payDet=(e)=>{const r=[];if(!incPayments)return r;if(e.fullPaymentAmount)r.push(['Full Payment',`${e.fullPaymentCurrency||e.currency||'SGD'} ${e.fullPaymentAmount}`]);if(e.depositAmount)r.push(['Deposit',`${e.depositCurrency||e.currency||'SGD'} ${e.depositAmount}${e.depositPaid==='yes'?' (Paid)':' (Unpaid)'}`]);if(e.depositDate)r.push(['Deposit Date',fmtD2(e.depositDate)]);if(e.paymentDueDate)r.push(['Payment Due',fmtD2(e.paymentDueDate)]);if(e.fullyPaid==='yes')r.push(['Status','Fully Paid']);return r;};
+  const fmtD2=d=>d?new Date(d+'T00:00:00').toLocaleDateString(dloc(),{day:'numeric',month:'short',year:'numeric'}):'';
+  const fmtT2=dt=>{if(!dt)return '';try{const d2=new Date(dt.includes('T')?dt:dt.replace(' ','T'));if(isNaN(d2))return dt;return d2.toLocaleTimeString(dloc(),{hour:'numeric',minute:'2-digit',hour12:true});}catch(e){return dt;}};
+  const payDet=(e)=>{const r=[];if(!incPayments)return r;if(e.fullPaymentAmount)r.push(['Full Payment',`${e.fullPaymentCurrency||e.currency||baseCur()} ${e.fullPaymentAmount}`]);if(e.depositAmount)r.push(['Deposit',`${e.depositCurrency||e.currency||baseCur()} ${e.depositAmount}${e.depositPaid==='yes'?' (Paid)':' (Unpaid)'}`]);if(e.depositDate)r.push(['Deposit Date',fmtD2(e.depositDate)]);if(e.paymentDueDate)r.push(['Payment Due',fmtD2(e.paymentDueDate)]);if(e.fullyPaid==='yes')r.push(['Status','Fully Paid']);return r;};
   if(secs.includes('flights'))(t.flights||[]).forEach(f=>{
     const d=f.departureTime?(f.departureTime.includes('T')?f.departureTime.split('T')[0]:f.departureTime.split(' ')[0]):'';
     if(!inRange(d||t.startDate))return;
@@ -3024,7 +3220,7 @@ function buildItineraryItems(t,opts){
     det.push(...payDet(f));
     items.push({type:'FLIGHT',date:d||t.startDate,sortKey:f.departureTime||d||t.startDate,
       title:`${f.airline||''} ${f.flightNumber||''}`.trim()||'Flight',
-      details:det,cost:f.cost?parseFloat(f.cost):0,currency:f.currency||'SGD',color:[59,130,246],
+      details:det,cost:f.cost?parseFloat(f.cost):0,currency:f.currency||baseCur(),color:[59,130,246],
       timeStr:f.departureTime?`${fmtT2(f.departureTime)} - ${fmtT2(f.arrivalTime)}`:'',
       detailStr:[f.from&&f.to?`${f.from} → ${f.to}`:'',f.pnr?`PNR: ${f.pnr}`:'',f.seat?`Seat: ${f.seat}`:'',f.duration?`Duration: ${f.duration}`:''].filter(Boolean).join(' | ')
     });
@@ -3040,7 +3236,7 @@ function buildItineraryItems(t,opts){
     det.push(...payDet(h));
     items.push({type:'HOTEL',date:h.checkIn||t.startDate,sortKey:h.checkIn||t.startDate,
       title:h.name||'Hotel',
-      details:det,cost:h.cost?parseFloat(h.cost):0,currency:h.currency||'SGD',color:[168,85,247],
+      details:det,cost:h.cost?parseFloat(h.cost):0,currency:h.currency||baseCur(),color:[168,85,247],
       timeStr:h.checkIn&&h.checkOut?`${fmtD2(h.checkIn)} - ${fmtD2(h.checkOut)}`:'',
       detailStr:[incBooking&&h.bookingNumber?`Booking: ${h.bookingNumber}`:'',h.checkIn&&h.checkOut?`${nights(h.checkIn,h.checkOut)} nights`:''].filter(Boolean).join(' | ')
     });
@@ -3056,7 +3252,7 @@ function buildItineraryItems(t,opts){
     det.push(...payDet(a));
     items.push({type:'ACTIVITY',date:a.date||t.startDate,sortKey:(a.date||t.startDate)+' '+(a.time||'99'),
       title:a.name||'Activity',
-      details:det,cost:a.cost?parseFloat(a.cost):0,currency:a.currency||'SGD',color:[245,158,11],
+      details:det,cost:a.cost?parseFloat(a.cost):0,currency:a.currency||baseCur(),color:[245,158,11],
       timeStr:a.time||'',
       detailStr:[a.location||'',a.duration?`Duration: ${a.duration}`:'',incBooking&&a.bookingDetails?`Booking: ${a.bookingDetails}`:''].filter(Boolean).join(' | ')
     });
@@ -3072,7 +3268,7 @@ function buildItineraryItems(t,opts){
     det.push(...payDet(x));
     items.push({type:'TRANSPORT',date:x.date||t.startDate,sortKey:(x.date||t.startDate)+' '+(x.time||'99'),
       title:`${x.type||''} ${x.name||''}`.trim()||'Transport',
-      details:det,cost:x.cost?parseFloat(x.cost):0,currency:x.currency||'SGD',color:[34,197,94],
+      details:det,cost:x.cost?parseFloat(x.cost):0,currency:x.currency||baseCur(),color:[34,197,94],
       timeStr:x.time||'',
       detailStr:[x.location||'',x.duration?`Duration: ${x.duration}`:'',incBooking&&x.bookingDetails?`Booking: ${x.bookingDetails}`:''].filter(Boolean).join(' | ')
     });
@@ -3090,8 +3286,8 @@ function genItineraryPDF(t,opts){
   const doc=new jsPDF({unit:'mm',format:'a4'});
   const W=210,M=15,CW=W-2*M;
   let y=0,pg=1;
-  const fmtD2=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
-  const fmtDL=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'';
+  const fmtD2=d=>d?new Date(d+'T00:00:00').toLocaleDateString(dloc(),{day:'numeric',month:'short',year:'numeric'}):'';
+  const fmtDL=d=>d?new Date(d+'T00:00:00').toLocaleDateString(dloc(),{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'';
   const addFoot=()=>{doc.setFontSize(7);doc.setTextColor(160);doc.text('Generated by Holiday Tracker',M,290);doc.text('Page '+pg,W-M,290,{align:'right'});doc.setTextColor(0);};
   const np=()=>{addFoot();doc.addPage();y=15;pg++;};
   const ck=h=>{if(y+h>278)np();};
@@ -3105,7 +3301,7 @@ function genItineraryPDF(t,opts){
   const tLines=doc.splitTextToSize(t.name,CW);doc.text(tLines,M,26);
   doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(203,213,225);
   doc.text(`${fmtD2(t.startDate)} — ${fmtD2(t.endDate)}  |  ${days(t.startDate,t.endDate)} days, ${nights(t.startDate,t.endDate)} nights  |  ${t.locations.join(', ')}`,M,40);
-  if(incCost){doc.setTextColor(134,239,172);doc.text(`Total: SGD ${eCost(t).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}`,W-M,40,{align:'right'});}
+  if(incCost){doc.setTextColor(134,239,172);doc.text(`Total: ${baseCur()} ${eCost(t).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}`,W-M,40,{align:'right'});}
   y=56;doc.setTextColor(0);
 
   // Build & group items
@@ -3179,17 +3375,17 @@ function genItineraryPDF(t,opts){
     const cats=secs.map(s=>({l:catMap[s]||s,a:t[s]||[]}));
     doc.setFontSize(9);
     cats.forEach(c=>{
-      const sm=c.a.reduce((s,e)=>s+toSGD(e.cost,e.currency,e.rateToSGD),0);
+      const sm=c.a.reduce((s,e)=>s+toBase(e.cost,e.currency,e.rateToSGD),0);
       if(sm>0){
         doc.setFont('helvetica','normal');doc.setTextColor(100,116,139);doc.text(c.l,M+4,y);
         doc.setFont('helvetica','normal');doc.setTextColor(51,65,85);
-        doc.text(`SGD ${sm.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}`,M+45,y);y+=5;
+        doc.text(`${baseCur()} ${sm.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}`,M+45,y);y+=5;
       }
     });
     y+=1;doc.setDrawColor(200);doc.line(M+4,y,M+80,y);y+=6;
     doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(30,41,59);
     doc.text('Total',M+4,y);
-    doc.text(`SGD ${eCost(t).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}`,M+45,y);
+    doc.text(`${baseCur()} ${eCost(t).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}`,M+45,y);
   }
 
   addFoot();
@@ -3203,7 +3399,7 @@ function genItineraryXLSX(t,opts){
   const incCost=(opts.fields||[]).includes('costs');
   const incPayments=(opts.fields||[]).includes('payments');
   const secs=opts.sections||['flights','hotels','activities','transport'];
-  const fmtD2=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
+  const fmtD2=d=>d?new Date(d+'T00:00:00').toLocaleDateString(dloc(),{day:'numeric',month:'short',year:'numeric'}):'';
   const wb=XLSX.utils.book_new();
 
   // Overview sheet
@@ -3212,7 +3408,7 @@ function genItineraryXLSX(t,opts){
     ['Duration',`${days(t.startDate,t.endDate)} days, ${nights(t.startDate,t.endDate)} nights`],
     ['Locations',t.locations.join(', ')],[]];
   secs.forEach(s=>ov.push([catMap[s]||s,(t[s]||[]).length]));
-  if(incCost){ov.push([],['Total Cost (SGD)',eCost(t).toFixed(2)]);}
+  if(incCost){ov.push([],[`Total Cost (${baseCur()})`,eCost(t).toFixed(2)]);}
   const ws1=XLSX.utils.aoa_to_sheet(ov);ws1['!cols']=[{wch:18},{wch:45}];
   XLSX.utils.book_append_sheet(wb,ws1,'Overview');
 
@@ -3240,7 +3436,7 @@ function genItineraryXLSX(t,opts){
     }
     rows.push(r);
   });
-  if(incCost){rows.push([]);const totalRow=new Array(hdr.length).fill('');totalRow[hdr.indexOf('Cost')-1]='Total (SGD)';totalRow[hdr.indexOf('Cost')]=eCost(t).toFixed(2);rows.push(totalRow);}
+  if(incCost){rows.push([]);const totalRow=new Array(hdr.length).fill('');totalRow[hdr.indexOf('Cost')-1]=`Total (${baseCur()})`;totalRow[hdr.indexOf('Cost')]=eCost(t).toFixed(2);rows.push(totalRow);}
   const ws2=XLSX.utils.aoa_to_sheet(rows);
   ws2['!cols']=[{wch:5},{wch:16},{wch:11},{wch:30},{wch:40},{wch:22}];
   if(flds.includes('notes'))ws2['!cols'].push({wch:25});
@@ -3268,12 +3464,12 @@ function modal(title,body,onSave,opts){
 function xm(){document.getElementById('mbg').classList.remove('open');}
 
 function eventCur(ev){
-  if(!ev)return 'SGD';
+  if(!ev)return baseCur();
   const all=[...(ev.flights||[]),...(ev.hotels||[]),...(ev.activities||[]),...(ev.transport||[])];
   for(let i=all.length-1;i>=0;i--){if(all[i].currency)return all[i].currency;}
-  return 'SGD';
+  return baseCur();
 }
-function curSel(sel='SGD',nm='currency'){return`<select class="fc" name="${nm}">${CUR.map(c=>`<option value="${c}"${c===sel?' selected':''}>${c}</option>`).join('')}</select>`;}
+function curSel(sel,nm='currency'){sel=sel||baseCur();const l=currencyList();if(!l.includes(sel))l.unshift(sel);return`<select class="fc" name="${nm}">${l.map(c=>`<option value="${c}"${c===sel?' selected':''} title="${esc(_currencyName(c))}">${c}</option>`).join('')}</select>`;}
 function dzHtml(id,showTextTab){
   const tabs=showTextTab?`<div class="dz-tabs"><button class="dz-tab active" data-dztab="file" data-dzid="${id}">Upload / Paste image</button><button class="dz-tab" data-dztab="text" data-dzid="${id}">Paste text</button></div>`:'';
   const textPane=showTextTab?`<div class="dz-text-pane" data-dzid="${id}" style="display:none"><textarea class="dz-paste-area" data-dztext="${id}" placeholder="Paste your booking confirmation email text here…\n\nSupports flight tickets, hotel reservations, activities, and transport bookings."></textarea><button class="btn btn-p dz-paste-btn" data-dzparse="${id}">Parse text</button></div>`:'';
@@ -3435,7 +3631,7 @@ function autoFillForm(txt,dzId){
         pnr:leg.pnr||parsed.pnr||'',seat:leg.seat||'',from:leg.from||'',to:leg.to||'',
         departureTime:(leg.date?leg.date+'T':'')+(leg.departureTime||'00:00'),
         arrivalTime:((leg.arrivalDate||leg.date)?(leg.arrivalDate||leg.date)+'T':'')+(leg.arrivalTime||'00:00'),
-        duration:leg.duration||'',cost:leg.cost||'',currency:parsed.currency||'SGD',
+        duration:leg.duration||'',cost:leg.cost||'',currency:parsed.currency||baseCur(),
         notes:leg.duration?'Duration: '+leg.duration:'',ocrText:''
       }));
       toast(parsed.legs.length+' flights detected — Leg 1 shown, save to add all');
@@ -3609,7 +3805,7 @@ function suRenderBody(parsed){
     <button type="button" class="btn btn-s" id="su-add-leg" style="width:100%;margin-top:6px">+ Add another flight</button>
     <div class="fg" style="margin-top:12px">
       <div class="fi"><label>Booking total</label><input class="fc" type="number" step="0.01" id="su-cost" value="${esc(cost)}"${perLeg.length?` placeholder="Per flight" disabled title="Each flight keeps its own cost: ${esc(perLeg.map(l=>l.fn+' '+(l.currency||'')+' '+l.cost).join(', '))}"`:''}></div>
-      <div class="fi"><label>Currency</label>${curSel(parsed.currency||'SGD','su-cost-cur')}</div>
+      <div class="fi"><label>Currency</label>${curSel(parsed.currency||baseCur(),'su-cost-cur')}</div>
     </div>
     <div style="font-size:10px;color:var(--text3);margin-top:4px">The total is recorded on the first flight so it's only counted once.</div>
     ${parsed.rawText?`<button class="su-raw-toggle" onclick="const el=this.nextElementSibling;el.style.display=el.style.display==='none'?'block':'none';this.textContent=el.style.display==='none'?'Show raw text ▸':'Hide raw text ▾'">Show raw text ▸</button><div class="ocr-out" style="display:none;margin-top:4px">${esc(parsed.rawText)}</div>`:''}`;
@@ -3722,7 +3918,7 @@ function showSmartUpload(){
             cost:lc,currency:lcur,rateToSGD:snapRate(lcur),notes:!perLegCost&&i===0&&cost&&legs.length>1?`Booking total for ${legs.length} flights`:'',ocrText:i===0?(parsed.rawText||''):''});
         });
       }else{
-        const entry={id:uid(),cost:parsed.cost||'',currency:parsed.currency||'SGD',rateToSGD:snapRate(parsed.currency||'SGD'),notes:parsed.rawText?'[Auto-extracted]':'',ocrText:parsed.rawText||''};
+        const entry={id:uid(),cost:parsed.cost||'',currency:parsed.currency||baseCur(),rateToSGD:snapRate(parsed.currency||baseCur()),notes:parsed.rawText?'[Auto-extracted]':'',ocrText:parsed.rawText||''};
         if(type==='hotel'){Object.assign(entry,{name:parsed.hotelName||parsed.name||'',bookingNumber:parsed.bookingNumber||parsed.pnr||'',website:'',checkIn:parsed.date||'',checkOut:parsed.dateTo||'',notes:[parsed.roomType,parsed.nights?parsed.nights+' night'+(parsed.nights>1?'s':''):''].filter(Boolean).join(' · ')||entry.notes});ev.hotels.push(entry);}
         else if(type==='activity'){Object.assign(entry,{name:parsed.title||parsed.name||'',location:parsed.locations?parsed.locations[0]:'',date:parsed.date||'',time:suTime24(parsed.departureTime),duration:'',bookingDetails:parsed.pnr||''});ev.activities.push(entry);}
         else{Object.assign(entry,{type:parsed.transportType||'Other',name:parsed.provider||parsed.name||'',location:parsed.locations?parsed.locations[0]:'',date:parsed.date||'',time:suTime24(parsed.departureTime),duration:'',bookingDetails:parsed.pnr||'',notes:parsed.title&&parsed.title!==parsed.provider?parsed.title:entry.notes});ev.transport.push(entry);}
@@ -3783,7 +3979,7 @@ const AIRLINE_NAMES=['Singapore Airlines','Scoot','Garuda','Batik Air','China Ai
 const AIRPORTS={SIN:'Singapore',KUL:'Kuala Lumpur',CGK:'Jakarta',DPS:'Bali',NRT:'Tokyo Narita',HND:'Tokyo Haneda',KIX:'Osaka',BKK:'Bangkok',ICN:'Seoul',PVG:'Shanghai',PEK:'Beijing',MLE:'Maldives',MNL:'Manila',CEB:'Cebu',TPE:'Taipei',SYD:'Sydney',MEL:'Melbourne',LHR:'London',HKG:'Hong Kong',HAN:'Hanoi',SGN:'Ho Chi Minh',HKT:'Phuket',CNX:'Chiang Mai',PEN:'Penang',LGK:'Langkawi',USM:'Koh Samui',JOG:'Yogyakarta',SUB:'Surabaya',MDC:'Manado',LBJ:'Labuan Bajo',TRK:'Tarakan',KNO:'Medan',ADD:'Addis Ababa',JRO:'Kilimanjaro',NBO:'Nairobi',DAR:'Dar es Salaam',DOH:'Doha',DXB:'Dubai',IST:'Istanbul',CDG:'Paris',AMS:'Amsterdam',FRA:'Frankfurt',ZRH:'Zurich',FCO:'Rome',BCN:'Barcelona',MAD:'Madrid',CAI:'Cairo',CPT:'Cape Town',BWN:'Brunei',RGN:'Yangon',REP:'Siem Reap',SZB:'Subang',XSP:'Singapore Seletar',TWU:'Tawau',BKI:'Kota Kinabalu',SDK:'Sandakan',MYY:'Miri',KCH:'Kuching',BTJ:'Banda Aceh',PKU:'Pekanbaru',UPG:'Makassar',BPN:'Balikpapan',PLM:'Palembang',SOC:'Solo',SRG:'Semarang',AMQ:'Ambon',GTO:'Gorontalo',KDI:'Kendari',WGP:'Waingapu',TMC:'Tambolaka',MOF:'Maumere',ENE:'Ende',RTG:'Ruteng',BMU:'Bima',LOP:'Lombok',HLP:'Jakarta Halim',DMK:'Bangkok Don Mueang',CNS:'Cairns',AKL:'Auckland',WLG:'Wellington',DEL:'Delhi',BOM:'Mumbai',CMB:'Colombo',KTM:'Kathmandu',JFK:'New York JFK',LAX:'Los Angeles',SFO:'San Francisco',ORD:'Chicago',MIA:'Miami',YVR:'Vancouver',YYZ:'Toronto',GRU:'São Paulo',LIM:'Lima',BOG:'Bogota',SCL:'Santiago',EZE:'Buenos Aires',MUC:'Munich',VIE:'Vienna',CPH:'Copenhagen',OSL:'Oslo',ARN:'Stockholm',HEL:'Helsinki',LIS:'Lisbon',ATH:'Athens',WAW:'Warsaw',PRG:'Prague',BUD:'Budapest',DUB:'Dublin',EDI:'Edinburgh',GVA:'Geneva',MXP:'Milan',CTS:'Sapporo',FUK:'Fukuoka',ITM:'Osaka Itami',GMP:'Seoul Gimpo',CJU:'Jeju',DAD:'Da Nang',PQC:'Phu Quoc',KBV:'Krabi',HDY:'Hat Yai',CEI:'Chiang Rai',LPQ:'Luang Prabang',VTE:'Vientiane',PNH:'Phnom Penh',SBW:'Sibu',BTU:'Bintulu',LBU:'Labuan',JHB:'Johor Bahru',IPH:'Ipoh',TGG:'Kuala Terengganu',AOR:'Alor Setar',SZX:'Shenzhen',CAN:'Guangzhou',HGH:'Hangzhou',CTU:'Chengdu',KMG:'Kunming',XMN:'Xiamen',WUH:'Wuhan',NKG:'Nanjing',TSN:'Tianjin',TAO:'Qingdao',CKG:'Chongqing',NGO:'Nagoya',BEJ:'Berau',KOE:'Kupang',ARD:'Alor',AUH:'Abu Dhabi',MCT:'Muscat',JED:'Jeddah',ZNZ:'Zanzibar',SEZ:'Seychelles',MRU:'Mauritius',DIL:'Dili',BDO:'Bandung',PDG:'Padang',BTH:'Batam',TNJ:'Tanjung Pinang',DJJ:'Jayapura',SOQ:'Sorong',TTE:'Ternate',MKW:'Manokwari',LDU:'Lahad Datu',OKA:'Okinawa',HIJ:'Hiroshima',SDJ:'Sendai',PPS:'Puerto Princesa',USU:'Coron',MPH:'Boracay',IAO:'Siargao',DVO:'Davao',CXR:'Nha Trang'};
 // Airport time zones (flights are stored in each airport's local time)
 const AIRPORT_TZ=(()=>{const m={};for(const[tz,codes]of Object.entries({"Asia/Singapore":"SIN XSP","Asia/Kuala_Lumpur":"KUL PEN LGK SZB TWU BKI SDK MYY KCH SBW BTU LBU JHB IPH TGG AOR LDU","Asia/Jakarta":"CGK HLP KNO PKU PLM SRG SOC JOG BTJ BDO PDG BTH TNJ SUB","Asia/Makassar":"DPS LBJ TRK UPG BPN MDC KDI GTO WGP TMC MOF ENE RTG BMU LOP KOE ARD BEJ","Asia/Jayapura":"AMQ DJJ SOQ TTE MKW","Asia/Dili":"DIL","Asia/Tokyo":"NRT HND KIX ITM CTS FUK NGO OKA HIJ SDJ","Asia/Seoul":"ICN GMP CJU","Asia/Shanghai":"PVG PEK SZX CAN HGH CTU KMG XMN WUH NKG TSN TAO CKG","Asia/Hong_Kong":"HKG","Asia/Taipei":"TPE","Asia/Manila":"MNL CEB PPS USU MPH IAO DVO","Asia/Bangkok":"BKK DMK HKT CNX USM KBV HDY CEI","Asia/Ho_Chi_Minh":"SGN HAN DAD PQC CXR","Asia/Vientiane":"LPQ VTE","Asia/Phnom_Penh":"PNH REP","Asia/Yangon":"RGN","Asia/Brunei":"BWN","Indian/Maldives":"MLE","Asia/Colombo":"CMB","Asia/Kolkata":"DEL BOM","Asia/Kathmandu":"KTM","Australia/Sydney":"SYD","Australia/Melbourne":"MEL","Australia/Brisbane":"CNS","Pacific/Auckland":"AKL WLG","Asia/Dubai":"DXB AUH","Asia/Qatar":"DOH","Asia/Muscat":"MCT","Asia/Riyadh":"JED","Europe/Istanbul":"IST","Africa/Addis_Ababa":"ADD","Africa/Dar_es_Salaam":"JRO DAR ZNZ","Africa/Nairobi":"NBO","Africa/Cairo":"CAI","Africa/Johannesburg":"CPT","Indian/Mahe":"SEZ","Indian/Mauritius":"MRU","Europe/London":"LHR EDI","Europe/Dublin":"DUB","Europe/Paris":"CDG","Europe/Amsterdam":"AMS","Europe/Berlin":"FRA MUC","Europe/Zurich":"ZRH GVA","Europe/Rome":"FCO MXP","Europe/Madrid":"BCN MAD","Europe/Vienna":"VIE","Europe/Copenhagen":"CPH","Europe/Oslo":"OSL","Europe/Stockholm":"ARN","Europe/Helsinki":"HEL","Europe/Lisbon":"LIS","Europe/Athens":"ATH","Europe/Warsaw":"WAW","Europe/Prague":"PRG","Europe/Budapest":"BUD","America/New_York":"JFK MIA","America/Los_Angeles":"LAX SFO","America/Chicago":"ORD","America/Vancouver":"YVR","America/Toronto":"YYZ","America/Sao_Paulo":"GRU","America/Lima":"LIM","America/Bogota":"BOG","America/Santiago":"SCL","America/Argentina/Buenos_Aires":"EZE"}))codes.split(' ').forEach(c=>m[c]=tz);return m;})();
-const HOME_TZ='Asia/Singapore',HOME_TZ_LABEL='Singapore';
+
 function tzForPlace(city){
   if(!city)return '';
   if(AIRPORT_TZ[city])return AIRPORT_TZ[city];
@@ -3821,10 +4017,10 @@ function fmtFlightDT(dt,place,tz){
   if(!dt)return '—';
   const main=fmtDT(dt);
   if(!tz||/T00:00$/.test(dt))return main;
-  const ms=zonedToUtc(dt,tz);if(isNaN(ms)||tzOffsetMin(ms,tz)===tzOffsetMin(ms,HOME_TZ))return main;
-  const home=new Date(ms).toLocaleString('en-GB',{timeZone:HOME_TZ,weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit',hour12:true});
+  const ms=zonedToUtc(dt,tz);if(isNaN(ms)||tzOffsetMin(ms,tz)===tzOffsetMin(ms,homeTz()))return main;
+  const home=new Date(ms).toLocaleString(dloc(),{timeZone:homeTz(),weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit',hour12:true});
   const placeLbl=place||tz.split('/').pop().replace(/_/g,' ');
-  return `${main} <span class="tz-place">${esc(placeLbl)}</span><div class="tz-home">${esc(home)} ${HOME_TZ_LABEL} time</div>`;
+  return `${main} <span class="tz-place">${esc(placeLbl)}</span><div class="tz-home">${esc(home)} ${esc(homeTzLabel())} time</div>`;
 }
 const CITIES=['Singapore','Kuala Lumpur, Malaysia','Penang, Malaysia','Langkawi, Malaysia','Johor Bahru, Malaysia','Kota Kinabalu, Malaysia','Ipoh, Malaysia','Melaka, Malaysia','Tioman, Malaysia','Redang, Malaysia','Perhentian, Malaysia','Cameron Highlands, Malaysia','Jakarta, Indonesia','Bali, Indonesia','Denpasar, Indonesia','Yogyakarta, Indonesia','Surabaya, Indonesia','Manado, Indonesia','Labuan Bajo, Indonesia','Tarakan, Indonesia','Komodo, Indonesia','Lembeh, Indonesia','Halmahera, Indonesia','Nusa Lembongan, Indonesia','Nusa Penida, Indonesia','Nusa Dua, Indonesia','Ubud, Indonesia','Seminyak, Indonesia','Canggu, Indonesia','Sanur, Indonesia','Lombok, Indonesia','Gili Trawangan, Indonesia','Gili Air, Indonesia','Flores, Indonesia','Raja Ampat, Indonesia','Bunaken, Indonesia','Derawan, Indonesia','Bandung, Indonesia','Semarang, Indonesia','Medan, Indonesia','Makassar, Indonesia','Tokyo, Japan','Osaka, Japan','Kyoto, Japan','Hokkaido, Japan','Okinawa, Japan','Fukuoka, Japan','Nagoya, Japan','Hiroshima, Japan','Nara, Japan','Sapporo, Japan','Yokohama, Japan','Kobe, Japan','Bangkok, Thailand','Phuket, Thailand','Chiang Mai, Thailand','Koh Samui, Thailand','Krabi, Thailand','Phi Phi, Thailand','Koh Tao, Thailand','Koh Lipe, Thailand','Chiang Rai, Thailand','Pattaya, Thailand','Hua Hin, Thailand','Koh Phangan, Thailand','Seoul, South Korea','Busan, South Korea','Jeju, South Korea','Incheon, South Korea','Shanghai, China','Beijing, China','Hangzhou, China','Shenzhen, China','Guangzhou, China','Chengdu, China','Xian, China','Hong Kong','Macau','Taipei, Taiwan','Kaohsiung, Taiwan','Hualien, Taiwan','Tainan, Taiwan','Manila, Philippines','Cebu, Philippines','Boracay, Philippines','El Nido, Philippines','Coron, Philippines','Siargao, Philippines','Palawan, Philippines','Malapascua, Philippines','Hanoi, Vietnam','Ho Chi Minh City, Vietnam','Da Nang, Vietnam','Hoi An, Vietnam','Nha Trang, Vietnam','Phu Quoc, Vietnam','Sapa, Vietnam','Siem Reap, Cambodia','Phnom Penh, Cambodia','Luang Prabang, Laos','Vientiane, Laos','Yangon, Myanmar','Bagan, Myanmar','Colombo, Sri Lanka','Kandy, Sri Lanka','Ella, Sri Lanka','Galle, Sri Lanka','New Delhi, India','Mumbai, India','Goa, India','Jaipur, India','Agra, India','Varanasi, India','Kerala, India','Kathmandu, Nepal','Pokhara, Nepal','Male, Maldives','Maldives','Dubai, UAE','Abu Dhabi, UAE','Doha, Qatar','Muscat, Oman','Istanbul, Turkey','Cappadocia, Turkey','Antalya, Turkey','Bodrum, Turkey','Tel Aviv, Israel','Jerusalem, Israel','Amman, Jordan','Petra, Jordan','Tbilisi, Georgia','Baku, Azerbaijan','London, UK','Edinburgh, UK','Manchester, UK','Paris, France','Nice, France','Lyon, France','Marseille, France','Amsterdam, Netherlands','Rotterdam, Netherlands','Berlin, Germany','Munich, Germany','Frankfurt, Germany','Hamburg, Germany','Zurich, Switzerland','Geneva, Switzerland','Interlaken, Switzerland','Rome, Italy','Venice, Italy','Florence, Italy','Milan, Italy','Amalfi, Italy','Barcelona, Spain','Madrid, Spain','Seville, Spain','Mallorca, Spain','Ibiza, Spain','Lisbon, Portugal','Porto, Portugal','Athens, Greece','Santorini, Greece','Mykonos, Greece','Crete, Greece','Prague, Czech Republic','Vienna, Austria','Budapest, Hungary','Warsaw, Poland','Krakow, Poland','Dublin, Ireland','Copenhagen, Denmark','Stockholm, Sweden','Oslo, Norway','Bergen, Norway','Helsinki, Finland','Reykjavik, Iceland','Brussels, Belgium','Bruges, Belgium','Dubrovnik, Croatia','Split, Croatia','Bucharest, Romania','Sofia, Bulgaria','Tallinn, Estonia','Riga, Latvia','Vilnius, Lithuania','Moscow, Russia','St Petersburg, Russia','Sydney, Australia','Melbourne, Australia','Brisbane, Australia','Gold Coast, Australia','Perth, Australia','Adelaide, Australia','Cairns, Australia','Auckland, New Zealand','Queenstown, New Zealand','Wellington, New Zealand','Fiji','Bora Bora, French Polynesia','Tahiti, French Polynesia','New York, USA','Los Angeles, USA','San Francisco, USA','Las Vegas, USA','Miami, USA','Chicago, USA','Seattle, USA','Boston, USA','Washington DC, USA','Honolulu, USA','Toronto, Canada','Vancouver, Canada','Montreal, Canada','Banff, Canada','Mexico City, Mexico','Cancun, Mexico','Tulum, Mexico','Lima, Peru','Cusco, Peru','Machu Picchu, Peru','Bogota, Colombia','Cartagena, Colombia','Buenos Aires, Argentina','Rio de Janeiro, Brazil','Sao Paulo, Brazil','Santiago, Chile','Cape Town, South Africa','Johannesburg, South Africa','Nairobi, Kenya','Dar es Salaam, Tanzania','Zanzibar, Tanzania','Kilimanjaro, Tanzania','Cairo, Egypt','Luxor, Egypt','Marrakech, Morocco','Fez, Morocco','Addis Ababa, Ethiopia','Accra, Ghana','Lagos, Nigeria','Mauritius','Seychelles'];
 const CURRENCY_SYMBOLS={'rp':'IDR','idr':'IDR','rm':'MYR','myr':'MYR','₱':'PHP','php':'PHP','¥':'CNY','cny':'CNY','jpy':'JPY','฿':'THB','thb':'THB','₫':'VND','vnd':'VND','$':'USD','usd':'USD','sgd':'SGD','s$':'SGD','a$':'AUD','aud':'AUD','€':'EUR','eur':'EUR','£':'GBP','gbp':'GBP','kr':'SEK','₹':'INR','inr':'INR','egp':'EGP','mvr':'MVR','twd':'TWD','krw':'KRW'};
@@ -4580,7 +4776,7 @@ function _extractCost(txt,r){
   // Fallback: any "MYR 95.04" or "IDR 2,320,000" pattern
   if(!r.cost){const cm=txt.match(/(SGD|USD|MYR|IDR|EUR|GBP|THB|PHP|AUD)\s*([\d,]+\.?\d*)/i);if(cm){r.currency=cm[1].toUpperCase();r.cost=cm[2].replace(/,/g,'');}}
   if(!r.cost){const symCost=txt.match(/\b(Rp\.?|RM|S\$|A\$)\s*([\d,]+\.?\d*)/i);
-    if(symCost){r.cost=symCost[2].replace(/,/g,'');const sym=symCost[1].toLowerCase().replace(/\.$/,'');r.currency=CURRENCY_SYMBOLS[sym]||'SGD';}}
+    if(symCost){r.cost=symCost[2].replace(/,/g,'');const sym=symCost[1].toLowerCase().replace(/\.$/,'');r.currency=CURRENCY_SYMBOLS[sym]||baseCur();}}
 }
 
 function parseBookingText(rawTxt){
@@ -4860,14 +5056,14 @@ function parseBookingText(rawTxt){
 // ===== PAYMENT TRACKING =====
 function paymentHtml(e,opts){
   e=e||{};opts=opts||{};
-  const baseCur=e.currency||'SGD';
+  const entryCur=e.currency||baseCur();
   const hasPay=!!(e.depositAmount||e.depositDate||e.depositPaid||e.paymentDueDate||e.fullyPaid||e.fullPaymentAmount);
   return `<button type="button" class="form-details-toggle${hasPay?' open':''}" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')" style="grid-column:1/-1"><span class="fdt-arrow">▶</span> Payment tracking</button>
     <div class="form-details${hasPay?' open':''}" style="grid-column:1/-1"><div class="fg">
       ${opts.fullPayment?`<div class="fi"><label>Full Payment Amount <span style="font-weight:400;color:var(--text3)">(incl. deposit)</span></label><input class="fc" type="number" step="0.01" name="fullPaymentAmount" value="${e.fullPaymentAmount||''}"></div>
-      <div class="fi"><label>Full Payment Currency</label>${curSel(e.fullPaymentCurrency||baseCur,'fullPaymentCurrency')}</div>`:''}
+      <div class="fi"><label>Full Payment Currency</label>${curSel(e.fullPaymentCurrency||entryCur,'fullPaymentCurrency')}</div>`:''}
       <div class="fi"><label>Deposit Amount</label><input class="fc" type="number" step="0.01" name="depositAmount" value="${e.depositAmount||''}"></div>
-      <div class="fi"><label>Deposit Currency</label>${curSel(e.depositCurrency||baseCur,'depositCurrency')}</div>
+      <div class="fi"><label>Deposit Currency</label>${curSel(e.depositCurrency||entryCur,'depositCurrency')}</div>
       <div class="fi"><label>Deposit Date</label><input class="fc" type="date" name="depositDate" value="${e.depositDate||''}"></div>
       <div class="fi"><label>Deposit Paid?</label><select class="fc" name="depositPaid"><option value=""${!e.depositPaid?' selected':''}>—</option><option value="yes"${e.depositPaid==='yes'?' selected':''}>Yes</option><option value="no"${e.depositPaid==='no'?' selected':''}>No</option></select></div>
       <div class="fi"><label>Payment Due</label><input class="fc" type="date" name="paymentDueDate" value="${e.paymentDueDate||''}"></div>
@@ -4906,9 +5102,9 @@ function fEvent(t){
     <div class="fi full"><label>Event Name</label><input class="fc" name="name" value="${esc(t.name)}"></div>
     <div class="fi"><label>Category</label><select class="fc" name="category">${CATEGORIES.map(c=>`<option value="${c.id}"${(t.category||'trip')===c.id?' selected':''}>${c.label}</option>`).join('')}</select></div>
     <div class="fi"><label>Requires Leave?</label><select class="fc" name="requiresLeave"><option value="true"${t.requiresLeave!==false?' selected':''}>Yes</option><option value="false"${t.requiresLeave===false?' selected':''}>No</option></select></div>
-    <div class="fi"><label>Start Date <span class="dow-hint" data-for="sd">${t.startDate?dayN(t.startDate):''}</span></label><input class="fc" type="date" name="sd" value="${t.startDate}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'}):''"></div>
+    <div class="fi"><label>Start Date <span class="dow-hint" data-for="sd">${t.startDate?dayN(t.startDate):''}</span></label><input class="fc" type="date" name="sd" value="${t.startDate}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString(dloc(),{weekday:'long'}):''"></div>
     <div class="fi"><label>Start Time</label><input class="fc" type="time" name="st" value="${t.startTime||''}"></div>
-    <div class="fi"><label>End Date <span class="dow-hint" data-for="ed">${t.endDate?dayN(t.endDate):''}</span></label><input class="fc" type="date" name="ed" value="${t.endDate}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'}):''"></div>
+    <div class="fi"><label>End Date <span class="dow-hint" data-for="ed">${t.endDate?dayN(t.endDate):''}</span></label><input class="fc" type="date" name="ed" value="${t.endDate}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString(dloc(),{weekday:'long'}):''"></div>
     <div class="fi"><label>End Time</label><input class="fc" type="time" name="et" value="${t.endTime||''}"></div>
     <div class="fi full"><label>Locations (comma-separated)</label><input class="fc" name="locs" value="${esc(t.locations.join(', '))}"></div>
     <div class="fi full"><label>Countries</label>
@@ -4988,8 +5184,8 @@ function fHotel(ev,h){
   const hasDetails=!!(h.bookingNumber||h.website||h.cost||h.notes);
   modal(e?'Edit Hotel':'Add Hotel',`<div class="fg">
     <div class="fi full"><label>Hotel Name</label><input class="fc" name="name" value="${esc(h.name)}"></div>
-    <div class="fi"><label>Check-in <span class="dow-hint">${h.checkIn?dayN(h.checkIn):''}</span></label><input class="fc" type="date" name="ci" value="${h.checkIn||''}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'}):''"></div>
-    <div class="fi"><label>Check-out <span class="dow-hint">${h.checkOut?dayN(h.checkOut):''}</span></label><input class="fc" type="date" name="co" value="${h.checkOut||''}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'}):''"></div>
+    <div class="fi"><label>Check-in <span class="dow-hint">${h.checkIn?dayN(h.checkIn):''}</span></label><input class="fc" type="date" name="ci" value="${h.checkIn||''}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString(dloc(),{weekday:'long'}):''"></div>
+    <div class="fi"><label>Check-out <span class="dow-hint">${h.checkOut?dayN(h.checkOut):''}</span></label><input class="fc" type="date" name="co" value="${h.checkOut||''}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString(dloc(),{weekday:'long'}):''"></div>
     <div class="fi"><label>Nights</label><input class="fc" type="number" name="nights" min="1" value="${initNights}" placeholder="Auto-calculated"></div>
     <button type="button" class="form-details-toggle${hasDetails?' open':''}" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="fdt-arrow">▶</span> More details</button>
     <div class="form-details${hasDetails?' open':''}" style="grid-column:1/-1"><div class="fg">
@@ -5080,8 +5276,8 @@ function fAct(ev,a){
   modal(e?'Edit Activity':'Add Activity',`<div class="fg">
     <div class="fi full"><label>Name</label><input class="fc" name="name" value="${esc(a.name||'')}"></div>
     <div class="fi"><label>Location</label><input class="fc" name="loc" list="location-list" value="${esc(a.location||'')}" autocomplete="off"></div>
-    <div class="fi"><label>Start Date <span class="dow-hint">${a.date?dayN(a.date):''}</span></label><input class="fc" type="date" name="date" value="${a.date||''}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'}):''"></div>
-    <div class="fi"><label>End Date <span class="dow-hint">${a.endDate?dayN(a.endDate):''}</span></label><input class="fc" type="date" name="endDate" value="${a.endDate||''}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'}):''"></div>
+    <div class="fi"><label>Start Date <span class="dow-hint">${a.date?dayN(a.date):''}</span></label><input class="fc" type="date" name="date" value="${a.date||''}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString(dloc(),{weekday:'long'}):''"></div>
+    <div class="fi"><label>End Date <span class="dow-hint">${a.endDate?dayN(a.endDate):''}</span></label><input class="fc" type="date" name="endDate" value="${a.endDate||''}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString(dloc(),{weekday:'long'}):''"></div>
     <div class="fi"><label>Days</label><input class="fc" type="number" name="days" min="1" value="${initDays}" placeholder="Auto-calculated"></div>
     <button type="button" class="form-details-toggle${hasDetails?' open':''}" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="fdt-arrow">▶</span> More details</button>
     <div class="form-details${hasDetails?' open':''}" style="grid-column:1/-1"><div class="fg">
@@ -5123,7 +5319,7 @@ function fTrans(ev,x){
     <div class="fi"><label>Type</label><select class="fc" name="type">${types.map(tp=>`<option${tp===x.type?' selected':''}>${tp}</option>`).join('')}</select></div>
     <div class="fi"><label>Name / Provider</label><input class="fc" name="name" value="${esc(x.name||'')}"></div>
     <div class="fi"><label>Location</label><input class="fc" name="loc" list="location-list" value="${esc(x.location||'')}" autocomplete="off"></div>
-    <div class="fi"><label>Date <span class="dow-hint">${x.date?dayN(x.date):''}</span></label><input class="fc" type="date" name="date" value="${x.date||''}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'}):''"></div>
+    <div class="fi"><label>Date <span class="dow-hint">${x.date?dayN(x.date):''}</span></label><input class="fc" type="date" name="date" value="${x.date||''}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString(dloc(),{weekday:'long'}):''"></div>
     <div class="fi"><label>Time</label><input class="fc" type="time" name="time" value="${x.time||''}"></div>
     <button type="button" class="form-details-toggle${hasDetails?' open':''}" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="fdt-arrow">▶</span> More details</button>
     <div class="form-details${hasDetails?' open':''}" style="grid-column:1/-1"><div class="fg">
@@ -5156,7 +5352,7 @@ function bind(){
     S.leave[y].jobs[ji][f]=el.type==='number'?parseFloat(el.value)||0:el.value;
     saveS();render();
   });
-  document.querySelectorAll('[data-rc]').forEach(el=>el.onchange=()=>{S.rates[el.dataset.rc]=parseFloat(el.value)||0;saveS();});
+  document.querySelectorAll('[data-rc]').forEach(el=>el.onchange=()=>{const v=parseFloat(el.value)||0;if(v>0){S.rates[el.dataset.rc]=v*(rateOf(baseCur())||1);saveS();}});
 }
 
 // Drag an Apple event card onto a tracker event card to add it there
@@ -5235,7 +5431,7 @@ document.addEventListener('click',e=>{
     }
     case 'publish-feed':{
       toast('Publishing calendar feed…');
-      pushToGist().then(()=>{render();toast('Calendar feed published');});
+      (cloudMode()==='account'?gistFeedSync(false):pushToGist()).then(()=>{render();toast('Calendar feed published');});
       break;
     }
     case 'save-apple-cal-url':{
@@ -5250,7 +5446,7 @@ document.addEventListener('click',e=>{
     }
     case 'export':{const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a2=document.createElement('a');a2.href=URL.createObjectURL(b);a2.download='holiday-tracker.json';a2.click();toast('Exported');break;}
     case 'export-csv':{
-      const csvRows=[['Event','Start','End','Locations','Days','Flights','Hotels','Activities','Transport','Total Cost (SGD)']];
+      const csvRows=[['Event','Start','End','Locations','Days','Flights','Hotels','Activities','Transport',`Total Cost (${baseCur()})`]];
       S.events.sort((a2,b2)=>a2.startDate.localeCompare(b2.startDate)).forEach(t2=>{
         const d2=days(t2.startDate,t2.endDate);
         const csvEsc=v=>{const s=String(v||'');return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;};
@@ -5266,6 +5462,18 @@ document.addEventListener('click',e=>{
     case 'sync-disconnect':disconnectSync();break;
     case 'sync-now':cloudFullSync();break;
     case 'acct-signin':acctSignIn();break;
+    case 'go-rates':e.preventDefault();nav('settings');setTimeout(()=>[...document.querySelectorAll('.card h3')].find(h=>/Exchange/.test(h.textContent))?.scrollIntoView({behavior:'smooth'}),50);break;
+    case 'go-prefs':e.preventDefault();nav('settings');setTimeout(()=>document.getElementById('prefs-card')?.scrollIntoView({behavior:'smooth'}),50);break;
+    case 'ph-cal-rm':{const p=S.prefs=JSON.parse(JSON.stringify(P()));p.holidays=(p.holidays||[]).filter(c=>c!==el.dataset.cc);if(p.workHolidays===el.dataset.cc){p.workHolidays=p.holidays[0]||'';p.region='';}saveS();render();break;}
+    case 'ph-del':{const p=S.prefs=JSON.parse(JSON.stringify(P()));p.customHolidays=(p.customHolidays||[]).filter(h=>!(h.d===el.dataset.d&&h.n===el.dataset.n));saveS();render();break;}
+    case 'ph-import':{let f=document.getElementById('ph-ics-f');if(!f){f=document.createElement('input');f.type='file';f.id='ph-ics-f';f.accept='.ics,text/calendar';f.style.display='none';document.body.appendChild(f);}f.click();break;}
+    case 'ph-add':modal('Add a holiday',`<div class="fg"><div class="fi"><label>Date</label><input class="fc" type="date" id="ph-new-d"></div><div class="fi"><label>Name</label><input class="fc" id="ph-new-n" placeholder="e.g. Company day off"></div><div class="fi"><label>Repeat</label><select class="fc" id="ph-new-r"><option value="1">Just this date</option><option value="5">Same date for the next 5 years</option></select></div></div>`,()=>{
+        const d=document.getElementById('ph-new-d').value,n=document.getElementById('ph-new-n').value.trim()||'Holiday',rep=parseInt(document.getElementById('ph-new-r').value);
+        if(!d){toast('Pick a date');return false;}
+        const p=S.prefs=JSON.parse(JSON.stringify(P()));p.customHolidays=p.customHolidays||[];
+        for(let k=0;k<rep;k++){const dd=(parseInt(d.slice(0,4))+k)+d.slice(4);if(!p.customHolidays.some(h=>h.d===dd&&h.n===n))p.customHolidays.push({d:dd,n});}
+        saveS();render();toast('Holiday added');
+      },{saveLabel:'Add'});break;
     case 'acct-signup':acctSignUp();break;
     case 'acct-forgot':e.preventDefault();acctForgot();break;
     case 'acct-signout':acctSignOut();break;
@@ -5364,6 +5572,23 @@ document.addEventListener('change',e=>{
   if(e.target.matches('[data-action="tp-to"]')){S._tpTo=e.target.value;saveS();render();}
 });
 
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset&&t.dataset.pref!==undefined){setPref(t.dataset.pref,t.value);return;}
+  if(t.dataset&&t.dataset.prefWeekend!==undefined){setWeekend(parseInt(t.dataset.prefWeekend),t.checked);return;}
+  if(t.id==='ph-ics-f'&&t.files.length){
+    // Holiday calendar file (.ics) → My holidays: all-day events by date and title
+    const r=new FileReader();r.onload=()=>{
+      const p=S.prefs=JSON.parse(JSON.stringify(P()));const have=new Set((p.customHolidays||[]).map(h=>h.d+'|'+h.n));let added=0;
+      String(r.result).replace(/\r?\n[ \t]/g,'').split('BEGIN:VEVENT').slice(1).forEach(b=>{
+        const dm=b.match(/DTSTART[^:\n]*:(\d{4})(\d{2})(\d{2})/),sm=b.match(/SUMMARY[^:\n]*:(.*)/);
+        if(!dm)return;const d=`${dm[1]}-${dm[2]}-${dm[3]}`,n=(sm?sm[1]:'Holiday').replace(/\\([,;\\])/g,'$1').replace(/\\n/gi,' ').trim().slice(0,80);
+        if(!have.has(d+'|'+n)){(p.customHolidays=p.customHolidays||[]).push({d,n});have.add(d+'|'+n);added++;}
+      });
+      saveS();render();toast(added?`Added ${added} holiday${added>1?'s':''}`:'No new holidays found in that file');
+    };r.readAsText(t.files[0]);t.value='';return;
+  }
+});
 document.addEventListener('change',e=>{if(e.target.id==='imp-f'&&e.target.files.length){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.events||d.trips){if(d.trips&&!d.events){d.events=d.trips.map(t=>({...t,category:'trip',requiresLeave:true}));delete d.trips;}S=d;saveS();render();toast('Imported');}}catch(e2){toast('Error');}};r.readAsText(e.target.files[0]);}});
 // Search input handler
 document.addEventListener('input',e=>{
@@ -5423,6 +5648,7 @@ document.getElementById('fab').onclick=()=>showSmartUpload();
 
 // Init
 try{render();
+  setTimeout(()=>{try{if(!_acct)maybeAskRegion();}catch(e){}},1500);
   // Auto-sync on load
   const _initConf=getSyncConfig();
   if(acctEnabled()){acctInit().then(()=>{if(!_acct&&cloudMode()==='gist')fullSync();});}
