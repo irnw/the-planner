@@ -1064,6 +1064,14 @@ body.sb-collapsed .topbar{left:68px}
 .trip-card.ec.past{opacity:.7}
 .trip-card.ec:hover{background:var(--card-hover)}
 .trip-card.ec:hover .trip-name{color:var(--primary-deep)}
+/* Calendar month/year pickers: look like the title, clearly clickable */
+.cal-picker{display:flex;align-items:center;gap:6px;min-width:0!important}
+.cp{position:relative;display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 10px;border:1px solid transparent;border-radius:999px;cursor:pointer;transition:border-color .15s,background .15s}
+.cp span{font-family:var(--serif);font-weight:700;font-size:19px;letter-spacing:-.01em;color:var(--text);border-bottom:1px dashed var(--line-strong);line-height:1.2}
+.cp svg{width:15px;height:15px;color:var(--primary-deep);flex-shrink:0}
+.cp:hover,.cp:focus-within{border-color:var(--line-strong);background:var(--primary-dim)}
+.cp:hover span{border-bottom-color:transparent}
+.cp select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px;border:none;appearance:none;-webkit-appearance:none}
 @keyframes sheetIn{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 .more-list{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line)}
 .more-list button{display:flex;align-items:center;gap:12px;padding:15px 16px;background:none;border:0;border-top:1px solid var(--line);color:var(--text);font:inherit;font-size:17px;text-align:left;cursor:pointer}
@@ -3002,11 +3010,11 @@ function vCal(){
   const ui=calUI(),mode=ui.view==='list'?'list':'month',showAll=!!ui.all;
   const ws=P().weekStart??1,today=ymd(new Date());
   const first=new Date(y,m,1),last=new Date(y,m+1,0);
-  const evs=tpFilter(S.events).filter(t=>t.startDate);
+  const evs=S.events.filter(t=>t.startDate);
   const leaveDays=calLeaveDays();
   const nav=`<div class="cal-nav">
       <button class="btn btn-s" data-action="cal-prev" aria-label="Previous month">←</button>
-      <h3>${mn[m]} ${y}</h3>
+      <h3 class="cal-picker"><label class="cp"><select data-action="cal-month" aria-label="Month">${mn.map((n,i)=>`<option value="${i}"${i===m?' selected':''}>${n}</option>`).join('')}</select><span>${mn[m]}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></label><label class="cp"><select data-action="cal-year" aria-label="Year">${(()=>{const ys=S.events.map(t=>parseInt((t.startDate||'').slice(0,4))).filter(Boolean),now=new Date().getFullYear(),lo=Math.min(now-5,...ys,y),hi=Math.max(now+5,...ys,y),o=[];for(let k=hi;k>=lo;k--)o.push(`<option value="${k}"${k===y?' selected':''}>${k}</option>`);return o.join('');})()}</select><span>${y}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></label></h3>
       <button class="btn btn-s" data-action="cal-next" aria-label="Next month">→</button>
       <button class="btn btn-ghost" data-action="cal-today">Today</button>
       <div class="cal-tools">
@@ -3020,7 +3028,7 @@ function vCal(){
       <div class="ph-legend-item"><span class="cal-leave-dot"></span>Leave day</div>
       <a href="#" data-action="go-prefs" style="font-size:11px;color:var(--primary)">Holiday calendars</a>
     </div>`;
-  const header=`<div class="page-header"><div><h2>Calendar</h2><div class="subtitle">${mn[m]} ${y}</div></div><div>${tpHtml()}</div></div>`;
+  const header=`<div class="page-header"><div><h2>Calendar</h2><div class="subtitle">${mn[m]} ${y}</div></div></div>`;
   if(mode==='list')return `${header}<div class="page-content">${nav}${vCalList(y,m,evs,leaveDays)}${legend}</div>`;
 
   // Weeks covering the month, starting on the chosen weekday
@@ -3088,7 +3096,7 @@ function calItemHtml(t){
 }
 // Everything on one day: holidays, leave, and each event with that day's bookings
 function showCalDay(ds){
-  const evs=tpFilter(S.events).filter(t=>{const[a,b]=_calEvRange(t);return t.startDate&&a<=ds&&b>=ds;});
+  const evs=S.events.filter(t=>{const[a,b]=_calEvRange(t);return t.startDate&&a<=ds&&b>=ds;});
   const phs=getPH(ds),leave=calLeaveDays().has(ds),applied=leave&&getAppliedForDate(ds);
   const timeOf=v=>{if(!v||!/T\d/.test(v))return '';const t=v.split('T')[1].slice(0,5);return t==='00:00'?'':t;};
   const bookings=t=>{
@@ -6385,6 +6393,8 @@ document.addEventListener('click',e=>{const box=document.getElementById('gs-resu
 document.addEventListener('focusin',e=>{if(e.target&&e.target.id==='gsearch'&&e.target.value.trim().length>=2)renderSearchResults();});
 document.addEventListener('change',e=>{
   const t=e.target;
+  if(t.dataset&&t.dataset.action==='cal-month'){S.calM=parseInt(t.value);saveUI();render();return;}
+  if(t.dataset&&t.dataset.action==='cal-year'){S.calY=parseInt(t.value);saveUI();render();return;}
   if(t.dataset&&t.dataset.action==='ev-cat'){S._catFilter=t.value;saveUI();render();return;}
   if(t.dataset&&t.dataset.action==='ev-year'){S.tfY=t.value?parseInt(t.value):null;saveUI();render();return;}
   if(t.dataset&&t.dataset.action==='ev-apple'){setListUI({apple:t.checked});render();return;}
