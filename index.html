@@ -496,6 +496,80 @@ td.mg-l{color:var(--text3);white-space:nowrap;padding-top:9px}
 .guide-body li{margin:0 0 6px}
 .guide-body p{margin:0 0 8px}
 .guide-note{font-size:11.5px;color:var(--text3);margin-top:8px!important}
+/* Minimal lists: Dashboard + My Events */
+.main{min-width:0}
+.page-content,.dash>*,.sec,.toolbar{min-width:0;max-width:100%}
+.page-header>div{min-width:0}
+
+.dash{display:flex;flex-direction:column;gap:22px}
+.sec{margin-bottom:18px}
+.dash .sec{margin-bottom:0}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--text3);margin:0 2px 8px}
+.sec-h a{font-size:12px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--primary);text-decoration:none}
+.sec-h .cnt{font-weight:500;color:var(--text3);opacity:.8}
+.quiet{font-size:12px;color:var(--text3);margin:4px 2px}
+.evr-list{display:flex;flex-direction:column;border:1px solid var(--glass-border);border-radius:12px;overflow:hidden;background:var(--bg2)}
+.evr{display:flex;align-items:center;gap:12px;padding:11px 14px;cursor:pointer;position:relative;border-top:1px solid var(--glass-border);transition:background .15s}
+.evr:first-child{border-top:0}
+.evr:hover{background:var(--card-hover)}
+.evr.drop-over{background:var(--primary-dim,rgba(108,140,255,.15));box-shadow:inset 0 0 0 2px var(--primary)}
+.evr-bar{width:4px;align-self:stretch;border-radius:2px;flex-shrink:0}
+.evr-main{flex:1;min-width:0}
+.evr-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evr-meta{font-size:12px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evr-facts{display:flex;gap:12px;font-size:12px;color:var(--text2);white-space:nowrap;flex-shrink:0}
+.evr-cost{color:var(--text1,inherit);font-variant-numeric:tabular-nums}
+.evr-when{font-size:12px;color:var(--primary);font-weight:500;white-space:nowrap;min-width:72px;text-align:right;flex-shrink:0}
+.evr-when.now{color:var(--green)}
+.evr.apple .evr-name{font-weight:400;color:var(--text2)}
+.evr.apple .evr-bar{opacity:.45}
+.evr.past{opacity:.62}
+.evr.past:hover{opacity:1}
+.evr-apple{display:inline-block;width:11px;height:11px;margin-right:6px;vertical-align:-1px;opacity:.55;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E") center/contain no-repeat}
+.ic{display:inline-block;width:13px;height:13px;margin-right:4px;vertical-align:-2px;background:currentColor;opacity:.75}
+.ic-fl{-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.9.3 1.1l5.7 3.8-2.2 2.2-2.5-.3c-.4 0-.7.1-.9.4l-.1.1c-.2.3-.2.7.1 1l2.3 2.3c.3.3.7.3 1 .1l.1-.1c.2-.2.4-.5.4-.9l-.3-2.5 2.2-2.2 3.8 5.7c.2.4.7.5 1.1.3l.5-.3c.4-.2.6-.6.5-1.1z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.9.3 1.1l5.7 3.8-2.2 2.2-2.5-.3c-.4 0-.7.1-.9.4l-.1.1c-.2.3-.2.7.1 1l2.3 2.3c.3.3.7.3 1 .1l.1-.1c.2-.2.4-.5.4-.9l-.3-2.5 2.2-2.2 3.8 5.7c.2.4.7.5 1.1.3l.5-.3c.4-.2.6-.6.5-1.1z'/%3E%3C/svg%3E") center/contain no-repeat}
+.ic-ho{-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 18V7M21 18v-6a3 3 0 00-3-3h-7v9M3 14h18M7 11.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 18V7M21 18v-6a3 3 0 00-3-3h-7v9M3 14h18M7 11.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z'/%3E%3C/svg%3E") center/contain no-repeat}
+.ic-ac{-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 8a2 2 0 002-2h14a2 2 0 002 2v2a2 2 0 000 4v2a2 2 0 00-2 2H5a2 2 0 00-2-2v-2a2 2 0 000-4z'/%3E%3Cpath d='M13 6v12' stroke-dasharray='2 2'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 8a2 2 0 002-2h14a2 2 0 002 2v2a2 2 0 000 4v2a2 2 0 00-2 2H5a2 2 0 00-2-2v-2a2 2 0 000-4z'/%3E%3Cpath d='M13 6v12' stroke-dasharray='2 2'/%3E%3C/svg%3E") center/contain no-repeat}
+.evr-warn{color:var(--orange);font-size:12px;margin-left:4px}
+.evr-add{position:absolute;right:10px;top:50%;transform:translateY(-50%);opacity:0;border:1px solid var(--glass-border);background:var(--bg2);color:var(--text2);width:26px;height:26px;border-radius:8px;cursor:pointer;font-size:15px;line-height:1;flex-shrink:0;transition:opacity .15s}
+.evr:hover .evr-add,.evr-add:focus{opacity:1}
+@media(hover:none){.evr-add{position:static;transform:none;opacity:.8}}
+@media(hover:hover){.evr.apple:hover .evr-when{visibility:hidden}}
+.hero{position:relative;padding:18px 20px 16px 24px;border-radius:14px;background:var(--bg2);border:1px solid var(--glass-border);cursor:pointer;overflow:hidden}
+.hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c,var(--primary))}
+.hero:hover{background:var(--card-hover)}
+.hero.drop-over{box-shadow:inset 0 0 0 2px var(--primary)}
+.hero-k{font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.hero-row{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.hero-name{font-family:var(--serif);font-size:24px;line-height:1.2;letter-spacing:-.2px}
+.hero-meta{font-size:13px;color:var(--text2);margin-top:4px}
+.hero-cd{text-align:right;flex-shrink:0;line-height:1.1}
+.hero-cd b{display:block;font-family:var(--serif);font-size:32px;font-weight:500;color:var(--primary)}
+.hero-cd span{font-size:11px;color:var(--text3)}
+.hero-facts{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:12px;color:var(--text2)}
+.empty-hero{cursor:default;text-align:left}
+.att-list{display:flex;flex-direction:column;gap:8px}
+.att{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;background:rgba(251,146,60,.07);border:1px solid rgba(251,146,60,.25);cursor:pointer}
+.att.bad{background:rgba(239,68,68,.07);border-color:rgba(239,68,68,.3)}
+.att b{display:block;font-size:13px;font-weight:600}
+.att span{font-size:12px;color:var(--text3)}
+.att>div{flex:1;min-width:0}
+.att-ic{font-size:16px;width:20px;text-align:center}
+.att-go{font-size:18px;color:var(--text3)}
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.tb-search{flex:1 1 200px;min-width:160px}
+.tb-sel{width:auto;font-size:12px;padding:6px 8px}
+.tb-check{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;white-space:nowrap}
+.more-btn{margin-top:8px;font-size:12px;width:100%}
+@media(max-width:700px){
+  .evr{padding:10px 12px;gap:10px;flex-wrap:wrap}
+  .evr-main{flex:1 1 60%}
+  .evr-facts{order:3;width:100%;padding-left:14px;gap:10px;font-size:11px}
+  .evr-when{min-width:0;font-size:11px}
+  .hero-name{font-size:20px}
+  .hero-cd b{font-size:26px}
+  .toolbar .tb-sel,.toolbar .sort-ctrl{flex:1 1 auto}
+}
 /* Calendar: month bars, list view, day details */
 .cal-tools{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
 .seg{display:inline-flex;border:1px solid var(--glass-border);border-radius:8px;overflow:hidden}
@@ -2032,62 +2106,8 @@ function render(){
 function nav(v,x){S.v=v;if(x)Object.assign(S,x);saveUI();render();window.scrollTo(0,0);}
 
 // ===== DASHBOARD =====
-function vDash(){
-  const ft=tpFilter(S.events);
-  const td=ymd(new Date());
-  const curYear=new Date().getFullYear();
-  const lyRaw=S.leave[curYear]||{};
-  const lyJobs=(lyRaw.jobs||[]);
-  const lyTotals=leaveJobTotals(lyJobs);
-  const tot=lyTotals.tot,bal=lyTotals.bal;
-  const leaveReq=Math.max(0,calcLeaveDaysForYear(curYear,false)-calcAppliedDays(curYear));
-  const nextEvent=upcoming().length?upcoming()[0]:null;
-  const dLeft=nextEvent?daysUntil(nextEvent.startDate):0;
-  const countdownHtml=nextEvent?(dLeft===0?'<span style="color:var(--green);font-weight:600">Today!</span>':dLeft<0?'<span style="color:var(--green);font-weight:600">In progress</span>':`<div class="countdown"><span class="cd-num">${dLeft}</span><span class="cd-unit">day${dLeft!==1?'s':''} away</span></div>`):'—';
-  const totalDays=ft.reduce((s,t)=>s+days(t.startDate,t.endDate),0);
-  const yShort=String(curYear).slice(2);
-  // Clash count
-  const clashCount=ft.filter(t=>{const b=clashBadgeHtml(t);return b&&b.length>0;}).length;
-  const timeClashCount=ft.filter(t=>clashBadgeHtml(t).includes('clash-time')).length;
-  const dateClashCount=ft.filter(t=>clashBadgeHtml(t).includes('clash-date')).length;
-  // Dashboard filters
-  const dashSearch=(S._dashSearch||'').toLowerCase();
-  const dashCat=S._dashCat||'all';
-  const dashStatus=S._dashStatus||'all';
-  // Filter events
-  let dashEvents=ft.slice();
-  if(dashSearch)dashEvents=dashEvents.filter(t=>t.name.toLowerCase().includes(dashSearch)||t.locations.some(l=>l.toLowerCase().includes(dashSearch))||(t.notes||'').toLowerCase().includes(dashSearch));
-  if(dashCat!=='all')dashEvents=dashEvents.filter(t=>(t.category||'trip')===dashCat);
-  if(dashStatus==='active')dashEvents=dashEvents.filter(t=>eventStatus(t)==='active');
-  else if(dashStatus==='upcoming')dashEvents=dashEvents.filter(t=>eventStatus(t)!=='completed');
-  else if(dashStatus==='completed')dashEvents=dashEvents.filter(t=>eventStatus(t)==='completed');
-  // Sort: active first, then upcoming by nearest start, then completed by most recent end
-  dashEvents.sort((a,b)=>{
-    const sa=eventStatus(a),sb=eventStatus(b);
-    const ord={active:0,upcoming:1,completed:2};
-    if(ord[sa]!==ord[sb])return ord[sa]-ord[sb];
-    if(sa==='completed')return b.endDate.localeCompare(a.endDate);
-    return a.startDate.localeCompare(b.startDate);
-  });
-  // Payment due alerts
-  const payDue=ft.filter(t=>{
-    const items=[...(t.flights||[]),...(t.hotels||[]),...(t.activities||[]),...(t.transport||[])];
-    return items.some(i=>i.paymentDueDate&&i.fullyPaid!=='yes'&&i.paymentDueDate>=td);
-  });
-  // Category tabs
-  const usedCats=[...new Set(ft.map(t=>t.category||'trip'))];
-  const catTabs=CATEGORIES.filter(c=>usedCats.includes(c.id));
-  return `
-  <div class="page-header"><div><h2>Dashboard</h2><div class="subtitle">Welcome back${_acct&&_acct.user_metadata&&_acct.user_metadata.name?', '+esc(_acct.user_metadata.name):''}</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${syncIndicatorHtml()}</div></div>
-  <div class="page-content">
-    <div class="stats">
-      <div class="stat blue"><div class="s-label">Events</div><div class="s-val">${ft.length}</div><div class="s-sub">${totalDays} days total</div></div>
-      <div class="stat orange"><div class="s-label">Leave '${yShort}</div><div class="s-val">${bal}</div><div class="s-sub">${lyTotals.taken} used · ${tot} total</div></div>
-      <div class="stat purple"><div class="s-label">Next Event</div><div class="s-val" style="font-size:16px">${nextEvent?esc(nextEvent.name):'---'}</div><div class="s-sub">${countdownHtml}</div></div>
-      <div class="stat${clashCount?' clash-link':''}" style="border-color:#ef4444;${clashCount?'cursor:pointer':''}" ${clashCount?'data-action="show-all-clashes"':''}><div class="s-label">Clashes</div><div class="s-val">${clashCount}</div><div class="s-sub">${timeClashCount} timing · ${dateClashCount} date</div></div>
-    </div>
-    ${payDue.length?`<div class="card" style="margin-bottom:16px;border:1px solid var(--orange);border-radius:10px;overflow:hidden"><div style="background:rgba(251,146,60,.08);padding:12px 16px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><span style="font-weight:600;font-size:13px;color:var(--orange)">Payments Due</span></div>${payDue.map(t=>`<div style="font-size:12px;color:var(--text2);padding:2px 0"><span style="font-weight:600">${esc(t.name)}</span> has unpaid bookings with upcoming due dates</div>`).join('')}</div></div>`:''}
-    ${(()=>{const sc=getSyncConfig();
+// Account / sync prompt on the dashboard (signed-out devices, old GitHub link states)
+function dashAccountCardHtml(){return (()=>{const sc=getSyncConfig();
       if(acctEnabled()){
         if(_acct||!_acctReady)return '';
         const legacy=sc.token&&!sc.retired;
@@ -2128,35 +2148,130 @@ function vDash(){
         </div>
         <a href="https://github.com/settings/tokens/new?scopes=gist&description=Holiday+Tracker+Sync" target="_blank" rel="noopener" style="font-size:11px;color:var(--primary);display:inline-block;margin-top:8px">Create a token (gist scope only) &#8594;</a>
       </div>
-    </div>`;return '';})()}
-    <div style="display:flex;gap:6px;align-items:center;margin-bottom:16px;padding:8px 12px;background:var(--bg2);border-radius:10px;border:1px solid var(--glass-border);overflow-x:auto">
-      <div class="search-bar" style="flex:0 0 140px;min-width:120px;max-width:140px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search..." value="${esc(S._dashSearch||'')}" data-action="dash-search" style="padding:5px 10px 5px 28px;font-size:11px"></div>
-      <div class="ytabs" style="margin-bottom:0;gap:3px;flex-shrink:0"><div class="yt${dashCat==='all'?' active':''}" data-action="dash-cat" data-cat="all" style="padding:3px 8px;font-size:11px">All</div>${catTabs.map(c=>`<div class="yt${dashCat===c.id?' active':''}" data-action="dash-cat" data-cat="${c.id}" style="padding:3px 8px;font-size:11px;${dashCat===c.id?'background:'+c.color+';border-color:'+c.color:''}"><span style="display:inline-block;width:6px;height:6px;border-radius:2px;background:${c.color};margin-right:3px"></span>${c.label}</div>`).join('')}</div>
-      <div class="ytabs" style="margin-bottom:0;gap:3px;flex-shrink:0">${['all','active','upcoming','completed'].map(st=>`<div class="yt${dashStatus===st?' active':''}" data-action="dash-status" data-st="${st}" style="padding:3px 8px;font-size:11px">${st.charAt(0).toUpperCase()+st.slice(1)}</div>`).join('')}</div>
-      <div style="flex-shrink:0">${tpHtml()}</div>
-    </div>
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-header"><h3>All Events <span style="font-size:12px;font-weight:400;color:var(--text3)">(${dashEvents.length})</span></h3><button class="btn btn-p" data-action="add-event">+ New Event</button></div>
-      <div class="card-body" style="padding:12px">
-      ${dashEvents.length?dashEvents.map(t=>{const st=eventStatus(t);const dl=daysUntil(t.startDate);const cc=catColor(t.category||'trip');const countTxt=st==='active'?'In progress':st==='completed'?(Math.abs(daysUntil(t.endDate))+' days ago'):(dl===0?'Today':(dl+' day'+(dl!==1?'s':'')+' away'));return`
-        <div class="entry" style="cursor:pointer;border-left:3px solid ${eColor(t)}${st==='completed'?';opacity:.6':''}" data-action="view" data-id="${t.id}" ${t.source==='apple'?`draggable="true" data-apple-drag="${t.id}" title="Drag onto an event to add it there"`:`data-drop-ev="${t.id}"`}>
-          <div class="entry-top"><h4>${esc(t.name)}</h4><div style="display:flex;gap:6px;align-items:center">${clashBadgeHtml(t,true)}${t.source==='apple'?'<span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border)">&#63743; Apple</span>':''}<span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span><span class="tag tag-b">${days(t.startDate,t.endDate)}d ${nights(t.startDate,t.endDate)}n</span></div></div>
-          <div class="entry-grid">
-            <div class="eg"><span class="ek">Dates</span><span class="ev">${fmtS(t.startDate)}${t.startTime?' '+t.startTime:''} — ${fmtS(t.endDate)}${t.endTime?' '+t.endTime:''}</span></div>
-            <div class="eg"><span class="ek">Locations</span><span class="ev">${t.locations.join(', ')}</span></div>
-            <div class="eg"><span class="ek">Bookings</span><span class="ev">${(t.flights||[]).length}F · ${(t.hotels||[]).length}H · ${(t.activities||[]).length}A</span></div>
-            ${eCost(t)?`<div class="eg"><span class="ek">Cost</span><span class="ev">${fmtM(eCost(t),baseCur())}</span></div>`:''}
-            ${(()=>{const ps=eventPaymentStatus(t);return ps?`<div class="eg"><span class="ek">Payment</span><span class="ev" style="color:${ps.color};font-weight:600;font-size:11px">${ps.status==='paid'?'✓':'⚠'} ${ps.label}</span></div>`:''})()}
-            <div class="eg"><span class="ek">Countdown</span><span class="ev" style="font-weight:600;color:${st==='active'?'var(--green)':st==='completed'?'var(--text3)':'var(--primary)'}">${countTxt}</span></div>
-            <div class="eg"><span class="ek">Leave</span><span class="ev">${t.requiresLeave===false?'No':'Yes'}</span></div>
-          </div>
-        </div>`;}).join(''):'<div class="empty"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.4-.1.9.3 1.1l5.7 3.8-2.2 2.2-2.5-.3c-.4 0-.7.1-.9.4l-.1.1c-.2.3-.2.7.1 1l2.3 2.3c.3.3.7.3 1 .1l.1-.1c.2-.2.4-.5.4-.9l-.3-2.5 2.2-2.2 3.8 5.7c.2.4.7.5 1.1.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg><p>No events found</p><p style="font-size:11px;color:var(--text3);margin-bottom:12px">Try a different filter or add a new event</p><button class="btn btn-p" data-action="add-event">+ Plan an Event</button></div>'}
-      </div>
+    </div>`;return '';})();}
+// ===== TRIPS LIST =====
+// ===== EVENT ROWS (shared by Dashboard and My Events) =====
+// One line per event: colour bar, name, a single meta line, and only the facts that exist.
+const LIST_UI_KEY='htListUI';
+function listUI(){try{return JSON.parse(localStorage.getItem(LIST_UI_KEY)||'{}');}catch(e){return{};}}
+function setListUI(p){try{localStorage.setItem(LIST_UI_KEY,JSON.stringify({...listUI(),...p}));}catch(e){}}
+function whenText(t){
+  const st=eventStatus(t);
+  if(st==='active'){const d=Math.abs(daysUntil(t.startDate))+1,n=days(t.startDate,t.endDate);return n>1?`Now · day ${d} of ${n}`:'Today';}
+  if(st==='completed')return '';
+  const dl=daysUntil(t.startDate);return dl===0?'Today':dl===1?'Tomorrow':dl<7?`In ${dl} days`:dl<60?`In ${dl} days`:`In ${Math.round(dl/30.4)} months`;
+}
+function rangeText(t){
+  const a=t.startDate,b=t.endDate||a,sameY=a.slice(0,4)===b.slice(0,4),thisY=a.slice(0,4)===String(new Date().getFullYear());
+  const f=d=>new Date(d+'T00:00:00').toLocaleDateString(dloc(),{day:'numeric',month:'short',...(thisY&&sameY?{}:{year:'numeric'})});
+  const fs=d=>new Date(d+'T00:00:00').toLocaleDateString(dloc(),{day:'numeric',month:'short'});
+  if(a===b)return f(a)+(t.startTime?' · '+t.startTime:'');
+  return (sameY?fs(a):f(a))+' – '+f(b);
+}
+function evRowHtml(t,opts){
+  opts=opts||{};
+  const isApple=t.source==='apple',st=eventStatus(t),n=days(t.startDate,t.endDate);
+  const fl=(t.flights||[]).length,ho=(t.hotels||[]).length,ac=(t.activities||[]).length,cost=eCost(t),ps=eventPaymentStatus(t);
+  const timeClash=findClashes(t,t.id).filter(c=>c.severity==='time');
+  const places=(t.locations||[]).filter(l=>l&&l.length<=40).slice(0,2).join(', ');// long street addresses stay on the event page
+  const meta=[rangeText(t),n>1?n+' days':'',places].filter(Boolean).join(' · ');
+  const facts=[fl?`<span title="${fl} flight${fl>1?'s':''}"><i class="ic ic-fl"></i>${fl}</span>`:'',ho?`<span title="${ho} hotel${ho>1?'s':''}"><i class="ic ic-ho"></i>${ho}</span>`:'',ac&&!isApple?`<span title="${ac} activit${ac>1?'ies':'y'}"><i class="ic ic-ac"></i>${ac}</span>`:'',
+    cost?`<span class="evr-cost">${fmtM(cost,baseCur())}</span>`:'',ps&&ps.status!=='paid'?`<span style="color:${ps.color}" title="${esc(ps.label)}">● ${esc(ps.label)}</span>`:''].filter(Boolean).join('');
+  const when=opts.noWhen?'':whenText(t);
+  return `<div class="evr${isApple?' apple':''}${st==='completed'?' past':''}" data-action="view" data-id="${t.id}" ${isApple?`draggable="true" data-apple-drag="${t.id}" title="${esc(t.name)} · from Apple Calendar · drag onto a trip to add it there"`:`data-drop-ev="${t.id}" title="${esc(t.name)}"`}>
+    <span class="evr-bar" style="background:${eColor(t)}"></span>
+    <div class="evr-main"><div class="evr-name">${isApple?'<span class="evr-apple" aria-label="From Apple Calendar"></span>':''}${esc(t.name)}${timeClash.length?` <span class="evr-warn clash-link" data-action="show-clash" data-id="${t.id}" title="Time clash with ${esc(timeClash.map(c=>c.event.name).join(', '))}">⚠</span>`:''}</div><div class="evr-meta">${esc(meta)}</div></div>
+    ${facts?`<div class="evr-facts">${facts}</div>`:''}
+    ${when?`<div class="evr-when${st==='active'?' now':''}">${esc(when)}</div>`:''}
+    ${isApple?`<button class="evr-add" data-action="apple-attach" data-id="${t.id}" title="Add to a trip">+</button>`:''}
+  </div>`;
+}
+
+// ===== DASHBOARD =====
+// What matters now: the next trip, anything needing attention, what's coming up. The full list lives in My Events.
+function vDash(){
+  const ft=tpFilter(S.events),td=ymd(new Date()),curYear=new Date().getFullYear();
+  const lyTotals=leaveJobTotals((S.leave[curYear]||{}).jobs||[]);
+  // Leave still needed this year: workdays of trips from today on that aren't applied for yet (past trips are in "taken")
+  const leaveAhead=(()=>{let n=0;const end=String(curYear)+'-12-31';tpFilter(S.events).forEach(t=>{if(t.requiresLeave===false||!t.startDate||!t.endDate)return;
+    let c=new Date((t.startDate>td?t.startDate:td)+'T00:00:00');const e=new Date((t.endDate<end?t.endDate:end)+'T00:00:00');
+    while(c<=e){const ds=ymd(c);if(isWorkday(ds)&&!getAppliedForDate(ds))n++;c.setDate(c.getDate()+1);}});return n;})();
+  const live=ft.filter(t=>eventStatus(t)!=='completed').sort((a,b)=>a.startDate.localeCompare(b.startDate));
+  const trips=live.filter(t=>t.source!=='apple');
+  const hero=trips.find(t=>eventStatus(t)==='active')||trips[0]||null;
+  // Needs attention: payments, leave shortfall, real time clashes (date overlaps are normal: a dinner during a trip)
+  const att=[];
+  live.forEach(t=>['flights','hotels','activities','transport'].forEach(k=>(t[k]||[]).forEach(i=>{
+    if(!i.paymentDueDate||i.fullyPaid==='yes')return;
+    const d=daysUntil(i.paymentDueDate);if(d>45)return;
+    const nm=i.name||i.flightNumber||i.airline||({flights:'Flight',hotels:'Hotel',activities:'Activity',transport:'Transport'})[k];
+    att.push({o:d,html:`<div class="att${d<0?' bad':''}" data-action="view" data-id="${t.id}"><span class="att-ic">💳</span><div><b>${d<0?'Payment overdue':d===0?'Payment due today':'Payment due '+esc(fmtS(i.paymentDueDate))}</b><span>${esc(nm)} · ${esc(t.name)}</span></div><span class="att-go">›</span></div>`});
+  })));
+  if(lyTotals.tot&&leaveAhead>lyTotals.bal){const sh=+(leaveAhead-lyTotals.bal).toFixed(1);att.push({o:999,html:`<div class="att bad" data-action="nav" data-to="leave"><span class="att-ic">🗓</span><div><b>${sh} more leave day${sh!==1?'s':''} needed this year</b><span>Upcoming trips need ${leaveAhead} not yet applied for; you have ${lyTotals.bal} left</span></div><span class="att-go">›</span></div>`});}
+  const tc=live.filter(t=>findClashes(t,t.id).some(c=>c.severity==='time'));
+  if(tc.length)att.push({o:998,html:`<div class="att bad" data-action="show-all-clashes"><span class="att-ic">⚠</span><div><b>${tc.length} time clash${tc.length>1?'es':''}</b><span>${esc(tc.slice(0,3).map(t=>t.name).join(', '))}${tc.length>3?'…':''}</span></div><span class="att-go">›</span></div>`});
+  att.sort((a,b)=>a.o-b.o);
+  const heroHtml=hero?(()=>{const t=hero,st=eventStatus(t),fl=(t.flights||[]).length,ho=(t.hotels||[]).length,ac=(t.activities||[]).length,cost=eCost(t),ps=eventPaymentStatus(t);
+    const facts=[fl?`<i class="ic ic-fl"></i>${fl} flight${fl>1?'s':''}`:'',ho?`<i class="ic ic-ho"></i>${ho} hotel${ho>1?'s':''}`:'',ac?`<i class="ic ic-ac"></i>${ac} activit${ac>1?'ies':'y'}`:'',cost?fmtM(cost,baseCur()):'',ps?`<span style="color:${ps.color}">${ps.status==='paid'?'✓':'●'} ${esc(ps.label)}</span>`:''].filter(Boolean);
+    const dl=daysUntil(t.startDate);
+    return `<div class="hero" data-action="view" data-id="${t.id}" data-drop-ev="${t.id}" style="--c:${eColor(t)}">
+      <div class="hero-k">${st==='active'?'Happening now':'Next up'}</div>
+      <div class="hero-row"><div style="min-width:0"><div class="hero-name">${esc(t.name)}</div><div class="hero-meta">${esc(rangeText(t))} · ${days(t.startDate,t.endDate)} days${(t.locations||[]).length?' · '+esc(t.locations.slice(0,3).join(', ')):''}</div></div>
+        <div class="hero-cd">${st==='active'?`<b>Day ${Math.abs(dl)+1}</b><span>of ${days(t.startDate,t.endDate)}</span>`:dl===0?'<b>Today</b>':`<b>${dl}</b><span>day${dl!==1?'s':''} to go</span>`}</div></div>
+      ${facts.length?`<div class="hero-facts">${facts.map(f=>`<span>${f}</span>`).join('')}</div>`:''}
+    </div>`;})()
+    :`<div class="hero empty-hero"><div class="hero-name">No trips planned yet</div><div class="hero-meta">Add one, or drop a booking confirmation on the Scan button.</div><button class="btn btn-p" data-action="add-event" style="margin-top:12px">+ New Event</button></div>`;
+  const rest=live.filter(t=>t!==hero).slice(0,7);
+  const yr=ft.filter(t=>t.source!=='apple'&&t.startDate&&t.startDate.startsWith(String(curYear)));
+  const away=yr.reduce((s,t)=>s+days(t.startDate,t.endDate),0);
+  const subtitle=[`${yr.length} event${yr.length!==1?'s':''} in ${curYear}`,away?`${away} days away`:'',lyTotals.tot?`${lyTotals.bal} leave day${lyTotals.bal!==1?'s':''} left`:''].filter(Boolean).join(' · ');
+  return `
+  <div class="page-header"><div><h2>${(()=>{const h=new Date().getHours();return h<12?'Good morning':h<18?'Good afternoon':'Good evening';})()}${_acct&&_acct.user_metadata&&_acct.user_metadata.name?', '+esc(_acct.user_metadata.name):''}</h2><div class="subtitle">${subtitle}</div></div><div style="display:flex;align-items:center;gap:8px">${syncIndicatorHtml()}<button class="btn btn-p" data-action="add-event">+ New Event</button></div></div>
+  <div class="page-content dash">
+    ${dashAccountCardHtml()}
+    ${heroHtml}
+    ${att.length?`<div class="sec"><div class="sec-h">Needs attention</div><div class="att-list">${att.map(a=>a.html).join('')}</div></div>`:''}
+    <div class="sec"><div class="sec-h">Coming up<a href="#" data-action="nav" data-to="events">See all events ›</a></div>
+      ${rest.length?`<div class="evr-list">${rest.map(t=>evRowHtml(t)).join('')}</div>`:'<p class="quiet">Nothing else planned yet.</p>'}
     </div>
   </div>`;
 }
 
-// ===== TRIPS LIST =====
+// ===== MY EVENTS =====
+function vEvents(){
+  const ui=listUI(),q=(S._searchQ||'').toLowerCase(),catF=S._catFilter||'all',showApple=ui.apple!==false,view=ui.view==='cards'?'cards':'list';
+  const yrs=[...new Set(S.events.map(t=>t.year||new Date(t.startDate).getFullYear()))].filter(Boolean).sort((a,b)=>b-a);
+  let list=tpFilter(S.events).filter(t=>!S.tfY||(t.year||new Date(t.startDate).getFullYear())==S.tfY);
+  if(catF!=='all')list=list.filter(t=>(t.category||'trip')===catF);
+  if(!showApple)list=list.filter(t=>t.source!=='apple');
+  if(q)list=list.filter(t=>t.name.toLowerCase().includes(q)||(t.locations||[]).some(l=>l.toLowerCase().includes(q))||(t.notes||'').toLowerCase().includes(q));
+  const appleN=S.events.filter(t=>t.source==='apple').length;
+  const usedCats=[...new Set(S.events.map(t=>t.category||'trip'))],cats=CATEGORIES.filter(c=>usedCats.includes(c.id));
+  const render1=arr=>view==='cards'?`<div class="trip-grid">${arr.map(eventCardHtml).join('')}</div>`:`<div class="evr-list">${arr.map(t=>evRowHtml(t)).join('')}</div>`;
+  let body;
+  if(eventSortKey==='date'){
+    // By date: now, then upcoming (soonest first), then past (most recent first, a few at a time)
+    const now=list.filter(t=>eventStatus(t)==='active'),up=list.filter(t=>eventStatus(t)==='upcoming').sort((a,b)=>a.startDate.localeCompare(b.startDate)),past=list.filter(t=>eventStatus(t)==='completed').sort((a,b)=>(b.endDate||b.startDate).localeCompare(a.endDate||a.startDate));
+    const pastN=ui.pastAll?past.length:Math.min(past.length,12);
+    body=[now.length?`<div class="sec"><div class="sec-h">Now</div>${render1(now)}</div>`:'',
+      up.length?`<div class="sec"><div class="sec-h">Upcoming <span class="cnt">${up.length}</span></div>${render1(up)}</div>`:'',
+      past.length?`<div class="sec"><div class="sec-h">Past <span class="cnt">${past.length}</span></div>${render1(past.slice(0,pastN))}${past.length>pastN?`<button class="btn btn-ghost more-btn" data-action="ev-past-all">Show ${past.length-pastN} more past events</button>`:''}</div>`:''].join('');
+  }else body=render1(sortEvents(list));
+  return `
+  <div class="page-header"><div><h2>My Events</h2><div class="subtitle">${list.length===S.events.length?list.length+' events':list.length+' of '+S.events.length+' events'}</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${tpHtml()}<button class="btn btn-p" data-action="add-event">+ New Event</button></div></div>
+  <div class="page-content">
+    <div class="toolbar">
+      <div class="search-bar tb-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search events…" value="${esc(S._searchQ||'')}" data-action="search-events"></div>
+      <select class="fc tb-sel" data-action="ev-cat" aria-label="Type"><option value="all">All types</option>${cats.map(c=>`<option value="${c.id}"${catF===c.id?' selected':''}>${c.label}</option>`).join('')}</select>
+      <select class="fc tb-sel" data-action="ev-year" aria-label="Year"><option value="">All years</option>${yrs.map(y=>`<option value="${y}"${S.tfY==y?' selected':''}>${y}</option>`).join('')}</select>
+      ${sortCtrlHtml('event',eventSortKey,eventSortDir)}
+      ${appleN?`<label class="tb-check" title="Appointments imported from Apple Calendar"><input type="checkbox" data-action="ev-apple"${showApple?' checked':''}> Apple Calendar (${appleN})</label>`:''}
+      <div class="seg" role="group" aria-label="Layout"><button class="${view==='list'?'on':''}" data-action="ev-view" data-v="list">List</button><button class="${view==='cards'?'on':''}" data-action="ev-view" data-v="cards">Cards</button></div>
+    </div>
+    ${list.length?body:'<div class="empty"><p>No events found</p><p style="font-size:11px;color:var(--text3)">Try a different search or filter</p></div>'}
+  </div>`;
+}
+
 function eventCardHtml(t){
   const st=eventStatus(t);
   const cc=catColor(t.category||'trip');
@@ -2166,54 +2281,17 @@ function eventCardHtml(t){
     <div class="trip-body">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div class="trip-name">${esc(t.name)}</div><div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${clashBadgeHtml(t,true)}${t.source==='apple'?'<span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border)">&#63743; Apple</span>':''}<span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span></div></div>
       <div class="trip-dates"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>${fmt(t.startDate)} — ${fmt(t.endDate)}</div>
-      <div class="trip-locs">${t.locations.map(l=>`<span class="loc">${esc(l)}</span>`).join('')}${(t.countries||[]).length?t.countries.slice(0,4).map(cid=>`<span class="country-tag">${esc(COUNTRY_DATA[cid]||cid)}</span>`).join('')+(t.countries.length>4?`<span class="country-tag">+${t.countries.length-4}</span>`:''):''}</div>
+      <div class="trip-locs">${t.locations.filter(l=>l.length<=40).slice(0,3).map(l=>`<span class="loc">${esc(l)}</span>`).join('')}${(t.countries||[]).length?t.countries.slice(0,4).map(cid=>`<span class="country-tag">${esc(COUNTRY_DATA[cid]||cid)}</span>`).join('')+(t.countries.length>4?`<span class="country-tag">+${t.countries.length-4}</span>`:''):''}</div>
       <div class="trip-foot">
-        <span><b>${days(t.startDate,t.endDate)}</b> days</span>
-        <span><b>${nights(t.startDate,t.endDate)}</b> nights</span>
-        <span><b>${(t.flights||[]).length}</b> flights</span>
-        <span><b>${(t.hotels||[]).length}</b> hotels</span>
+        <span><b>${days(t.startDate,t.endDate)}</b> day${days(t.startDate,t.endDate)>1?'s':''}</span>
+        ${(t.flights||[]).length?`<span><b>${(t.flights||[]).length}</b> flight${(t.flights||[]).length>1?'s':''}</span>`:''}
+        ${(t.hotels||[]).length?`<span><b>${(t.hotels||[]).length}</b> hotel${(t.hotels||[]).length>1?'s':''}</span>`:''}
         ${eCost(t)?`<span style="color:var(--green)"><b>${fmtM(eCost(t),'')}</b> ${baseCur()}</span>`:''}
         ${isApple?`<button class="btn btn-ghost apple-attach-btn" data-action="apple-attach" data-id="${t.id}">+ Add to event…</button>`:''}
       </div>
     </div>
   </div>`;
 }
-function vEvents(){
-  const yrs=[...new Set(S.events.map(t=>t.year||new Date(t.startDate).getFullYear()))].sort((a,b)=>b-a);
-  const q=(S._searchQ||'').toLowerCase();
-  const catF=S._catFilter||'all';
-  const grouped=S._catGroup||false;
-  let filtered=tpFilter(S.events).filter(t=>!S.tfY||(t.year||new Date(t.startDate).getFullYear())==S.tfY);
-  if(catF!=='all')filtered=filtered.filter(t=>(t.category||'trip')===catF);
-  if(q)filtered=filtered.filter(t=>t.name.toLowerCase().includes(q)||t.locations.some(l=>l.toLowerCase().includes(q))||(t.notes||'').toLowerCase().includes(q));
-  filtered=sortEvents(filtered);
-  const usedCats=[...new Set(S.events.map(t=>t.category||'trip'))];
-  const catTabs=CATEGORIES.filter(c=>usedCats.includes(c.id));
-  let gridHtml='';
-  if(grouped&&catF==='all'){
-    const groups={};
-    filtered.forEach(t=>{const c=t.category||'trip';if(!groups[c])groups[c]=[];groups[c].push(t);});
-    const orderedCats=CATEGORIES.filter(c=>groups[c.id]);
-    gridHtml=orderedCats.map(cat=>`<div class="cat-group"><div class="cat-group-header"><div style="width:10px;height:10px;border-radius:3px;background:${cat.color}"></div><span style="font-weight:600;font-size:13px">${cat.label}</span><span style="color:var(--text3);font-size:11px">${groups[cat.id].length} event${groups[cat.id].length!==1?'s':''}</span></div><div class="trip-grid">${groups[cat.id].map(t=>eventCardHtml(t)).join('')}</div></div>`).join('');
-  }else{
-    gridHtml=`<div class="trip-grid">${filtered.map(t=>eventCardHtml(t)).join('')}</div>`;
-  }
-  return `
-  <div class="page-header"><div><h2>My Events</h2><div class="subtitle">${filtered.length} of ${S.events.length} events</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${tpHtml()}<button class="btn btn-p" data-action="add-event">+ New Event</button></div></div>
-  <div class="page-content">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-      <div class="ytabs" style="margin-bottom:0"><div class="yt${!S.tfY&&catF==='all'?' active':''}" data-action="fy" data-y="">All</div>${catTabs.map(c=>`<div class="yt${catF===c.id?' active':''}" data-action="cat-filter" data-cat="${c.id}" style="${catF===c.id?'background:'+c.color+';border-color:'+c.color:''}"><span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:${c.color};margin-right:4px"></span>${c.label}</div>`).join('')}<span style="width:1px;height:16px;background:var(--border);margin:0 4px"></span>${yrs.map(y=>`<div class="yt${S.tfY==y&&catF==='all'?' active':''}" data-action="fy" data-y="${y}">${y}</div>`).join('')}</div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <div class="yt${grouped?' active':''}" data-action="cat-group" style="font-size:11px;padding:4px 10px;cursor:pointer" title="Group by category"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h12M3 18h6"/></svg> Group</div>
-        <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search events…" value="${esc(S._searchQ||'')}" data-action="search-events"></div>
-        ${sortCtrlHtml('event',eventSortKey,eventSortDir)}
-      </div>
-    </div>
-    ${gridHtml}
-    ${!filtered.length?'<div class="empty"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>No events found</p><p style="font-size:11px;color:var(--text3)">Try a different search or filter</p></div>':''}
-  </div>`;
-}
-
 // ===== TRIP DETAIL =====
 function vDetail(){
   const t=S.events.find(x=>x.id===S.tid);
@@ -5541,9 +5619,11 @@ document.addEventListener('click',e=>{
     case 'edit-event':{const t=S.events.find(x=>x.id===el.dataset.id);if(t)fEvent(t);break;}
     case 'del-event':{const delId=el.dataset.id;const delEv=S.events.find(t=>t.id===delId);if(delEv){const bc=(delEv.flights||[]).length+(delEv.hotels||[]).length+(delEv.activities||[]).length+(delEv.transport||[]).length;modal('Delete Event',`<div class="confirm-modal-body"><div class="cm-icon">⚠️</div><div class="cm-title">Delete "${esc(delEv.name)}"?</div><div class="cm-sub">${bc?'This will remove <strong>'+bc+' booking'+(bc>1?'s':'')+'</strong> (flights, hotels, activities, transport).':'This trip has no bookings.'}<br>This action cannot be undone.</div></div>`,()=>{const idx=S.events.indexOf(delEv);S.events.splice(idx,1);saveS();nav('events');toast('Event deleted');},{saveLabel:'Delete',danger:true});}}break;
     case 'tab':S.tab=el.dataset.t;saveS();render();break;
-    case 'fy':S.tfY=el.dataset.y?parseInt(el.dataset.y):null;S._catFilter='all';saveS();render();break;
-    case 'cat-filter':S._catFilter=el.dataset.cat||'all';S.tfY=null;saveS();render();break;
-    case 'cat-group':S._catGroup=!S._catGroup;saveS();render();break;
+    case 'fy':S.tfY=el.dataset.y?parseInt(el.dataset.y):null;S._catFilter='all';saveUI();render();break;
+    case 'cat-filter':S._catFilter=el.dataset.cat||'all';S.tfY=null;saveUI();render();break;
+    case 'cat-group':S._catGroup=!S._catGroup;saveUI();render();break;
+    case 'ev-view':setListUI({view:el.dataset.v});render();break;
+    case 'ev-past-all':setListUI({pastAll:true});render();break;
     case 'sly':S.ly=parseInt(el.dataset.y);saveS();render();break;
     case 'aly':{const y=prompt('Year:');if(y&&parseInt(y)){S.leave[parseInt(y)]={jobs:[{employer:'',startDate:'',endDate:'',al:0,bp:0,ot:0,ph:0,taken:0}],holidays:[]};S.ly=parseInt(y);saveS();render();}break;}
     case 'add-job':{const y=S.ly||2026;if(!S.leave[y])S.leave[y]={jobs:[],holidays:[],applied:[]};if(!S.leave[y].jobs)S.leave[y]=migrateLeaveJobs(S.leave[y]);S.leave[y].jobs.push({employer:'',startDate:'',endDate:'',al:0,bp:0,ot:0,ph:0,taken:0});saveS();render();break;}
@@ -5652,8 +5732,7 @@ document.addEventListener('click',e=>{
       saveS();render();
       break;
     }
-    case 'dash-cat':S._dashCat=el.dataset.cat||'all';saveS();render();break;
-    case 'dash-status':S._dashStatus=el.dataset.st||'all';saveS();render();break;
+
     case 'add-attach-link':{if(ev){
       modal('Add Link Attachment',`<div class="fg">
         <div class="fi full"><label>Name</label><input class="fc" name="att-name" placeholder="e.g. Hotel confirmation"></div>
@@ -5729,6 +5808,9 @@ document.addEventListener('change',e=>{
 
 document.addEventListener('change',e=>{
   const t=e.target;
+  if(t.dataset&&t.dataset.action==='ev-cat'){S._catFilter=t.value;saveUI();render();return;}
+  if(t.dataset&&t.dataset.action==='ev-year'){S.tfY=t.value?parseInt(t.value):null;saveUI();render();return;}
+  if(t.dataset&&t.dataset.action==='ev-apple'){setListUI({apple:t.checked});render();return;}
   if(t.dataset&&t.dataset.pref!==undefined){setPref(t.dataset.pref,t.value);return;}
   if(t.dataset&&t.dataset.prefWeekend!==undefined){setWeekend(parseInt(t.dataset.prefWeekend),t.checked);return;}
   if(t.id==='ph-ics-f'&&t.files.length){
