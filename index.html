@@ -1038,6 +1038,10 @@ body.sb-collapsed .topbar{left:68px}
 .sb-collapse:hover{color:var(--primary-deep);border-color:var(--primary)!important}
 .sb-collapse svg{width:14px;height:14px}
 .sidebar.collapsed .sb-collapse{padding:0!important;justify-content:center}
+/* Search: compact, about three times the sync status */
+.tb-search{flex:0 0 240px!important;width:240px!important;max-width:240px!important}
+.gs-results{min-width:380px;left:auto;right:0}
+@media(max-width:860px){.tb-search{flex:1 1 auto!important;width:auto!important;max-width:220px!important}.gs-results{min-width:0}}
 @keyframes sheetIn{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 .more-list{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line)}
 .more-list button{display:flex;align-items:center;gap:12px;padding:15px 16px;background:none;border:0;border-top:1px solid var(--line);color:var(--text);font:inherit;font-size:17px;text-align:left;cursor:pointer}
@@ -2543,7 +2547,7 @@ function renderTopbar(){
   if(!tb){
     tb=document.createElement('header');tb.id='topbar';tb.className='topbar';
     tb.innerHTML=`<div class="tb-brand" data-action="nav" data-to="dashboard"><span class="wordmark">The <em>Planner</em></span></div>
-      <div class="tb-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="gsearch" type="search" placeholder="Search trips, places, bookings…" autocomplete="off" aria-label="Search"><kbd>/</kbd><div class="gs-results" id="gs-results" role="listbox"></div></div>
+      <div class="tb-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="gsearch" type="search" placeholder="Search" title="Search trips, places and bookings" autocomplete="off" aria-label="Search"><kbd>/</kbd><div class="gs-results" id="gs-results" role="listbox"></div></div>
       <div class="tb-sync"></div><button class="tb-theme" onclick="toggleTheme();renderTopbar()" aria-label="Switch light/dark"></button>`;
     document.body.appendChild(tb);
     if(window.innerWidth<=860)tb.querySelector('#gsearch').placeholder='Search';
