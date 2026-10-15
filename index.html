@@ -3640,7 +3640,7 @@ function _tryDirectExtract(txt){
 // ===== KNOWN ITINERARY LAYOUTS =====
 // Dedicated readers for the itinerary formats of frequently used airlines (SQ, Scoot, AirAsia,
 // Batik, Firefly, Garuda, Qatar, Emirates, Malaysia Airlines). Tried before the generic parser.
-const AIRPORT_NAME_ALIASES=[[/CHANGI/i,'SIN'],[/SELETAR/i,'XSP'],[/SOEKARNO.?HATTA/i,'CGK'],[/NGURAH\s*RAI|DENPASAR/i,'DPS'],[/JUANDA/i,'SUB'],[/KALIMARAU/i,'BEJ'],[/JUWATA/i,'TRK'],[/KOMODO\s*AIRPORT|LABUAN\s*BAJO/i,'LBJ'],[/SULTAN\s*ABDUL\s*AZIZ\s*SHAH|SUBANG/i,'SZB'],[/KUALA\s*LUMPUR\s*INT|\bKLIA\b/i,'KUL'],[/HAMAD\s*INT/i,'DOH'],[/DUBAI\s*INT/i,'DXB'],[/HALIM\s*PERDANA/i,'HLP'],[/EL\s*TARI/i,'KOE'],[/ZAINUDDIN\s*ABDUL\s*MADJID|LOMBOK\s*INT/i,'LOP'],[/SAM\s*RATULANGI/i,'MDC'],[/KUALANAMU/i,'KNO'],[/SULTAN\s*HASANUDDIN/i,'UPG'],[/NARITA/i,'NRT'],[/HANEDA/i,'HND'],[/SUVARNABHUMI/i,'BKK'],[/DON\s*MUEANG/i,'DMK'],[/INCHEON/i,'ICN'],[/TULLAMARINE/i,'MEL'],[/KINGSFORD\s*SMITH/i,'SYD'],[/VELANA/i,'MLE'],[/HEATHROW/i,'LHR']];
+const AIRPORT_NAME_ALIASES=[[/CHANGI/i,'SIN'],[/SELETAR/i,'XSP'],[/SOEKARNO.?HATTA/i,'CGK'],[/NGURAH\s*RAI|DENPASAR/i,'DPS'],[/JUANDA/i,'SUB'],[/KALIMARAU/i,'BEJ'],[/JUWATA/i,'TRK'],[/KOMODO\s*AIRPORT|LABUAN\s*BAJO/i,'LBJ'],[/SULTAN\s*ABDUL\s*AZIZ\s*SHAH|SUBANG/i,'SZB'],[/KUALA\s*LUMPUR\s*INT|\bKLIA\b/i,'KUL'],[/HAMAD\s*INT/i,'DOH'],[/DUBAI\s*INT/i,'DXB'],[/HALIM\s*PERDANA/i,'HLP'],[/EL\s*TARI/i,'KOE'],[/ZAINUDDIN\s*ABDUL\s*MADJID|LOMBOK\s*INT/i,'LOP'],[/SAM\s*RATULANGI/i,'MDC'],[/KUALANAMU/i,'KNO'],[/SULTAN\s*HASANUDDIN/i,'UPG'],[/NARITA/i,'NRT'],[/HANEDA/i,'HND'],[/SUVARNABHUMI/i,'BKK'],[/DON\s*MUEANG/i,'DMK'],[/INCHEON/i,'ICN'],[/TULLAMARINE/i,'MEL'],[/KINGSFORD\s*SMITH/i,'SYD'],[/VELANA/i,'MLE'],[/HEATHROW/i,'LHR'],[/DOMINE\s*EDUARD\s*OSOK/i,'SOQ'],[/SULTAN\s*BABULLAH/i,'TTE'],[/SENTANI/i,'DJJ'],[/PATTIMURA/i,'AMQ'],[/RENDANI/i,'MKW'],[/ADISUCIPTO|YOGYAKARTA\s*INT/i,'JOG'],[/SEPINGGAN|SULTAN\s*AJI\s*MUHAMMAD/i,'BPN'],[/HANG\s*NADIM/i,'BTH'],[/MINANGKABAU/i,'PDG']];
 const _MON='Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?';
 function _cityCode(str){
   // "Flight Information Surabaya" → SUB: try trailing/leading word groups against airport cities
@@ -3653,6 +3653,18 @@ function _cityCode(str){
 function _aliasCodesInOrder(str){
   const hits=[];
   for(const[re,code]of AIRPORT_NAME_ALIASES){const g=new RegExp(re.source,'gi');let m;while((m=g.exec(str))!==null)hits.push({code,pos:m.index});}
+  hits.sort((a,b)=>a.pos-b.pos);
+  return hits.filter((h,i)=>!i||h.code!==hits[i-1].code).map(h=>h.code);
+}
+// Airport aliases plus plain city names ("SINGAPORE", "SORONG"), in the order they appear
+function _placeCodesInOrder(str){
+  const hits=[];
+  for(const[re,code]of AIRPORT_NAME_ALIASES){const g=new RegExp(re.source,'gi');let m;while((m=g.exec(str))!==null)hits.push({code,pos:m.index});}
+  for(const[code,city]of Object.entries(AIRPORTS)){
+    if(city.length<4||/\s/.test(city))continue;
+    const g=new RegExp('\\b'+city+'\\b','gi');let m;
+    while((m=g.exec(str))!==null)if(!hits.some(h=>h.pos===m.index))hits.push({code,pos:m.index});
+  }
   hits.sort((a,b)=>a.pos-b.pos);
   return hits.filter((h,i)=>!i||h.code!==hits[i-1].code).map(h=>h.code);
 }
@@ -3799,9 +3811,13 @@ function _layoutGdsTable(txt){
   while((m=re.exec(txt))!==null){
     const before=txt.substring(Math.max(prevEnd,m.index-300),m.index);prevEnd=m.index+m[0].length;
     let codes=_aliasCodesInOrder(before);
+    // Airport names not in the alias list: "SORONG DOMINE EDUARD OSOK" starts with the city
+    if(codes.length<2)codes=_placeCodesInOrder(before);
     if(codes.length<2)codes=[...before.matchAll(/\b([A-Z]{3})\b/g)].map(x=>x[1]).filter(_isAp);
     const leg={fromCode:codes[codes.length-2]||'',toCode:codes[codes.length-1]||'',departureTime:_hhmm(m[6]),arrivalTime:_hhmm(m[7])};
     const ds=_findDates(m[3]+' '+m[4]+(m[5]?' '+m[5]:''));if(ds[0])leg.date=ds[0].date;
+    // Rest of the row: "Ok 30Dec 28Jan 07:45 30K" (status, NVB, NVA, last check-in, seat)
+    const seat=txt.substring(prevEnd,prevEnd+80).split(/Terminal|Fare\s*Basis|Baggage/i)[0].match(/\b(\d{1,2}[A-K])\b/);if(seat)leg.seat=seat[1];
     legs.push(_finishLeg(leg,{code:m[1].toUpperCase(),num:m[2]}));
   }
   return legs;
