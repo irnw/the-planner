@@ -3816,8 +3816,6 @@ function _layoutGdsTable(txt){
     if(codes.length<2)codes=[...before.matchAll(/\b([A-Z]{3})\b/g)].map(x=>x[1]).filter(_isAp);
     const leg={fromCode:codes[codes.length-2]||'',toCode:codes[codes.length-1]||'',departureTime:_hhmm(m[6]),arrivalTime:_hhmm(m[7])};
     const ds=_findDates(m[3]+' '+m[4]+(m[5]?' '+m[5]:''));if(ds[0])leg.date=ds[0].date;
-    // Rest of the row: "Ok 30Dec 28Jan 07:45 30K" (status, NVB, NVA, last check-in, seat)
-    const seat=txt.substring(prevEnd,prevEnd+80).split(/Terminal|Fare\s*Basis|Baggage/i)[0].match(/\b(\d{1,2}[A-K])\b/);if(seat)leg.seat=seat[1];
     legs.push(_finishLeg(leg,{code:m[1].toUpperCase(),num:m[2]}));
   }
   return legs;
