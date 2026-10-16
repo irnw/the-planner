@@ -1330,6 +1330,17 @@ details.c-region .country-grid{margin:0 0 14px}
 @media(max-width:700px){.doc{flex-wrap:wrap}.doc-acts{width:100%;justify-content:flex-end}}
 /* Share a trip */
 .sh-on{border-color:var(--primary)!important;color:var(--primary-deep)!important}
+/* Trip header actions: one quiet segmented control instead of four separate pills */
+.dtools{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.dtools-grp{display:inline-flex;align-items:stretch;border:1px solid var(--line-strong);border-radius:999px;overflow:hidden;background:var(--card)}
+.dt-b{display:inline-flex;align-items:center;gap:7px;background:none;border:0;border-left:1px solid var(--line-strong);padding:9px 15px;font:500 10.5px var(--font);text-transform:uppercase;letter-spacing:.16em;color:var(--text2);cursor:pointer;transition:color .15s,background .15s}
+.dt-b:first-child{border-left:0;padding-left:17px}
+.dt-b:hover{color:var(--primary-deep);background:var(--input-bg)}
+.dt-b svg{flex:none}
+.dt-b.sh-on{color:var(--primary-deep)!important}
+.dt-del{padding:9px 14px 9px 13px;color:var(--text3)}
+.dt-del:hover{color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
+@media(max-width:700px){.dtools{width:100%}.dtools-grp{width:100%}.dt-b{flex:1;justify-content:center;padding:10px 8px}.dt-del{flex:0 0 auto;padding:10px 14px}}
 .sh-intro{font-size:13px;line-height:1.6;color:var(--text2);margin:0 0 14px}
 .sh-link{display:flex;gap:6px;margin-bottom:8px}.sh-link .fc{flex:1;min-width:0;font-family:var(--mono,monospace);font-size:12px}
 .sh-native{width:100%;margin-bottom:6px}
@@ -3204,12 +3215,14 @@ function vDetail(){
       <h2>${esc(t.name)}</h2>
       <div class="subtitle">${fmt(t.startDate)} — ${fmt(t.endDate)} · ${dayN(t.startDate)} · ${days(t.startDate,t.endDate)} days, ${nights(t.startDate,t.endDate)} nights</div>
     </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">
-      ${t.source!=='apple'&&acctEnabled()?`<button class="btn btn-s${_shares&&_shares.has(t.id)?' sh-on':''}" data-action="share-trip" data-id="${t.id}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:3px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>${_shares&&_shares.has(t.id)?'Shared':'Share'}</button>`:''}
-      <button class="btn btn-s" data-action="export-event" data-id="${t.id}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:3px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Export</button>
+    <div class="dtools">
       ${t.source==='apple'?`<button class="btn btn-p" data-action="apple-attach" data-id="${t.id}">+ Add to event…</button>`:''}
-      <button class="btn btn-s" data-action="edit-event" data-id="${t.id}">Edit</button>
-      <button class="btn btn-d" data-action="del-event" data-id="${t.id}">Delete</button>
+      <div class="dtools-grp" role="group" aria-label="Trip actions">
+        <button class="dt-b" data-action="edit-event" data-id="${t.id}" title="Edit trip"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg><span>Edit</span></button>
+        ${t.source!=='apple'&&acctEnabled()?`<button class="dt-b${_shares&&_shares.has(t.id)?' sh-on':''}" data-action="share-trip" data-id="${t.id}" title="Share a read-only link"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg><span>${_shares&&_shares.has(t.id)?'Shared':'Share'}</span></button>`:''}
+        <button class="dt-b" data-action="export-event" data-id="${t.id}" title="Export"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg><span>Export</span></button>
+        <button class="dt-b dt-del" data-action="del-event" data-id="${t.id}" title="Delete trip" aria-label="Delete trip"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
+      </div>
     </div>
   </div>
   <div class="page-content">
