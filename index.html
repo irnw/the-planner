@@ -1916,7 +1916,7 @@ async function pushToGist(retried){
   document.querySelectorAll('.sync-dot').forEach(d=>d.classList.add('syncing'));
   // Before pushing, merge remote visitedCountries so we never overwrite with fewer
   try{if(c.gistId){const g=await gistAPI('/gists/'+c.gistId);if(g&&g.files&&g.files[GIST_FILE]){const r=JSON.parse(g.files[GIST_FILE].content);if(r.migratedToAccount){c.retired=true;c.migratedTo=r.migratedTo;setSyncConfig(c);updateSyncStatus('Your data has moved to an account — sign in under Settings → Your Account');document.querySelectorAll('.sync-dot').forEach(d=>d.classList.remove('syncing'));render();return;}if(r.visitedCountries&&r.visitedCountries.length){const local=new Set(S.visitedCountries||[]);r.visitedCountries.forEach(x=>local.add(x));S.visitedCountries=[...local];}mergeAppleCalUrl(r);}}}catch(e){/* non-fatal */}
-  const payload={description:GIST_DESC,files:{[GIST_FILE]:{content:JSON.stringify(syncData(),null,2)},[ICS_FILE]:{content:buildICSFeed()}}};
+  const payload={description:GIST_DESC,files:{[GIST_FILE]:{content:JSON.stringify(syncData(),null,2)}}};
   try{
     let resp;
     if(c.gistId){
@@ -2340,10 +2340,11 @@ async function gistFeedSync(pullOnly,skipApple){
     if(_acct&&c.gistOwner&&(!S.calFeed||S.calFeed.gistId!==c.gistId||S.calFeed.owner!==c.gistOwner)){S.calFeed={gistId:c.gistId,owner:c.gistOwner};saveS();}
     const changed=skipApple?false:importAppleCalendar(g.files&&g.files[APPLE_ICS_FILE]?g.files[APPLE_ICS_FILE].content:'');
     if(!pullOnly){
-      const files={[ICS_FILE]:{content:buildICSFeed()}};
+      // The calendar feed now lives in Supabase (feedSync); the gist's old feed file is retired and no longer written
+      const files={};
       // The Apple import job reads the iCloud link from the gist's data file: keep it current after the move
       try{const d=JSON.parse(g.files[GIST_FILE].content);if(d.migratedToAccount&&(d.appleCalUrl||'')!==(S.appleCalUrl||'')){d.appleCalUrl=S.appleCalUrl||'';d.appleCalUrlAt=S.appleCalUrlAt||0;files[GIST_FILE]={content:JSON.stringify(d,null,2)};}}catch(e){}
-      await gistAPI('/gists/'+c.gistId,{method:'PATCH',body:JSON.stringify({files})});
+      if(Object.keys(files).length)await gistAPI('/gists/'+c.gistId,{method:'PATCH',body:JSON.stringify({files})});
     }
     return changed;
   }catch(e){console.warn('Calendar feed sync failed:',e);return false;}
@@ -2530,144 +2531,72 @@ function vGuideCard(){
   const firstTime=acctEnabled()&&!_acct,acc=acctEnabled();
   const APPLE='<b>Settings → Apple Calendar (iCloud) Sync</b>';
   return `<div class="card" id="guide-card" style="margin-bottom:16px"><div class="card-header"><h3>📖 User Guide</h3></div><div class="card-body guide">
-    <p class="guide-intro">${acc?'New here? Follow steps 1 to 4 once. Each takes a minute or two. ':''}Tap a heading to open it.</p>
-    ${sec(`What is ${APP_NAME}?`,`<p>One place for every trip and plan: flights, hotels, activities and transport, what you've paid and what's still due, your leave days, public holidays and the countries you've visited. Drop in a booking email, PDF or screenshot and it fills in the details for you. Your trips can also appear in Apple Calendar (or Google Calendar or Outlook), and your Apple Calendar appointments can appear here.</p>`,firstTime)}
-    ${!acc?'':sec('Step 1 · Create your account',ol([
-      `Open ${APP_NAME}. Until you sign in you'll see the welcome page.`,
-      'Tap <b>Continue with Google</b>.',
-      'Choose your Google account and allow it. There\'s no new password to remember and no confirmation email to wait for.',
-      `You come back to ${APP_NAME}, signed in. New accounts can only be created with Google.`,
-      'The first time, you\'re asked <b>Where are you based?</b> Pick your country: it sets your currency, public holidays, weekend and date style.',
-      'If the app asks <b>Move your existing data into your account?</b>, tap <b>Move my data</b> to keep what\'s on this device.'
+    <p class="guide-intro">${APP_NAME} keeps every trip in one place: bookings, payments, leave, holidays and the countries you've visited. Tap a heading to open it.</p>
+    ${sec('Getting started',`${acc?ol([
+      'On the welcome page, tap <b>Continue with Google</b> and choose your account. New accounts are created with Google; older email accounts use <b>Sign in with email</b>.',
+      'Pick your <b>home country</b> when asked. It sets your currency, public holidays, weekend and date style.',
+      'If asked <b>Move your existing data into your account?</b>, tap <b>Move my data</b>.',
+      'On your phone, open the same address and sign in the same way. To add an app icon: <b>iPhone (Safari)</b> Share → <b>Add to Home Screen</b>; <b>Android (Chrome)</b> ⋮ → <b>Add to Home screen</b>.'
+    ]):''}<p class="guide-note">Changes save automatically and reach your other devices within about 30 seconds.</p>`,firstTime)}
+    ${sec('Add trips and bookings',`${sub('Create an event')}${ul([
+      'Tap <b>+ New Event</b> (Dashboard or Events), give it a name, dates, places and a category (Trip, Work, Training, Social, Personal or Activity).',
+      'Inside the event, add bookings under <b>Flights</b>, <b>Hotels</b>, <b>Activities</b> and <b>Transport</b>. <b>Timeline</b> shows the trip day by day; <b>Attachments</b> keeps tickets and vouchers.'
+    ])}${sub('Let the app read a booking (Smart Upload)')}${ol([
+      'Tap <b>Scan</b> (bottom right).',
+      'Choose a PDF, photo or screenshot, drag a file in, or copy one and tap <b>Paste</b>. You can also paste the email text under <b>Paste text</b>. A PDF and a screenshot of the same booking give the same result.',
+      'Booked through Trip.com or Agoda? Add the e-ticket and the receipt together and they become one booking.',
+      'Check and edit what it found, choose the event (it suggests one), then tap <b>Save</b>.'
+    ])}${sub('Duplicates and clashes')}<p>If a booking was added twice, the event offers <b>Review &amp; merge</b>: pick the values to keep and the two become one (payments and attachments are kept). <b>⚠ Clash</b> means two things at the same time; <b>⚠ Overlap</b> means events share dates. Tap the label to see which.</p>`)}
+    ${sec('Dashboard, calendar and countries',ul([
+      '<b>Dashboard</b> shows what\'s happening now or next, anything that needs attention (payments due, leave short, clashes) and what\'s coming up.',
+      '<b>Search</b> at the top finds trips, places, flight numbers, hotels and booking references. Press <b>/</b> on a computer.',
+      '<b>Calendar</b> shows everything by month with your public holidays. Tap the month or year to jump, tap a day for its details, or switch to the list view.',
+      '<b>Countries</b> is your travel map: tap a country to mark it visited.',
+      'On a phone, Budget, Countries, Settings, this guide and Sign out are under <b>More</b>. On a computer, the round arrow on the menu\'s edge makes it narrower.',
+      'Shortcuts on a computer: <b>1–6</b> switch pages, <b>N</b> new event, <b>U</b> Smart Upload, <b>Esc</b> close.'
     ]))}
-    ${!acc?'':sec('Step 2 · Use it on your phone too',ol([
-      'On your phone, open the same web address you use on your computer.',
-      'On the welcome page, tap <b>Continue with Google</b> and pick the same Google account. (Older email accounts: tap <b>Sign in with email</b> and use the same email and password.)',
-      'Make it an app icon. <b>iPhone (Safari):</b> tap the Share button (square with an arrow) → <b>Add to Home Screen</b>. <b>Android (Chrome):</b> tap ⋮ → <b>Add to Home screen</b>.',
-      'Changes save automatically and show up on your other devices within about 30 seconds.'
+    ${sec('Leave, holidays and your region',ul([
+      '<b>Settings → Region &amp; Preferences</b>: change your home country, currency, weekend days, first day of the week, date style and home time zone (flight times also show in it).',
+      'Add other countries\' public holidays to see them on the Calendar.',
+      'Choose which holidays are <b>days off at work</b>, including state or regional ones. Those days aren\'t counted as leave.',
+      '<b>Leave</b> counts the work days each trip uses. Add your yearly allowance to see what\'s left. Missing holidays? Add them in <b>Leave → My holidays</b> or import an .ics file.'
     ]))}
-    ${sec((acc?'Step 3 · ':'')+'Add your first event',`${ol([
-      'Go to <b>Dashboard</b> or <b>Events</b> and tap <b>+ New Event</b>.',
-      'Give it a name (e.g. <i>Bali Diving</i>), choose a category, pick the start and end dates and the places you\'re visiting, then tap <b>Save</b>.',
-      'Open the event. Use the tabs <b>Flights</b>, <b>Hotels</b>, <b>Activities</b> and <b>Transport</b> and the <b>+ Add…</b> buttons to add bookings by hand, or let the app read them for you (Step 4).',
-      '<b>Timeline</b> shows the whole trip day by day. <b>Attachments</b> keeps tickets, vouchers and other files with the event.'
-    ])}<p class="guide-note">Categories: <b>Trip</b>, <b>Work</b>, <b>Training</b>, <b>Social</b>, <b>Personal</b> and <b>Activity</b>. Each has its own colour on the Calendar, and you can filter by them in Events.</p>`)}
-    ${sec((acc?'Step 4 · ':'')+'Let the app read your bookings (Smart Upload)',`${ol([
-      'Tap the <b>Scan</b> button at the bottom-right of the screen (or press <b>U</b> on a keyboard).',
-      'Add the booking in any of these ways: tap the box to choose a <b>PDF, photo or screenshot</b>; drag a file onto it; copy a screenshot or the email text and tap <b>Paste</b>; or open <b>Paste text</b> and paste the email in. On a computer, ⌘V / Ctrl+V also works.',
-      'A PDF and a screenshot of the same booking give the same result, so use whichever you have.',
-      'Booked through an agent such as Trip.com or Agoda? Add the <b>e-ticket and the receipt</b> together: they\'re combined into one booking with times, reference and price.',
-      'Check what it found. Every field can be edited; fix anything that\'s wrong and remove anything you don\'t want.',
-      'Choose which event it belongs to (it suggests one with matching dates) or create a new event, then tap <b>Save</b>.'
-    ])}<p class="guide-note">Works with most airline e-tickets (Singapore Airlines, Scoot, Garuda, Batik, AirAsia, Malaysia Airlines, Air India, t'way and more), Trip.com and Agoda, hotel vouchers and ferry tickets. Always give the result a quick check.</p>`)}
-    ${sec('Dashboard, search and getting around',ul([
-      '<b>Dashboard</b> shows what\'s <b>Happening now</b> (or <b>Next up</b>), anything that <b>Needs attention</b> (payments due, not enough leave, time clashes), and what\'s <b>Coming up</b>.',
-      '<b>Search</b> (top of the screen) finds trips, places, flight numbers, hotels and booking references. On a computer, press <b>/</b> to jump to it.',
-      'On a computer, the menu is on the left. Use the round arrow on its edge to make it narrower. On a phone, use the bar at the bottom; <b>More</b> has Budget, Countries, Settings, this guide and Sign out.',
-      'The sun/moon button switches between light and dark.',
-      'Keyboard shortcuts on a computer: <b>1</b> Dashboard, <b>2</b> Events, <b>3</b> Calendar, <b>4</b> Leave, <b>5</b> Budget, <b>6</b> Settings, <b>N</b> new event, <b>U</b> Smart Upload, <b>Esc</b> close a window.'
+    ${sec('Payments and budget',ul([
+      'In a booking, enter the <b>Deposit</b> and <b>Full Payment</b> amounts and a due date. The card shows the balance and the Dashboard reminds you.',
+      `Enter costs in any currency. Totals are converted to ${esc(baseCur())} as <b>estimates</b> using daily rates (adjustable in <b>Settings → Exchange Rates</b>). For exact figures, enter the amount from your bank statement.`,
+      '<b>Budget</b> totals your spending by year, event and category.'
     ]))}
-    ${sec('Track payments and your budget',ul([
-      'In any booking, fill in <b>Deposit Amount</b> (and its currency) and the <b>Full Payment</b> amount. The card shows what\'s paid and the balance left.',
-      'Set a payment due date and the Dashboard reminds you when it\'s coming up.',
-      `Enter costs in whatever currency you paid. Totals are converted to your own currency (${esc(baseCur())}). Rates update automatically and can be adjusted under <b>Settings → Exchange Rates</b>.`,
-      'Converted totals are <b>estimates</b>. Rates are published once a day and show the date they\'re from. A cost may keep the rate from the day you added it, and your bank or card will have charged its own rate and fees. For an exact figure, enter the amount from your statement in your own currency.',
-      '<b>Budget</b> (in the menu) totals your spending by year, event and category.'
-    ]))}
-    ${sec('Your country, currency and holidays',ul([
-      'Go to <b>Settings → Region &amp; Preferences</b> and pick your <b>Home country</b>. Your currency, public holidays, weekend days and date style are filled in for you.',
-      'Change any of them: for example a different currency for your budget, a Friday–Saturday weekend, or the day your week starts.',
-      '<b>Home time zone</b>: flight times are shown in each airport\'s local time, and also in your home time.',
-      'Add other countries\' public holidays (where you work, or where family lives). They show on the Calendar in different colours.',
-      'Choose which country\'s holidays are <b>days off at work</b>: those days aren\'t counted as leave. If your state or region has extra holidays, pick it there too.',
-      'Holidays for your country not listed? Add them yourself in <b>Leave → My holidays</b>, or import a holiday calendar file (.ics).'
-    ]))}
-    ${sec('Calendar, leave and countries',ul([
-      '<b>Calendar</b> shows all your events by month, with the public holidays you follow. Tap the month or year to jump to another; tap a day to see everything on it. It opens on the current month.',
-      'Switch to the list view to see the month as a list.',
-      '<b>Leave</b> counts the work days each trip uses (skipping your weekend and work holidays). Add your yearly allowance there and it shows what\'s left.',
-      '<b>Countries</b> is your travel map: tap a country to mark it visited, tap again to unmark. On a computer, hover over a country to see its name.'
-    ]))}
-    ${sec('See your trips in Apple Calendar (subscribe)',`<p>Subscribe once and your trips appear in your calendar app, and stay up to date: whenever you change something here, the calendar follows. This is one-way. Change things here, not in the calendar app.</p>
-      ${sub('1. Get your calendar link')}${ol([
-        `Go to ${APPLE}.`,
-        'Under <b>Your calendar feed</b>, tap <b>Copy URL</b>. On an iPhone, iPad or Mac you can instead tap <b>Subscribe on this device</b> and confirm, which skips the steps below for that device.',
-        'Every account has its own private link. It updates by itself whenever you change something, from any device.'
-      ])}
-      ${sub('2. Subscribe on a Mac (shows on all your Apple devices)')}${ol([
-        'Open <b>Calendar</b> → <b>File</b> → <b>New Calendar Subscription…</b>',
-        'Paste the link and click <b>Subscribe</b>.',
-        'Set <b>Location</b> to <b>iCloud</b> (so it also appears on your iPhone and iPad) and <b>Auto-refresh</b> to <b>Every hour</b>, then click <b>OK</b>.'
-      ])}
-      ${sub('Or subscribe on an iPhone or iPad')}${ol([
-        'Open <b>Settings</b> → <b>Apps</b> → <b>Calendar</b> → <b>Calendar Accounts</b> → <b>Add Account</b> → <b>Other</b> → <b>Add Subscribed Calendar</b>. (On older iOS: Settings → Calendar → Accounts.)',
-        'Paste the link, tap <b>Next</b>, then <b>Save</b>.'
-      ])}
-      ${sub('Google Calendar or Outlook')}${ul([
-        '<b>Google Calendar</b> (on a computer, at calendar.google.com): next to <b>Other calendars</b> click <b>+</b> → <b>From URL</b> → paste the link → <b>Add calendar</b>. Google updates subscribed calendars on its own schedule, which can take up to a day.',
-        '<b>Outlook</b>: <b>Add calendar</b> → <b>Subscribe from web</b> → paste the link.'
-      ])}
-      ${sub('What you\'ll see')}${ul([
-        'Each event as an all-day entry, plus your flights at their times, hotel check-ins and activities.',
-        'Reminders 7 days and 1 day before.',
-        'Appointments you brought in from Apple Calendar (next section) aren\'t repeated, so nothing shows twice.'
-      ])}
-      ${sub('Keep the link private')}<p>Anyone who has the link can see your trips, so don't share it. If it has been shared by mistake, tap <b>Reset link</b>: the old link stops working, and you subscribe again with the new one.</p>
-      ${sub('One-off calendar file')}<p>Just want a snapshot? In ${APPLE}, under <b>Calendar Export</b>, tap <b>Export Upcoming Events</b> or <b>Export All Events</b>. Open the downloaded .ics file to add the events to Apple Calendar, Google Calendar or Outlook. It won't update after later changes: export again when you need to.</p>`)}
-    ${sec('Bring your Apple Calendar appointments in',`<p>Appointments from one of your Apple calendars can appear here too, so you see everything in one place and can add them to a trip.</p>
-      ${sub('1. Share the calendar\'s link')}${ol([
-        '<b>On a Mac:</b> in Calendar, right-click the calendar in the list → <b>Sharing Settings…</b> (or <b>Share Calendar…</b>) → tick <b>Public Calendar</b> → copy the link.',
-        '<b>On an iPhone:</b> in Calendar, tap <b>Calendars</b> → the <b>ⓘ</b> next to the calendar → turn on <b>Public Calendar</b> → <b>Share Link…</b> → <b>Copy</b>.'
-      ])}
-      ${sub('2. Paste it here')}${ol([
-        `Go to ${APPLE} → <b>Inbound: Apple Calendar → Tracker</b>.`,
-        'Paste the link and tap <b>Save</b>.',
-        'New and changed appointments appear within about 10 minutes. The card shows how many have been imported.'
-      ])}
-      ${sub('3. Use them')}${ul([
-        'They show in <b>Events</b> and on the <b>Calendar</b>, marked <b>Apple Calendar</b>. They count as <b>Personal</b> and never use leave. In Events, untick <b>Apple Calendar</b> to hide them.',
-        '<b>Add one to a trip:</b> tap <b>+</b> on its card (or open it and tap <b>+ Add to event…</b>), choose whether it\'s a Flight, Hotel, Activity or Transport and which event, then tap <b>Add</b>. On a computer you can also drag its card onto an event.',
-        'It stays linked: change it in Apple Calendar and the entry here updates; delete it there and it\'s removed here.',
-        'To get rid of an Apple appointment, delete it in <b>Apple Calendar</b>. Deleting it here doesn\'t stick: it comes back with the next update.'
-      ])}
-      <p class="guide-note">A public calendar can be opened by anyone who has its link. Use a calendar meant for plans you're happy to keep that way, and don't share the link.</p>`)}
-    ${sec('Duplicates and clashes',ul([
-      'If the same booking was added twice (for example by hand and from Smart Upload, or from Apple Calendar), the event shows <b>possible duplicates</b>. Tap <b>Review &amp; merge</b>, pick which value to keep where they differ, and the two become one. Payments, scanned text and attachments are kept. Not a duplicate? Tap <b>Not a duplicate</b>.',
-      'A <b>⚠ Clash</b> label means two things happen at the same time; <b>⚠ Overlap</b> means events share dates. Tap the label to see which ones.'
-    ]))}
-    ${sec('Share or print an itinerary',ol([
-      'Open the event and tap <b>Export</b>.',
-      'Choose PDF or Excel and what to include (untick <b>Costs</b> or <b>Booking details</b> before sharing with others).',
-      'Tap <b>Generate</b>. The file downloads to your device.'
-    ]))}
-    ${sec('Back up or move your data',ul([
-      '<b>Settings → Data → Export JSON</b> downloads a complete copy of your data. Keep it somewhere safe.',
-      '<b>Export CSV</b> gives a spreadsheet summary: one row per event with its dates, places, number of bookings and total cost.',
-      '<b>Import JSON</b> brings a copy back in, for example from an older device.'
-    ]))}
-    ${!acc?'':sec('Password help and signing out',ul([
-      '<b>Sign out:</b> on a computer, <b>Sign out</b> is at the bottom of the menu, under User Guide. On a phone, tap <b>More</b> → <b>Sign out</b>. It also appears in <b>Settings → Your Account</b>.',
-      'Signing out removes your data from that device. It stays safe in your account. Always sign out on shared or borrowed devices.',
-      '<b>Forgot your password?</b> (email accounts only) On the welcome page, tap <b>Sign in with email</b> and tap <b>Forgot password?</b>. Send the request and the admin will contact you with a temporary password, which you can change after signing in. You can also message <a href="https://www.instagram.com/irn.w" target="_blank" rel="noopener noreferrer">@irn.w</a> on Instagram. Google accounts don\'t have a password here: use Google\'s own recovery.',
-      '<b>Change password:</b> while signed in, go to <b>Settings → Your Account</b> and tap <b>Change Password</b>.',
-      '<b>Delete Account</b> permanently deletes your account and everything in it. Download a copy first: <b>Settings → Data → Export JSON</b>.'
-    ]))}
-    ${!acc?'':sec('Keeping your data private',ul([
-      'Only you can see your trips. Each account can only ever read its own data; this is enforced by the database, not just by the app.',
-      'Your password is never stored or visible to anyone, including the app\'s owner. Only a scrambled version is kept to check it.',
-      `${APP_NAME} will <b>never</b> ask for your password by email or message. If someone does, it's a scam.`,
-      'Sign out on devices that aren\'t yours.',
-      'Your booking documents may contain passport numbers or other personal details. Only upload what you\'re comfortable storing.',
-      'Calendar links (the feed you subscribe to, and a public Apple calendar) work for anyone who has them. Keep them to yourself.'
+    ${sec('Apple Calendar, Google Calendar and Outlook',`${sub('See your trips in your calendar')}${ol([
+      `Go to ${APPLE} and, under <b>Your calendar feed</b>, tap <b>Subscribe on this device</b> (Mac, iPhone, iPad) or <b>Copy URL</b>.`,
+      `If you copied it, paste it into:${ul([
+        '<b>Mac:</b> Calendar → File → New Calendar Subscription. Set Location to <b>iCloud</b> (so it shows on all your Apple devices) and Auto-refresh to <b>Every hour</b>.',
+        '<b>iPhone:</b> Settings → Apps → Calendar → Calendar Accounts → Add Account → Other → Add Subscribed Calendar.',
+        '<b>Google Calendar:</b> Other calendars <b>+</b> → From URL.',
+        '<b>Outlook:</b> Add calendar → Subscribe from web.'])}`,
+      'Your events, flights, hotel check-ins and activities appear with reminders 7 days and 1 day before, and update by themselves after every change. Make changes here, not in the calendar app.'
+    ])}<p class="guide-note">Anyone with the link can see your trips. If it was shared by mistake, tap <b>Reset link</b> and subscribe again. Google Calendar can take up to a day to refresh.</p>
+      ${sub('Bring Apple Calendar appointments in')}${ol([
+        'In Apple Calendar, make the calendar public: <b>Mac</b> right-click it → Sharing Settings → tick <b>Public Calendar</b>; <b>iPhone</b> Calendars → ⓘ → <b>Public Calendar</b> → Share Link. Copy the link.',
+        `Paste it in ${APPLE} under <b>Inbound</b> and tap <b>Save</b>. Appointments arrive within about 10 minutes, marked <b>Apple Calendar</b> (Personal, no leave).`,
+        'To add one to a trip, tap <b>+</b> on its card, choose Flight, Hotel, Activity or Transport and the event. On a computer you can drag it onto the event instead. It stays in sync with Apple Calendar.',
+        'Delete Apple appointments in Apple Calendar; deleting them here doesn\'t stick.'
+      ])}<p class="guide-note">A public calendar can be opened by anyone with its link, so use one you're comfortable with. Just need a one-off copy? <b>Calendar Export</b> in the same card downloads an .ics file that doesn't update.</p>`)}
+    ${sec('Sharing, backups and your account',ul([
+      '<b>Share an itinerary:</b> open the event → <b>Export</b> → PDF or Excel. Untick Costs or Booking details before sending it to others.',
+      '<b>Back up:</b> <b>Settings → Data → Export JSON</b> saves everything; <b>Import JSON</b> brings it back. <b>Export CSV</b> gives a one-row-per-event summary.',
+      ...(acc?[
+      '<b>Sign out</b> is at the bottom of the menu (phone: <b>More</b>). It removes your data from that device only, so always sign out on shared devices.',
+      '<b>Forgot your password?</b> (email accounts) On the welcome page: <b>Sign in with email</b> → <b>Forgot password?</b>. The admin will send a temporary password, or message <a href="https://www.instagram.com/irn.w" target="_blank" rel="noopener noreferrer">@irn.w</a> on Instagram. Change it in <b>Settings → Your Account</b>.',
+      '<b>Privacy:</b> only you can see your data, enforced by the database. Nobody, including the app\'s owner, can see your password, and you\'ll never be asked for it by message. Keep calendar links to yourself, and only upload documents you\'re comfortable storing.',
+      '<b>Delete Account</b> (Settings → Your Account) permanently removes everything. Export a backup first.']:[])
     ]))}
     ${sec('Something not working?',ul([
-      '<b>“Wrong email or password”:</b> check for typos and Caps Lock, or use <b>Forgot password?</b>.',
-      '<b>Changes not showing on another device:</b> tap <b>↻ Sync Now</b> in <b>Settings → Your Account</b> on both devices.',
-      '<b>The app looks out of date:</b> reload the page (on a computer, hold Shift while clicking reload, or press ⌘⇧R / Ctrl+Shift+R).',
-      '<b>Smart Upload misread something:</b> edit the field before saving. Screenshots work best when sharp and straight. If a photo misreads, try the PDF or paste the email text.',
-      '<b>Paste does nothing on a phone:</b> copy the screenshot or text again, tap <b>Paste</b>, and tap <b>Paste</b> again if your phone asks for permission. Or save the screenshot and tap the box to choose it.',
-      '<b>Subscribed calendar not updating:</b> on a Mac, check the subscription\'s Auto-refresh setting (right-click the calendar → Get Info). iPhones and Google Calendar refresh on their own schedule, which can take a few hours.',
-      '<b>Apple appointments not coming in:</b> check that <b>Public Calendar</b> is still on for that calendar and that the link in Settings is the current one. If the card says it couldn\'t fetch your calendar, copy the link again and tap <b>Save</b>.'
+      '<b>Out of date or not syncing:</b> reload the page (⌘⇧R / Ctrl+Shift+R), or tap <b>↻ Sync Now</b> in Settings → Your Account on each device.',
+      '<b>Smart Upload misread something:</b> edit the field before saving. If a photo misreads, try the PDF or paste the email text.',
+      '<b>Paste does nothing on a phone:</b> copy again, tap <b>Paste</b> and allow it if asked, or save the screenshot and choose it.',
+      '<b>Subscribed calendar not updating:</b> on a Mac, check the subscription\'s Auto-refresh (right-click → Get Info). iPhone and Google refresh on their own schedule.',
+      '<b>Apple appointments not arriving:</b> check Public Calendar is still on and the link in Settings is current, then tap <b>Save</b> again.',
+      '<b>“Wrong email or password”:</b> check for typos and Caps Lock, or use <b>Forgot password?</b>.'
     ]))}
   </div></div>`;
 }
@@ -3705,13 +3634,8 @@ function exportUpcomingICS(){
   generateICS();
   S.events=origEvents;
 }
-function calFeedUrl(){
-  const c=getSyncConfig();
-  // This device's GitHub link, or (signed in on another device) the one saved in your account
-  const id=c.gistId&&c.gistOwner?c.gistId:_acct&&S.calFeed&&S.calFeed.gistId,own=c.gistId&&c.gistOwner?c.gistOwner:_acct&&S.calFeed&&S.calFeed.owner;
-  if(!id||!own)return null;
-  return 'https://gist.githubusercontent.com/'+own+'/'+id+'/raw/'+ICS_FILE;
-}
+// The old GitHub gist feed was retired in Oct 2026: every account now has its own feed (feedUrl)
+function calFeedUrl(){return null;}
 
 // ===== APPLE CALENDAR INBOUND IMPORT =====
 function parseICSDate(v){
@@ -6578,7 +6502,7 @@ document.addEventListener('click',e=>{
       break;
     }
     case 'feed-reset':e.preventDefault();feedResetLink();break;
-    case 'feed-howto':{e.preventDefault();nav('guide');setTimeout(()=>{const d=[...document.querySelectorAll('.guide-sec')].find(x=>/subscribe/i.test(x.querySelector('summary').textContent));if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'});}},50);break;}
+    case 'feed-howto':{e.preventDefault();nav('guide');setTimeout(()=>{const d=[...document.querySelectorAll('.guide-sec')].find(x=>/Apple Calendar/.test(x.querySelector('summary').textContent));if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'});}},50);break;}
     case 'copy-cal-url':{
       const inp=document.getElementById('cal-feed-url');
       if(inp){navigator.clipboard.writeText(inp.value).then(()=>toast('Feed URL copied — paste it into Calendar subscription')).catch(()=>{inp.select();document.execCommand('copy');toast('Feed URL copied');});}
