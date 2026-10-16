@@ -1218,6 +1218,12 @@ body.gated .main{margin-left:0!important;padding:0!important;max-width:none!impo
   .ld-how ol{grid-template-columns:1fr;gap:20px}
   .landing .btn-google,.landing .acct-email-login{max-width:none}
 }
+.dz .on-touch{display:none}
+@media(hover:none) and (pointer:coarse){.dz .on-desk{display:none}.dz .on-touch{display:block}}
+.dz-clip{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:8px}
+.dz-clip svg{width:14px;height:14px;flex:none}
+.dz-paste-area{font-size:16px}
+@media(min-width:701px){.dz-paste-area{font-size:12px}}
 </style>
 
 </head>
@@ -4451,7 +4457,7 @@ function curSel(sel,nm='currency'){sel=sel||baseCur();const l=currencyList();if(
 function dzHtml(id,showTextTab){
   const tabs=showTextTab?`<div class="dz-tabs"><button class="dz-tab active" data-dztab="file" data-dzid="${id}">Upload / Paste image</button><button class="dz-tab" data-dztab="text" data-dzid="${id}">Paste text</button></div>`:'';
   const textPane=showTextTab?`<div class="dz-text-pane" data-dzid="${id}" style="display:none"><textarea class="dz-paste-area" data-dztext="${id}" placeholder="Paste your booking confirmation email text here…\n\nSupports flight tickets, hotel reservations, activities, and transport bookings."></textarea><button class="btn btn-p dz-paste-btn" data-dzparse="${id}">Parse text</button></div>`:'';
-  return`<div class="fi full"><label>Upload / Paste booking</label>${tabs}<div class="dz" data-dz="${id}"><div class="dz-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><p>Drop file or paste screenshot here</p><p class="sm">Ctrl+V / ⌘V to paste · Supports PDF, PNG, JPG</p><input type="file" accept=".pdf,.png,.jpg,.jpeg" style="display:none" data-fi="${id}"></div>${textPane}<div class="ocr-prog" id="op-${id}" style="display:none"></div><div class="ocr-out" id="or-${id}" style="display:none"></div></div>`;
+  return`<div class="fi full"><label>Upload / Paste booking</label>${tabs}<div class="dz" data-dz="${id}"><div class="dz-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><p class="on-desk">Drop file or paste screenshot here</p><p class="sm on-desk">Ctrl+V / ⌘V to paste · Supports PDF, PNG, JPG</p><p class="on-touch">Tap to choose a PDF, photo or screenshot</p><p class="sm on-touch">Or copy it, then tap Paste below</p><input type="file" accept=".pdf,image/*" style="display:none" data-fi="${id}"></div>${textPane}<button type="button" class="btn btn-s dz-clip" data-dzclip="${id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/></svg>Paste</button><div class="ocr-prog" id="op-${id}" style="display:none"></div><div class="ocr-out" id="or-${id}" style="display:none"></div></div>`;
 }
 
 function setupDZ(dz){
@@ -4461,6 +4467,7 @@ function setupDZ(dz){
   dz.ondragleave=()=>dz.classList.remove('over');
   dz.ondrop=e=>{e.preventDefault();dz.classList.remove('over');if(e.dataTransfer.files.length)runOCR(e.dataTransfer.files[0],id);};
   inp.onchange=e=>{if(e.target.files.length)runOCR(e.target.files[0],id);};
+  const clip=dz.parentElement&&dz.parentElement.querySelector(`[data-dzclip="${id}"]`);if(clip)clip.onclick=e=>{e.preventDefault();dzClipboardPaste(id);};
   // Clipboard paste (screenshots and text) is handled by one document-level listener, so it works
   // wherever focus is — a paste event goes to the focused element, which is often outside the modal
   if(!document._dzPasteSet){
@@ -4494,6 +4501,24 @@ function setupDZ(dz){
   }
 }
 
+// Paste button: phones have no Ctrl+V, and a long-press on the drop zone offers no Paste, so read the clipboard directly
+async function dzClipboardPaste(id){
+  const c=navigator.clipboard;
+  if(!c||(!c.read&&!c.readText)){toast('This browser can\'t paste here. Use Paste text, or save the screenshot and tap the box to choose it.');return;}
+  try{
+    if(c.read){
+      const items=await c.read();
+      for(const it of items){const t=it.types.find(x=>x.startsWith('image/'));if(t){const b=await it.getType(t);runOCR(new File([b],'Pasted screenshot',{type:t}),id);return;}}
+      for(const it of items){if(it.types.includes('text/plain')){const txt=(await (await it.getType('text/plain')).text()).trim();if(txt){dzPasteText(txt,id);return;}}}
+    }else{const txt=((await c.readText())||'').trim();if(txt){dzPasteText(txt,id);return;}}
+    toast('Nothing to paste. Copy a screenshot or the booking email text first.');
+  }catch(e){
+    // Older browsers without image support: fall back to text
+    if(e&&e.name!=='NotAllowedError'&&c.readText){try{const txt=((await c.readText())||'').trim();if(txt){dzPasteText(txt,id);return;}}catch(e2){}}
+    toast(e&&e.name==='NotAllowedError'?'Pasting was blocked. Tap Paste again and allow it, or use Paste text.':'Couldn\'t read the clipboard. Try Paste text instead.');
+  }
+}
+function dzPasteText(txt,id){const ta=document.querySelector(`[data-dztext="${id}"]`);if(ta)ta.value=txt;handleTextPaste(txt,id);}
 // Handle pasted text — parse directly without OCR
 function handleTextPaste(txt,dzId){
   const p=document.getElementById('op-'+dzId),r=document.getElementById('or-'+dzId);
@@ -5848,9 +5873,14 @@ function parseBookingText(rawTxt){
       /(?:Hotel|Resort|Property|Accommodation|Stay\s*at)\s*[:#]?\s*([A-Za-z][A-Za-z\s&'\-,]{2,60})(?:\n|$)/i,
       /your\s+stay\s+at\s+([A-Z][A-Za-z\s&'\-]{2,50})/i,
     ];
-    // Vouchers print the property name on the line above its address (label OCR'd as "Adress"/"Addres" too)
-    const aboveAddr=txt.match(/(?:^|\n)[ \t]*([^\n:]{2,60}?)[ \t]*\n[ \t]*(?:Hotel\s+)?(?:Ad{1,2}re?s{1,2}|Addr\.?|Alamat)\s*[:：.]/i);
-    if(aboveAddr&&!/\b(?:booking|confirmation|voucher|pin|phone|nights?|rooms?|guests?|adults?|check)\b/i.test(aboveAddr[1]))hotelPats.push(new RegExp('('+aboveAddr[1].trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')'));
+    // Vouchers print the property name just before its address (label OCR'd as "Adress"/"Addres" too).
+    // PDFs give one long line split by wide gaps; screenshots give lines with OCR specks ("__ 1 Name", "- 4 Address:")
+    const ai=txt.search(/(?:^|[\s\W])(?:Hotel\s+)?(?:Ad{1,2}re?s{1,2}|Addr\.?|Alamat)\s*[:：.]/i);
+    if(ai>0){
+      const segs=txt.slice(Math.max(0,ai-240),ai+1).split(/\n|[ \t]{2,}/).map(x=>x.replace(/^[\W_\d\s]+/,'').replace(/[\s\W_]+$/,'').trim()).filter(x=>/[A-Za-z]{3}/.test(x));
+      const cand=segs[segs.length-1];
+      if(cand&&cand.length<=70&&!/\b(?:booking|confirmation|voucher|pin|phone|nights?|rooms?|guests?|adults?|check|disclose)\b/i.test(cand))hotelPats.unshift(new RegExp('('+cand.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')'));
+    }
     for(const pat of hotelPats){const m=txt.match(pat);if(m){r.hotelName=m[1].trim().replace(/\s+/g,' ').slice(0,60);break;}}
   }
 
@@ -5907,6 +5937,8 @@ function parseBookingText(rawTxt){
   if(addrLine){
     const A=addrLine[1].toUpperCase();let best=null;
     for(const c of CITIES){const city=c.split(',')[0].trim();const m=new RegExp('\\b'+city.toUpperCase().replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b').exec(A);if(m&&(!best||m.index<best.pos))best={city,pos:m.index};}
+    if(!best){const AL={SEKUDAI:'Johor Bahru',SKUDAI:'Johor Bahru','ISKANDAR PUTERI':'Johor Bahru',JOHOR:'Johor Bahru',KUTA:'Bali',SEMINYAK:'Bali',UBUD:'Bali',CANGGU:'Bali',SANUR:'Bali',NUSA:'Bali'};
+      for(const[k,v]of Object.entries(AL)){const m=new RegExp('\\b'+k+'\\b').exec(A);if(m&&(!best||m.index<best.pos))best={city:v,pos:m.index};}}
     if(best)r.locations=[best.city,...r.locations.filter(l=>l!==best.city&&l.split(',')[0]!==best.city)];
   }
 
