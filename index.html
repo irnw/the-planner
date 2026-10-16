@@ -1182,10 +1182,46 @@ body.sb-collapsed .topbar{left:68px}
 .d-num.weekend{color:var(--text2)!important}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
+/* ===== Sign-in gate: welcome page ===== */
+body.gated .sidebar,body.gated .sidebar-overlay,body.gated .topbar,body.gated .tabbar,body.gated .fab,body.gated .hamburger,body.gated .offline-banner{display:none!important}
+body.gated .main{margin-left:0!important;padding:0!important;max-width:none!important;width:100%}
+.gate-wait{min-height:100vh;display:flex;align-items:center;justify-content:center;opacity:.35}
+.gate-wait .wordmark{font-size:26px}
+.landing{max-width:1040px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding:28px 40px 24px}
+.ld-top{display:flex;align-items:center;justify-content:space-between}
+.ld-top .wordmark{font-size:23px}
+.ld-theme{background:none;border:0;color:var(--text2);font:inherit;font-size:9.6px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;cursor:pointer;padding:6px 0}
+.ld-theme:hover{color:var(--primary-deep)}
+.ld-hero{max-width:520px;margin:auto 0;padding:64px 0 48px}
+.ld-kick{font-size:9.6px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;color:var(--primary-deep);margin-bottom:16px}
+.ld-hero h1{font-family:var(--serif);font-weight:700;font-size:44px;line-height:1.08;letter-spacing:-.02em;margin:0 0 16px;color:var(--text)}
+.ld-sub{font-size:15px;line-height:1.6;color:var(--text2);margin:0 0 28px;max-width:440px}
+.ld-err{font-size:13px;line-height:1.5;color:var(--accent,var(--orange));margin:0 0 16px}
+.landing .btn-google{max-width:320px}
+.landing .btn-google:disabled{opacity:.5;cursor:default}
+.ld-msg{font-size:12px;color:var(--text3);margin:10px 0 0;min-height:1em;line-height:1.5}
+.landing .acct-email-login{margin-top:10px;max-width:320px}
+.ld-form{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+.ld-row{display:flex;align-items:center;gap:12px;margin-top:2px}
+.ld-row a{margin-left:auto;font-size:11px;color:var(--primary-deep)}
+.ld-how{border-top:1px solid var(--line);padding:28px 0 8px}
+.ld-how ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:32px}
+.ld-how li{display:flex;flex-direction:column;gap:6px}
+.ld-n{font-family:var(--serif);font-size:13px;color:var(--primary)}
+.ld-how b{font-family:var(--serif);font-weight:700;font-size:17px;color:var(--text)}
+.ld-how p{font-size:13px;line-height:1.55;color:var(--text2);margin:0}
+.landing .sig{margin:28px 0 0 auto;padding:0!important;max-width:none;text-align:right}
+@media(max-width:700px){
+  .landing{padding:20px 20px calc(20px + env(safe-area-inset-bottom))}
+  .ld-hero{padding:48px 0 36px;margin:0}
+  .ld-hero h1{font-size:34px}
+  .ld-how ol{grid-template-columns:1fr;gap:20px}
+  .landing .btn-google,.landing .acct-email-login{max-width:none}
+}
 </style>
 
 </head>
-<body>
+<body class="gated">
 
 <button class="hamburger" id="hamburger" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
@@ -2310,7 +2346,7 @@ async function acctOnSignIn(user){
       if(row&&row.data){S=defS();S.events=normEvents(row.data);S.leave=row.data.leave||{};S.rates=row.data.rates||S.rates;S.ratesUpdated=row.data.ratesUpdated||'';S.theme=row.data.theme||S.theme;S.prefs=row.data.prefs||S.prefs;S.calFeed=row.data.calFeed||null;S.visitedCountries=row.data.visitedCountries||[];S.appleCalUrl=row.data.appleCalUrl||'';S.appleCalUrlAt=row.data.appleCalUrlAt||0;S.lastModified=row.modified_ms||1;try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}}
     }
   }catch(e){console.error('Sign-in sync failed:',e);toast('Signed in, but syncing failed: '+(e.message||e));}
-  finally{_acctBusy=false;applyTheme();render();}
+  finally{_acctBusy=false;applyTheme();render();setTimeout(()=>{try{if(!document.getElementById('mbg').classList.contains('open'))maybeAskRegion();}catch(e){}},400);}
 }
 // Yes/No dialog that resolves true/false (Cancel or closing = false)
 function acctAsk(o){
@@ -2445,15 +2481,15 @@ function vGuideCard(){
     <p class="guide-intro">${acc?'New here? Follow steps 1 to 4 once. Each takes a minute or two. ':''}Tap a heading to open it.</p>
     ${sec(`What is ${APP_NAME}?`,`<p>One place for every trip: flights, hotels, activities and transport, what you've paid and what's still due, your leave days and the countries you've visited. You can drop in a booking email or PDF and it fills in the details for you.</p>`,firstTime)}
     ${!acc?'':sec('Step 1 · Create your account',ol([
-      'Go to <b>Settings</b>: in the sidebar on a computer, or <b>More → Settings</b> at the bottom of the screen on a phone.',
-      'In <b>Your Account</b>, tap <b>Continue with Google</b>.',
+      `Open ${APP_NAME}. Until you sign in you'll see the welcome page.`,
+      'Tap <b>Continue with Google</b>.',
       'Choose your Google account and allow it. There\'s no new password to remember and no confirmation email to wait for.',
       `You come back to ${APP_NAME}, signed in. New accounts can only be created with Google.`,
       'If the app asks <b>Move your existing data into your account?</b>, tap <b>Move my data</b> to keep what\'s on this device.'
     ]))}
     ${!acc?'':sec('Step 2 · Use it on your phone too',ol([
       'On your phone, open the same web address you use on your computer.',
-      'Go to <b>Settings → Your Account</b> and tap <b>Continue with Google</b> with the same Google account. (Older email accounts: tap <b>Sign in with email</b> and use the same email and password.)',
+      'On the welcome page, tap <b>Continue with Google</b> and pick the same Google account. (Older email accounts: tap <b>Sign in with email</b> and use the same email and password.)',
       'Make it an app icon. <b>iPhone (Safari):</b> tap the Share button (square with an arrow) → <b>Add to Home Screen</b>. <b>Android (Chrome):</b> tap ⋮ → <b>Add to Home screen</b>.',
       'Changes save automatically and show up on your other devices within about 30 seconds.'
     ]))}
@@ -2494,7 +2530,7 @@ function vGuideCard(){
       'Tap <b>Generate</b>. The file downloads to your device.'
     ]))}
     ${!acc?'':sec('Password help and signing out',ul([
-      '<b>Forgot your password?</b> (email accounts only) Go to <b>Settings → Your Account → Sign in with email</b> and tap <b>Forgot password?</b>. Send the request and the admin will contact you with a temporary password, which you can change after signing in. You can also message <a href="https://www.instagram.com/irn.w" target="_blank" rel="noopener noreferrer">@irn.w</a> on Instagram. Google accounts don\'t have a password here: use Google\'s own recovery.',
+      '<b>Forgot your password?</b> (email accounts only) On the welcome page, tap <b>Sign in with email</b> and tap <b>Forgot password?</b>. Send the request and the admin will contact you with a temporary password, which you can change after signing in. You can also message <a href="https://www.instagram.com/irn.w" target="_blank" rel="noopener noreferrer">@irn.w</a> on Instagram. Google accounts don\'t have a password here: use Google\'s own recovery.',
       '<b>Change password:</b> while signed in, tap <b>Change Password</b>.',
       '<b>Sign Out</b> removes your data from that device. It stays safe in your account. Always sign out on shared or borrowed devices.',
       '<b>Delete Account</b> permanently deletes your account and everything in it. Download a copy first: <b>Settings → Data → Export JSON</b>.'
@@ -2719,9 +2755,56 @@ function renderSearchResults(){
   box.classList.add('on');
 }
 
+// ===== SIGN-IN GATE =====
+// The app is for signed-in people only. Before sign-in: a welcome page; while the session loads: a quiet blank page.
+let _gateTO=false;setTimeout(()=>{_gateTO=true;if(!_acctReady)try{render();}catch(e){}},6000);
+function gateState(){
+  if(!SUPA_URL)return 'open';                       // local copies without accounts
+  let owner=false;try{owner=!!localStorage.getItem(OWNER_KEY);}catch(e){}
+  if(!acctEnabled())return owner?'open':'offline';   // sign-in service didn't load: keep a signed-in device usable offline
+  if(!_acctReady)return _gateTO&&owner?'open':(_gateTO?'landing':'wait');
+  return _acct?'open':'landing';
+}
+const GOOGLE_G='<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.5z"/></svg>';
+function vLanding(state){
+  if(state==='wait')return `<div class="gate-wait"><span class="wordmark">The <em>Planner</em></span></div>`;
+  const steps=[
+    ['Sign in','Continue with Google. Your plans are private: only you can see them.'],
+    ['Add a trip','Drop in a booking email, PDF or screenshot and the details fill themselves in. Or type them in.'],
+    ['Plan ahead','See your calendar, leave days, budget and payments due, on your phone and computer.']
+  ];
+  return `<div class="landing">
+    <div class="ld-top"><span class="wordmark">The <em>Planner</em></span>
+      <button class="ld-theme" data-action="ld-theme" aria-label="Switch light or dark">${S.theme==='dark'?'Light':'Dark'}</button></div>
+    <div class="ld-hero">
+      <div class="ld-kick">Trips · Leave · Budget</div>
+      <h1>Every trip, in one calm place.</h1>
+      <p class="ld-sub">Flights, stays, plans and costs, alongside your leave days and public holidays.</p>
+      ${state==='offline'?`<p class="ld-err">Can't reach the sign-in service right now. Check your connection, then reload the page.</p>`:''}
+      <button class="btn-google" data-action="acct-google"${state==='offline'?' disabled':''}>${GOOGLE_G}<span>Continue with Google</span></button>
+      <p id="acct-msg" class="ld-msg"></p>
+      <details class="acct-email-login"><summary>Have an email account? Sign in with email</summary>
+        <form onsubmit="return false" autocomplete="on" class="ld-form">
+          <div class="fi"><label>Email</label><input class="fc" id="acct-email" type="email" autocomplete="username" inputmode="email" placeholder="you@example.com"></div>
+          <div class="fi"><label>Password</label><input class="fc" id="acct-pw" type="password" autocomplete="current-password"></div>
+          <div class="ld-row"><button class="btn btn-p" data-action="acct-signin">Sign In</button><a href="#" data-action="acct-forgot">Forgot password?</a></div>
+        </form>
+      </details>
+    </div>
+    <div class="ld-how"><div class="ld-kick">How it works</div>
+      <ol>${steps.map((s,i)=>`<li><span class="ld-n">0${i+1}</span><b>${s[0]}</b><p>${s[1]}</p></li>`).join('')}</ol>
+    </div>
+    ${signatureHtml()}
+  </div>`;
+}
+// While gated, app shortcuts, file drops and pastes do nothing (typing in the sign-in fields still works)
+['keydown','paste'].forEach(t=>document.addEventListener(t,e=>{if(document.body.classList.contains('gated')&&!/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)&&e.key!=='Escape')e.stopImmediatePropagation();},true));
+['dragover','drop'].forEach(t=>document.addEventListener(t,e=>{if(document.body.classList.contains('gated')){e.preventDefault();e.stopImmediatePropagation();}},true));
 function render(){
   try{renderSidebar();restoreSidebarState();}catch(e){console.error('Sidebar error:',e);}
   const a=document.getElementById('app');
+  const gate=gateState();document.body.classList.toggle('gated',gate!=='open');
+  if(gate!=='open'){a.innerHTML=vLanding(gate);return;}
   try{
     switch(S.v){
       case 'dashboard':a.innerHTML=vDash();break;
@@ -6383,6 +6466,7 @@ document.addEventListener('click',e=>{
     case 'sync-now':cloudFullSync();break;
     case 'acct-signin':acctSignIn();break;
     case 'acct-google':acctGoogle();break;
+    case 'ld-theme':toggleTheme();render();break;
     case 'go-rates':e.preventDefault();nav('settings');setTimeout(()=>[...document.querySelectorAll('.card h3')].find(h=>/Exchange/.test(h.textContent))?.scrollIntoView({behavior:'smooth'}),50);break;
     case 'go-prefs':e.preventDefault();nav('settings');setTimeout(()=>document.getElementById('prefs-card')?.scrollIntoView({behavior:'smooth'}),50);break;
     case 'ph-cal-rm':{const p=S.prefs=JSON.parse(JSON.stringify(P()));p.holidays=(p.holidays||[]).filter(c=>c!==el.dataset.cc);if(p.workHolidays===el.dataset.cc){p.workHolidays=p.holidays[0]||'';p.region='';}saveS();render();break;}
@@ -6584,7 +6668,7 @@ document.getElementById('fab').onclick=()=>showSmartUpload();
 
 // Init
 try{render();
-  setTimeout(()=>{try{if(!_acct)maybeAskRegion();}catch(e){}},1500);
+  setTimeout(()=>{try{if(gateState()==='open')maybeAskRegion();}catch(e){}},1500);
   // Auto-sync on load
   const _initConf=getSyncConfig();
   if(acctEnabled()){acctInit().then(()=>{if(!_acct&&cloudMode()==='gist')fullSync();});}
