@@ -1292,6 +1292,55 @@ details.c-region .country-grid{margin:0 0 14px}
   .calm-week{min-height:58px}
   .cal-tap-hint{display:block;font-size:12px;color:var(--text3);margin:10px 2px 0}
 }
+/* Long-weekend finder */
+.lw-intro{font-size:13px;color:var(--text2);margin:0 0 12px;line-height:1.5}
+.lw-pick{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;font-size:12px;color:var(--text2)}
+.lw-list{display:flex;flex-direction:column}
+.lw{display:flex;align-items:center;gap:16px;padding:14px 0;border-top:1px solid var(--line)}
+.lw-big{flex:none;width:64px;text-align:center}
+.lw-big b{display:block;font-family:var(--serif);font-size:28px;line-height:1;color:var(--primary-deep)}
+.lw-big span{font-size:11px;color:var(--text3)}
+.lw-main{flex:1;min-width:0}
+.lw-dates{font-size:14px;font-weight:500;color:var(--text)}
+.lw-take{font-size:12px;color:var(--text2);margin-top:4px;line-height:1.9}
+.lw-chip{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;background:var(--primary-dim);color:var(--primary-deep);font-size:11.5px;line-height:1.6}
+.lw-hol{font-size:11.5px;color:var(--text3);margin-top:2px}
+.lw-warn{font-size:11.5px;color:var(--orange);margin-top:2px}
+.lw-plan{flex:none;font-size:11px!important}
+.lw-more{display:inline-block;margin-top:10px;font-size:12px;color:var(--primary-deep)}
+@media(max-width:700px){.lw{flex-wrap:wrap;gap:12px}.lw-big{width:52px}.lw-plan{width:100%}.lw-pick .seg{width:100%}.lw-pick .seg button{flex:1}}
+/* Travel documents */
+.doc-note{font-size:12px;line-height:1.6;color:var(--text2);background:var(--primary-dim);padding:10px 12px;margin:0 0 12px}
+.doc-list{display:flex;flex-direction:column}
+.doc{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.doc-main{flex:1;min-width:0}
+.doc-name{font-size:14px;font-weight:500;color:var(--text)}
+.doc-l4{font-family:var(--mono,monospace);font-size:12px;color:var(--text3);font-weight:400}
+.doc-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.doc-st{font-size:11px;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.doc-st.ok{background:color-mix(in srgb,var(--green) 18%,transparent);color:var(--green)}
+.doc-st.warn{background:color-mix(in srgb,var(--orange) 18%,transparent);color:var(--orange)}
+.doc-st.bad{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}
+.doc-acts{display:flex;gap:2px}
+.doc-acts .btn{font-size:11px!important;padding:4px 6px}
+.doc-warns{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.doc-w{font-size:12px;color:var(--orange);line-height:1.5}
+.doc-w.bad{color:var(--accent)}
+.doc-w span{display:block;color:var(--text3)}
+@media(max-width:700px){.doc{flex-wrap:wrap}.doc-acts{width:100%;justify-content:flex-end}}
+/* Share a trip */
+.sh-on{border-color:var(--primary)!important;color:var(--primary-deep)!important}
+.sh-intro{font-size:13px;line-height:1.6;color:var(--text2);margin:0 0 14px}
+.sh-link{display:flex;gap:6px;margin-bottom:8px}.sh-link .fc{flex:1;min-width:0;font-family:var(--mono,monospace);font-size:12px}
+.sh-native{width:100%;margin-bottom:6px}
+.sh-opts{margin:14px 0 6px;border-top:1px solid var(--line);padding-top:12px}
+.sh-h{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.sh-opt{display:flex;gap:10px;align-items:flex-start;padding:8px 0;cursor:pointer}
+.sh-opt input{margin-top:3px;flex:none;width:16px;height:16px}
+.sh-opt b{display:block;font-size:13px;font-weight:500;color:var(--text)}
+.sh-opt small{display:block;font-size:12px;color:var(--text3);line-height:1.5}
+.sh-fine{font-size:12px;color:var(--text3);margin:8px 0 12px}
+.sh-acts{display:flex;gap:8px;justify-content:space-between}
 </style>
 
 </head>
@@ -1953,8 +2002,8 @@ async function gistAPI(path,opts={}){
 
 function syncData(){
   // Extract only the data fields worth syncing (not UI state like current view)
-  const {events,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified,visitedCountries,appleCalUrl,appleCalUrlAt,prefs,calFeed}=S;const trips=events;
-  return {events,trips,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified,visitedCountries:visitedCountries||[],appleCalUrl:appleCalUrl||'',appleCalUrlAt:appleCalUrlAt||0,...(prefs?{prefs}:{}),...(calFeed?{calFeed}:{})};
+  const {events,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified,visitedCountries,appleCalUrl,appleCalUrlAt,prefs,calFeed,docs}=S;const trips=events;
+  return {events,trips,leave,rates,ratesUpdated,theme,ly,calY,calM,lastModified,visitedCountries:visitedCountries||[],appleCalUrl:appleCalUrl||'',appleCalUrlAt:appleCalUrlAt||0,...(prefs?{prefs}:{}),...(calFeed?{calFeed}:{}),...(docs?{docs}:{})};
 }
 
 // Apple Calendar URL is merged by its own timestamp (not lastModified), so a device
@@ -2341,7 +2390,7 @@ async function acctPush(){
     if(error)throw error;
     const c=getSyncConfig();c.lastPush=Date.now();setSyncConfig(c);
     updateSyncStatus('Saved to your account just now');
-    gistFeedSync();feedSync();
+    gistFeedSync();feedSync();sharesSync();
   }catch(e){console.error('Account push failed:',e);updateSyncStatus('Sync error: '+(e.message||e));}
   finally{document.querySelectorAll('.sync-dot').forEach(d=>d.classList.remove('syncing'));}
 }
@@ -2357,7 +2406,7 @@ async function acctPull(quiet){
     if(rm>(S.lastModified||0)){
       backupBeforeSync();
       S.events=mergeEvents(S.events||[],normEvents(r));
-      S.leave=r.leave||S.leave;S.rates=r.rates||S.rates;S.ratesUpdated=r.ratesUpdated||S.ratesUpdated;S.theme=r.theme||S.theme;if(r.prefs)S.prefs=r.prefs;if(r.calFeed)S.calFeed=r.calFeed;
+      S.leave=r.leave||S.leave;S.rates=r.rates||S.rates;S.ratesUpdated=r.ratesUpdated||S.ratesUpdated;S.theme=r.theme||S.theme;if(r.prefs)S.prefs=r.prefs;if(r.calFeed)S.calFeed=r.calFeed;if(r.docs)S.docs=r.docs;
       S.lastModified=rm;changed=true;
     }
     const sbApple=await acctAppleFeed();
@@ -2446,7 +2495,7 @@ async function acctOnSignIn(user){
         ?{title:'Add this device\'s data to your account?',body:`This device has <b>${n} event${n===1?'':'s'}</b> that aren't saved to any account. Your account already has <b>${remoteN}</b>.<br><br><b>Add them</b> to combine both (nothing is lost). <b>Don't add</b> keeps a backup on this device and shows only your account's data.`,yes:'Add them',no:"Don't add",warn:true}
         :{title:'Move your existing data into your account?',body:`This device has <b>${n} event${n===1?'':'s'}</b>${getSyncConfig().token?' (including everything from your GitHub sync)':''}. Move it into your new account so it's private to you and available on any device you sign in to.<br><br>A backup copy stays on this device${getSyncConfig().token?' and in your GitHub gist':''} until you're sure everything is there.`,yes:'Move my data',no:'Start empty',warn:true});
       if(choice){
-        if(row&&row.data){S.events=mergeEvents(normEvents(row.data),S.events||[]);S.leave={...(row.data.leave||{}),...(S.leave||{})};if(!S.prefs&&row.data.prefs)S.prefs=row.data.prefs;}
+        if(row&&row.data){S.events=mergeEvents(normEvents(row.data),S.events||[]);S.leave={...(row.data.leave||{}),...(S.leave||{})};if(!S.prefs&&row.data.prefs)S.prefs=row.data.prefs;if(row.data.docs){const ids=new Set((S.docs||[]).map(d=>d.id));S.docs=[...(S.docs||[]),...row.data.docs.filter(d=>!ids.has(d.id))];}}
         S.lastModified=Date.now();
         localStorage.setItem(OWNER_KEY,user.id);
         _acctBusy=false;await acctPush();
@@ -2455,12 +2504,12 @@ async function acctOnSignIn(user){
       }else{
         backupBeforeSync();
         S=defS();
-        if(row&&row.data){S.events=normEvents(row.data);S.leave=row.data.leave||{};S.rates=row.data.rates||S.rates;S.prefs=row.data.prefs||S.prefs;S.lastModified=row.modified_ms||1;}
+        if(row&&row.data){S.events=normEvents(row.data);S.leave=row.data.leave||{};S.rates=row.data.rates||S.rates;S.prefs=row.data.prefs||S.prefs;S.docs=row.data.docs||S.docs;S.lastModified=row.modified_ms||1;}
         localStorage.setItem(OWNER_KEY,user.id);try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}
       }
     }else{
       localStorage.setItem(OWNER_KEY,user.id);
-      if(row&&row.data){S=defS();S.events=normEvents(row.data);S.leave=row.data.leave||{};S.rates=row.data.rates||S.rates;S.ratesUpdated=row.data.ratesUpdated||'';S.theme=row.data.theme||S.theme;S.prefs=row.data.prefs||S.prefs;S.calFeed=row.data.calFeed||null;S.visitedCountries=row.data.visitedCountries||[];S.appleCalUrl=row.data.appleCalUrl||'';S.appleCalUrlAt=row.data.appleCalUrlAt||0;S.lastModified=row.modified_ms||1;try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}}
+      if(row&&row.data){S=defS();S.events=normEvents(row.data);S.leave=row.data.leave||{};S.rates=row.data.rates||S.rates;S.ratesUpdated=row.data.ratesUpdated||'';S.theme=row.data.theme||S.theme;S.docs=row.data.docs||[];S.prefs=row.data.prefs||S.prefs;S.calFeed=row.data.calFeed||null;S.visitedCountries=row.data.visitedCountries||[];S.appleCalUrl=row.data.appleCalUrl||'';S.appleCalUrlAt=row.data.appleCalUrlAt||0;S.lastModified=row.modified_ms||1;try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}}
     }
   }catch(e){console.error('Sign-in sync failed:',e);toast('Signed in, but syncing failed: '+(e.message||e));}
   finally{_acctBusy=false;applyTheme();render();feedSync();setTimeout(()=>{try{if(!document.getElementById('mbg').classList.contains('open'))maybeAskRegion();}catch(e){}},400);}
@@ -2614,10 +2663,10 @@ function vGuideCard(){
       'Check and edit what it found, choose the event (it suggests one), then tap <b>Save</b>.'
     ])}${sub('Duplicates and clashes')}<p>If a booking was added twice, the event offers <b>Review &amp; merge</b>: pick the values to keep and the two become one (payments and attachments are kept). <b>⚠ Clash</b> means two things at the same time; <b>⚠ Overlap</b> means events share dates. Tap the label to see which.</p>`)}
     ${sec('Dashboard, calendar and countries',ul([
-      '<b>Dashboard</b> shows what\'s happening now or next, anything that needs attention (payments due, leave short, clashes) and what\'s coming up.',
+      '<b>Dashboard</b> shows what\'s happening now or next, anything that needs attention (payments due, leave short, clashes, documents expiring), your coming trips and, in a short list, the next 7 days of Apple Calendar appointments.',
       '<b>Search</b> at the top finds trips, places, flight numbers, hotels and booking references. Press <b>/</b> on a computer.',
-      '<b>Calendar</b> shows everything by month with your public holidays. Tap the month or year to jump, tap a day for its details, or switch to the list view.',
-      '<b>Countries</b> is your travel map: tap a country to mark it visited.',
+      '<b>Calendar</b> shows everything by month with your public holidays. Tap the month or year to jump, tap a day for its details, or switch to the list view. On a phone the month shows colours only: tap a day to see what\'s on. Open a trip from the Calendar and its back link returns to the same month.',
+      '<b>Countries</b> is your travel map: tap a country on the map or in a region list to mark it visited. <b>Travel stats</b> shows your trips, flights, time in the air, hotel nights, most-visited countries and airlines, by year.',
       'On a phone, Budget, Countries, Settings, this guide and Sign out are under <b>More</b>. On a computer, the round arrow on the menu\'s edge makes it narrower.',
       'Shortcuts on a computer: <b>1–6</b> switch pages, <b>N</b> new event, <b>U</b> Smart Upload, <b>Esc</b> close.'
     ]))}
@@ -2625,7 +2674,8 @@ function vGuideCard(){
       '<b>Settings → Region &amp; Preferences</b>: change your home country, currency, weekend days, first day of the week, date style and home time zone (flight times also show in it).',
       'Add other countries\' public holidays to see them on the Calendar.',
       'Choose which holidays are <b>days off at work</b>, including state or regional ones. Those days aren\'t counted as leave.',
-      '<b>Leave</b> counts the work days each trip uses. Add your yearly allowance to see what\'s left. Missing holidays? Add them in <b>Leave → My holidays</b> or import an .ics file.'
+      '<b>Leave</b> counts the work days each trip uses. Add your yearly allowance to see what\'s left. Missing holidays? Add them in <b>Leave → My holidays</b> or import an .ics file.',
+      '<b>Long weekends</b> (on the Leave page) suggests the best days to take off around public holidays. Choose how many leave days you\'d use, then tap <b>Plan a trip</b> to create an event for those dates. Trips you\'ve already planned are left out.'
     ]))}
     ${sec('Payments and budget',ul([
       'In a booking, enter the <b>Deposit</b> and <b>Full Payment</b> amounts and a due date. The card shows the balance and the Dashboard reminds you.',
@@ -2649,7 +2699,9 @@ function vGuideCard(){
         'Delete Apple appointments in Apple Calendar; deleting them here doesn\'t stick.'
       ])}<p class="guide-note">A public calendar can be opened by anyone with its link, so use one you're comfortable with. Just need a one-off copy? <b>Calendar Export</b> in the same card downloads an .ics file that doesn't update.</p>`)}
     ${sec('Sharing, backups and your account',ul([
-      '<b>Share an itinerary:</b> open the event → <b>Export</b> → PDF or Excel. Untick Costs or Booking details before sending it to others.',
+      '<b>Share a trip:</b> open it → <b>Share</b> → <b>Create link</b>, then send the link. Your travel companions get a read-only page that updates when you change the trip, without needing an account. Booking references, costs and notes are left out unless you tick them. <b>Stop sharing</b> turns the link off.',
+      '<b>Print or send a file:</b> open the event → <b>Export</b> → PDF or Excel. Untick Costs or Booking details before sending it to others.',
+      '<b>Travel documents</b> (Settings): add passports, visas and IDs with their expiry dates to get reminders, including when a passport has under 6 months left after a trip. Don\'t enter full document numbers; the last 4 characters are enough.',
       '<b>Back up:</b> <b>Settings → Data → Export JSON</b> saves everything; <b>Import JSON</b> brings it back. <b>Export CSV</b> gives a one-row-per-event summary.',
       ...(acc?[
       '<b>Sign out</b> is at the bottom of the menu (phone: <b>More</b>). It removes your data from that device only, so always sign out on shared devices.',
@@ -3053,6 +3105,7 @@ function vDash(){
   if(lyTotals.tot&&leaveAhead>lyTotals.bal){const sh=+(leaveAhead-lyTotals.bal).toFixed(1);att.push({o:999,html:`<div class="att bad" data-action="nav" data-to="leave"><span class="att-ic">🗓</span><div><b>${sh} more leave day${sh!==1?'s':''} needed this year</b><span>Upcoming trips need ${leaveAhead} not yet applied for; you have ${lyTotals.bal} left</span></div><span class="att-go">›</span></div>`});}
   const tc=live.filter(t=>findClashes(t,t.id).some(c=>c.severity==='time'));
   if(tc.length)att.push({o:998,html:`<div class="att bad" data-action="show-all-clashes"><span class="att-ic">⚠</span><div><b>${tc.length} time clash${tc.length>1?'es':''}</b><span>${esc(tc.slice(0,3).map(t=>t.name).join(', '))}${tc.length>3?'…':''}</span></div><span class="att-go">›</span></div>`});
+  docWarnings().forEach(w=>att.push({o:w.o,html:`<div class="att${w.bad?' bad':''}" data-action="${w.tid?'view':'nav'}" ${w.tid?`data-id="${w.tid}"`:'data-to="settings"'}><span class="att-ic">🛂</span><div><b>${esc(w.text)}</b><span>${esc(w.sub)}</span></div><span class="att-go">›</span></div>`}));
   att.sort((a,b)=>a.o-b.o);
   const heroHtml=hero?(()=>{const t=hero,st=eventStatus(t),fl=(t.flights||[]).length,ho=(t.hotels||[]).length,ac=(t.activities||[]).length,cost=eCost(t),ps=eventPaymentStatus(t);
     const facts=[fl?`<i class="ic ic-fl"></i>${fl} flight${fl>1?'s':''}`:'',ho?`<i class="ic ic-ho"></i>${ho} hotel${ho>1?'s':''}`:'',ac?`<i class="ic ic-ac"></i>${ac} activit${ac>1?'ies':'y'}`:'',cost?fmtM(cost,baseCur()):'',ps?`<span style="color:${ps.color}">${ps.status==='paid'?'✓':'●'} ${esc(ps.label)}</span>`:''].filter(Boolean);
@@ -3151,7 +3204,8 @@ function vDetail(){
       <h2>${esc(t.name)}</h2>
       <div class="subtitle">${fmt(t.startDate)} — ${fmt(t.endDate)} · ${dayN(t.startDate)} · ${days(t.startDate,t.endDate)} days, ${nights(t.startDate,t.endDate)} nights</div>
     </div>
-    <div style="display:flex;gap:6px">
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      ${t.source!=='apple'&&acctEnabled()?`<button class="btn btn-s${_shares&&_shares.has(t.id)?' sh-on':''}" data-action="share-trip" data-id="${t.id}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:3px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>${_shares&&_shares.has(t.id)?'Shared':'Share'}</button>`:''}
       <button class="btn btn-s" data-action="export-event" data-id="${t.id}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:3px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Export</button>
       ${t.source==='apple'?`<button class="btn btn-p" data-action="apple-attach" data-id="${t.id}">+ Add to event…</button>`:''}
       <button class="btn btn-s" data-action="edit-event" data-id="${t.id}">Edit</button>
@@ -3490,6 +3544,191 @@ function leaveJobTotals(jobs){
   const tot=al+bp+ot+ph;
   return{al,bp,ot,ph,taken,tot,bal:tot-taken};
 }
+// ===== LONG-WEEKEND FINDER (Leave page) =====
+// The best stretches off for a few days of leave: bridges between your weekend and the holidays that are days off at work.
+function longWeekends(y,maxLeave){
+  const td=ymd(new Date()),start=String(y)>td.slice(0,4)?`${y}-01-01`:td,end=`${y}-12-31`;
+  if(start>end)return[];
+  const days=[];for(let c=new Date(start+'T00:00:00');ymd(c)<=end;c.setDate(c.getDate()+1))days.push(ymd(c));
+  const off=days.map(d=>!isWorkday(d)),hol=days.map(d=>!isWeekendDow(new Date(d+'T00:00:00').getDay())&&isWorkPH(d));
+  // Days already taken: trips, work trips and training you've planned, and leave you've applied for
+  const busy=new Set();(S.events||[]).forEach(t=>{if(t.source==='apple'||!t.startDate||!t.endDate||!(['trip','work','training'].includes(t.category||'trip')||t.requiresLeave===true))return;for(let c=new Date(t.startDate+'T00:00:00');ymd(c)<=t.endDate;c.setDate(c.getDate()+1))busy.add(ymd(c));});
+  days.forEach(d=>{if(getAppliedForDate(d))busy.add(d);});
+  const cands=[];
+  // Every stretch of days off plus leave days that starts after a workday and ends before one
+  for(let a=0;a<days.length;a++){
+    if(a>0&&off[a-1])continue;
+    let w=0;const take=[];
+    for(let b=a;b<days.length&&b-a<16;b++){
+      if(!off[b]){w++;take.push(days[b]);if(w>maxLeave)break;}
+      if(b+1<days.length&&off[b+1])continue;// a following day off belongs in the stretch
+      if(!w)continue;
+      const span=days.slice(a,b+1),L=span.length;
+      if(!hol.slice(a,b+1).some(Boolean)||L<w+3)continue;// must use a holiday and beat a normal weekend
+      if(span.some(d=>busy.has(d)))continue;
+      cands.push({from:days[a],to:days[b],len:L,leave:w,take:[...take],hols:[...new Set(span.filter((d,i)=>hol[a+i]).flatMap(d=>getPH(d).filter(h=>h.country===P().workHolidays||h.country==='MINE').map(h=>h.n)))]});
+    }
+  }
+  // Longest break within the leave allowed (at least 2 days off per leave day), then best value; overlaps are dropped
+  cands.sort((x,z)=>z.len-x.len||z.len/z.leave-x.len/x.leave);
+  for(let i=cands.length-1;i>=0;i--)if(cands[i].len/cands[i].leave<2)cands.splice(i,1);
+  const pick=[];for(const c of cands)if(!pick.some(p=>!(c.to<p.from||c.from>p.to)))pick.push(c);
+  return pick.sort((x,z)=>x.from.localeCompare(z.from));
+}
+// ===== SHARE A TRIP (read-only link for travel companions; needs supabase/shared_trips.sql) =====
+const SHARE_BASE='https://theplanner.pages.dev/share/';
+let _shares=null;// Map event id → {token, opts, hash}; null until loaded for this account
+let _sharesMe=null,_sharesMissing=false;
+function shareSnapshot(t,o){
+  const pick=(e,keys)=>Object.fromEntries(keys.filter(k=>e[k]!=null&&e[k]!=='').map(k=>[k,e[k]]));
+  const ref=o.refs?['pnr','bookingNumber','bookingDetails']:[],cost=o.costs?['cost','currency']:[];
+  return{name:t.name,startDate:t.startDate,endDate:t.endDate,locations:t.locations||[],sharedBy:acctFirstName()||'',opts:{costs:!!o.costs,refs:!!o.refs,notes:!!o.notes},
+    ...(o.notes&&t.notes?{notes:t.notes}:{}),
+    flights:(t.flights||[]).map(f=>pick(f,['airline','flightNumber','from','to','departureTime','arrivalTime','duration',...ref,...cost])),
+    hotels:(t.hotels||[]).map(h=>pick(h,['name','checkIn','checkOut',...ref,...cost])),
+    activities:(t.activities||[]).map(a=>pick(a,['name','date','endDate','time','location','duration',...ref,...cost])),
+    transport:(t.transport||[]).map(x=>pick(x,['type','name','date','time','location','duration',...ref,...cost]))};
+}
+async function sharesLoad(){
+  if(!_acct)return null;const me=_acct.id;
+  if(_shares&&_sharesMe===me)return _shares;
+  const{data,error}=await sbClient().from('shared_trip').select('token,event_id,snapshot');
+  if(!_stillMe(me))return null;
+  if(error){_sharesMissing=/PGRST205|42P01|schema cache|shared_trip/i.test((error.code||'')+' '+(error.message||''));return null;}
+  _sharesMissing=false;_sharesMe=me;_shares=new Map((data||[]).map(r=>[r.event_id,{token:r.token,opts:(r.snapshot&&r.snapshot.opts)||{},hash:JSON.stringify(r.snapshot)}]));
+  return _shares;
+}
+// After each save: refresh the shared copy of any trip that changed; remove copies of deleted trips
+async function sharesSync(){
+  if(!_acct||_appErrorState)return;
+  const m=await sharesLoad();if(!m||!m.size)return;
+  for(const[eid,sh]of [...m]){
+    const t=(S.events||[]).find(e=>e.id===eid);
+    if(!t){await sbClient().from('shared_trip').delete().eq('event_id',eid);m.delete(eid);continue;}
+    const snap=shareSnapshot(t,sh.opts),h=JSON.stringify(snap);if(h===sh.hash)continue;
+    const{error}=await sbClient().from('shared_trip').update({snapshot:snap}).eq('event_id',eid);
+    if(!error)sh.hash=h;
+  }
+}
+async function showShareTrip(tid){
+  const t=S.events.find(x=>x.id===tid);if(!t)return;
+  if(!_acct){toast('Sign in to share a trip');return;}
+  modal('Share this trip','<p class="quiet" style="margin:0">Loading…</p>',null,{noSave:true});
+  const m=await sharesLoad();
+  if(!m){document.querySelector('#mbg .modal-body').innerHTML=_sharesMissing?'<p style="font-size:13px;color:var(--text2);margin:0">Sharing isn\'t switched on yet. Please try again later.</p>':'<p style="font-size:13px;color:var(--text2);margin:0">Couldn\'t load sharing right now. Check your connection and try again.</p>';return;}
+  renderShareModal(t);
+}
+function renderShareModal(t){
+  const sh=_shares.get(t.id),o=sh?sh.opts:{costs:false,refs:false,notes:false},url=sh?SHARE_BASE+sh.token:'';
+  const opt=(k,label,hint)=>`<label class="sh-opt"><input type="checkbox" data-shopt="${k}"${o[k]?' checked':''}><span><b>${label}</b><small>${hint}</small></span></label>`;
+  const body=`<p class="sh-intro">Send a <b>read-only</b> page of <b>${esc(t.name)}</b> to the people you're travelling with. They don't need an account. They see the dates, flights, hotels, activities and transport, and the page updates when you change the trip. They can't edit anything or see your other trips.</p>
+    ${url?`<div class="sh-link"><input class="fc" readonly value="${esc(url)}" id="sh-url" onclick="this.select()"><button class="btn btn-p" data-action="sh-copy">Copy</button></div>${navigator.share?'<button class="btn btn-s sh-native" data-action="sh-native">Send…</button>':''}`:''}
+    <div class="sh-opts"><div class="sh-h">Also include</div>
+      ${opt('refs','Booking references','Flight PNRs and confirmation numbers. Anyone with these and your surname may be able to manage a booking, so only include them if needed.')}
+      ${opt('costs','Costs','What each booking cost.')}
+      ${opt('notes','Trip notes','The notes on this trip.')}</div>
+    <p class="sh-fine">Anyone with the link can open it, so share it only with people you trust.</p>
+    <div class="sh-acts">${url?`<button class="btn btn-d" data-action="sh-stop">Stop sharing</button><button class="btn btn-p" data-action="sh-save">Update link</button>`:`<button class="btn btn-p" data-action="sh-create" style="width:100%">Create link</button>`}</div>
+    <p id="sh-msg" style="font-size:12px;color:var(--text3);margin:8px 0 0"></p>`;
+  const mb=document.querySelector('#mbg .modal-body');if(mb)mb.innerHTML=body;
+  const mo=document.querySelector('#mbg .modal');if(mo)mo.dataset.shareTid=t.id;
+}
+const _shOpts=()=>{const o={};document.querySelectorAll('[data-shopt]').forEach(i=>o[i.dataset.shopt]=i.checked);return o;};
+async function shareSave(tid,create){
+  const t=S.events.find(x=>x.id===tid);if(!t||!_acct)return;const me=_acct.id,o=_shOpts(),snap=shareSnapshot(t,o);
+  const msg=document.getElementById('sh-msg');if(msg)msg.textContent=create?'Creating link…':'Updating…';
+  const q=create?sbClient().from('shared_trip').upsert({user_id:me,event_id:t.id,snapshot:snap},{onConflict:'user_id,event_id'}).select('token').single()
+    :sbClient().from('shared_trip').update({snapshot:snap}).eq('event_id',t.id).select('token').single();
+  const{data,error}=await q;if(!_stillMe(me))return;
+  if(error||!data){if(msg){msg.style.color='var(--accent)';msg.textContent='Couldn\'t save: '+((error&&error.message)||'try again');}return;}
+  _shares.set(t.id,{token:data.token,opts:o,hash:JSON.stringify(snap)});renderShareModal(t);
+  toast(create?'Link ready. Copy it and send it to your travel companions.':'Shared page updated');render();
+}
+async function shareStop(tid){
+  const t=S.events.find(x=>x.id===tid);
+  const ok=await acctAsk({title:'Stop sharing this trip?',body:'The link stops working straight away for everyone who has it. You can share again later, with a new link.',yes:'Stop sharing',no:'Cancel'});
+  if(!ok)return;
+  const{error}=await sbClient().from('shared_trip').delete().eq('event_id',tid);
+  if(error){toast('Couldn\'t stop sharing: '+error.message);return;}
+  _shares.delete(tid);toast('Sharing stopped');render();
+}
+// ===== TRAVEL DOCUMENTS (Settings): expiry reminders only =====
+const DOC_TYPES={passport:'Passport',visa:'Visa',id:'ID card',permit:'Residence / work permit',other:'Other'};
+const _addMonths=(d,n)=>{const x=new Date(d+'T00:00:00');x.setMonth(x.getMonth()+n);return ymd(x);};
+// Warnings for the Dashboard and Settings: [{doc?, text, sub, bad, o}]
+function docWarnings(){
+  const docs=S.docs||[];if(!docs.length)return[];
+  const td=ymd(new Date()),out=[];
+  const trips=(S.events||[]).filter(t=>t.source!=='apple'&&t.startDate&&t.endDate&&t.endDate>=td&&['trip','work','training'].includes(t.category||'trip')).sort((a,b)=>a.startDate.localeCompare(b.startDate));
+  const home=COUNTRY_ISO2&&Object.keys(COUNTRY_DATA).find(id=>(COUNTRY_ISO2[id]||'').toUpperCase()===(P().country||''));
+  docs.forEach(d=>{if(!d.expiry)return;const n=daysUntil(d.expiry);
+    if(n<0)out.push({o:n,bad:true,text:`${docName(d)} has expired`,sub:`Expired ${fmt(d.expiry)}`});
+    else if(n<=90)out.push({o:n,bad:n<=30,text:`${docName(d)} expires ${fmtS(d.expiry)}`,sub:`${n} day${n!==1?'s':''} left`});});
+  // Many countries want 6 months' passport validity after you leave
+  const pp=docs.filter(d=>d.type==='passport'&&d.expiry);
+  if(pp.length){
+    const best=[...pp].sort((a,b)=>b.expiry.localeCompare(a.expiry))[0];
+    const hit=trips.filter(t=>(tripCountries(t).some(c=>c!==home)||!tripCountries(t).length)&&!pp.some(d=>d.expiry>=_addMonths(t.endDate,6)));
+    if(hit.length){// one warning for all affected trips, named after the first
+      const over=hit.filter(t=>best.expiry<t.endDate),f=(over[0]||hit[0]),more=(over.length||hit.length)-1;
+      out.push({o:daysUntil(f.startDate),bad:!!over.length,tid:f.id,
+        text:over.length?`Passport expires before ${f.name}${more>0?` and ${more} more trip${more>1?'s':''}`:''}`:`Passport has under 6 months left for ${hit.length} trip${hit.length>1?'s':''}`,
+        sub:`${docName(best)} expires ${fmt(best.expiry)}${over.length?'':` · from ${f.name} (${fmtS(f.startDate)})`}. Many countries ask for 6 months' validity.`});}
+  }
+  // A visa for a country you're visiting that runs out before the trip ends
+  docs.filter(d=>d.type==='visa'&&d.expiry&&d.country).forEach(d=>{
+    trips.filter(t=>tripCountries(t).includes(String(d.country))&&d.expiry<t.endDate&&d.expiry>=t.startDate.slice(0,4)+'-01-01').forEach(t=>
+      out.push({o:daysUntil(t.startDate),bad:true,text:`${docName(d)} runs out before ${t.name} ends`,sub:`Visa ends ${fmt(d.expiry)} · trip ends ${fmt(t.endDate)}`,tid:t.id}));});
+  return out.sort((a,b)=>a.o-b.o);
+}
+function docName(d){return (d.label&&d.label.trim())||[COUNTRY_DATA[d.country]||'',DOC_TYPES[d.type]||'Document'].filter(Boolean).join(' ');}
+function vDocsCard(){
+  const docs=[...(S.docs||[])].sort((a,b)=>(a.expiry||'9').localeCompare(b.expiry||'9')),warn=docWarnings();
+  const status=d=>{if(!d.expiry)return'';const n=daysUntil(d.expiry);return n<0?'<span class="doc-st bad">Expired</span>':n<=90?`<span class="doc-st warn">${n} days left</span>`:'<span class="doc-st ok">Valid</span>';};
+  return `<div class="card" id="docs-card" style="margin-bottom:16px"><div class="card-header"><h3>Travel documents</h3><button class="btn btn-p" data-action="doc-add" style="font-size:11px">+ Add</button></div><div class="card-body">
+    <p class="doc-note"><b>For reminders only.</b> Add the type, country and expiry date and ${APP_NAME} warns you before a document runs out, including when a passport has under 6 months left after a trip. Please <b>don't enter full passport, visa or ID numbers</b>; the last 4 characters are enough to tell documents apart. This is stored in your account, synced to your devices and visible only to you. Delete an entry when you no longer need it.</p>
+    ${docs.length?`<div class="doc-list">${docs.map(d=>`<div class="doc"><div class="doc-main"><div class="doc-name">${esc(docName(d))}${d.last4?` <span class="doc-l4">··${esc(d.last4)}</span>`:''}</div><div class="doc-sub">${esc(DOC_TYPES[d.type]||'Document')}${d.expiry?' · expires '+fmt(d.expiry):''}</div></div>${status(d)}<div class="doc-acts"><button class="btn btn-ghost" data-action="doc-edit" data-id="${d.id}">Edit</button><button class="btn btn-ghost" style="color:var(--accent)" data-action="doc-del" data-id="${d.id}">Delete</button></div></div>`).join('')}</div>`:'<p class="quiet" style="margin:0;font-size:13px">No documents yet.</p>'}
+    ${warn.length?`<div class="doc-warns">${warn.map(w=>`<div class="doc-w${w.bad?' bad':''}">⚠ <b>${esc(w.text)}</b><span>${esc(w.sub)}</span></div>`).join('')}</div>`:''}
+  </div></div>`;
+}
+function fDoc(d){
+  const e=!!d;d=d||{type:'passport',country:'',label:'',last4:'',expiry:''};
+  const countries=Object.entries(COUNTRY_DATA).sort((a,b)=>a[1].localeCompare(b[1]));
+  modal(e?'Edit document':'Add a travel document',`<div class="fg">
+    <div class="fi"><label>Type</label><select class="fc" name="dtype">${Object.entries(DOC_TYPES).map(([k,v])=>`<option value="${k}"${d.type===k?' selected':''}>${v}</option>`).join('')}</select></div>
+    <div class="fi"><label id="doc-c-label">${d.type==='visa'?'Visa for':'Issued by'}</label><select class="fc" name="dcountry"><option value="">Choose a country…</option>${countries.map(([id,n])=>`<option value="${id}"${String(d.country)===id?' selected':''}>${esc(n)}</option>`).join('')}</select></div>
+    <div class="fi"><label>Expiry date</label><input class="fc" type="date" name="dexp" value="${esc(d.expiry||'')}"></div>
+    <div class="fi"><label>Last 4 characters <span style="font-weight:400;color:var(--text3)">(optional)</span></label><input class="fc" name="dl4" maxlength="4" autocomplete="off" value="${esc(d.last4||'')}" placeholder="e.g. 123A"></div>
+    <div class="fi full"><label>Name <span style="font-weight:400;color:var(--text3)">(optional, e.g. "My passport", "Mum's passport")</span></label><input class="fc" name="dlabel" maxlength="40" value="${esc(d.label||'')}"></div>
+  </div><p class="doc-note" style="margin:12px 0 0">Only the last 4 characters, never the full number.</p><p id="doc-msg" style="font-size:12px;color:var(--accent);margin:8px 0 0"></p>`,()=>{
+    const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value.trim();
+    const exp=g('dexp'),l4=g('dl4').replace(/\s/g,'');
+    if(!exp){document.getElementById('doc-msg').textContent='Add the expiry date: it\'s what the reminders use.';return false;}
+    if(l4&&!/^[A-Za-z0-9]{1,4}$/.test(l4)){document.getElementById('doc-msg').textContent='Use up to 4 letters or numbers.';return false;}
+    const nd={id:d.id||uid(),type:g('dtype'),country:g('dcountry'),expiry:exp,last4:l4.toUpperCase(),label:g('dlabel')};
+    S.docs=(S.docs||[]).filter(x=>x.id!==nd.id);S.docs.push(nd);saveS();render();toast(e?'Document updated':'Document added');
+  },{saveLabel:e?'Save':'Add'});
+  setTimeout(()=>{const m=document.querySelector('.modal');const t=m&&m.querySelector('[name=dtype]');if(t)t.onchange=()=>{document.getElementById('doc-c-label').textContent=t.value==='visa'?'Visa for':'Issued by';};},30);
+}
+function vLongWeekends(y,balance){
+  const max=S._lwMax||2,list=longWeekends(y,max),open=!!S._lwAll,shown=open?list:list.slice(0,3);
+  const dd=d=>new Date(d+'T00:00:00').toLocaleDateString(dloc(),{weekday:'short',day:'numeric',month:'short'});
+  const holLabel=P().workHolidays?phLabel(P().workHolidays):'your';
+  return `<div class="card lw-card" style="margin-bottom:16px"><div class="card-header"><h3>Long weekends</h3></div><div class="card-body">
+    <p class="lw-intro">The best days to take off in ${y}, using your weekend and ${esc(holLabel)} holidays. Trips you've planned are left out.</p>
+    <div class="lw-pick"><span>Use up to</span><div class="seg" role="group" aria-label="Leave days to use">${[1,2,3,4].map(n=>`<button class="${n===max?'on':''}" data-action="lw-max" data-n="${n}">${n} day${n>1?'s':''}</button>`).join('')}</div></div>
+    ${list.length?`<div class="lw-list">${shown.map(c=>`<div class="lw">
+        <div class="lw-big"><b>${c.len}</b><span>days off</span></div>
+        <div class="lw-main"><div class="lw-dates">${dd(c.from)} – ${dd(c.to)}</div>
+          <div class="lw-take">Take ${c.leave} day${c.leave>1?'s':''} of leave: ${c.take.map(d=>`<span class="lw-chip">${dd(d)}</span>`).join('')}</div>
+          ${c.hols.length?`<div class="lw-hol">${esc(c.hols.join(' · '))}</div>`:''}
+          ${balance!=null&&c.leave>balance?`<div class="lw-warn">More than the ${balance} day${balance!==1?'s':''} you have left</div>`:''}</div>
+        <button class="btn btn-s lw-plan" data-action="lw-plan" data-from="${c.from}" data-to="${c.to}">Plan a trip</button>
+      </div>`).join('')}</div>
+      ${list.length>3?`<a href="#" class="lw-more" data-action="lw-all">${open?'Show fewer':`Show all ${list.length}`}</a>`:''}`
+    :`<p class="quiet" style="margin:6px 0 0;font-size:13px">No long weekends left in ${y} for ${max} day${max>1?'s':''} of leave. Try a higher number above${P().workHolidays?'':', or choose your work holidays in Settings → Region &amp; Preferences'}.</p>`}
+  </div></div>`;
+}
 function vLeave(){
   const yrs=Object.keys(S.leave).sort((a,b)=>b-a);
   const y=S.ly||yrs[0]||2026;
@@ -3531,6 +3770,7 @@ function vLeave(){
       </div></div>`;
     })():''}
 
+    ${vLongWeekends(y,totals.tot?Math.max(0,+(totals.bal-leaveRequired).toFixed(1)):null)}
     <div class="card" style="margin-bottom:16px">
       <div class="card-header"><h3>Leave Applied</h3><button class="btn btn-p" data-action="add-applied" style="font-size:11px">+ Add Leave</button></div>
       <div class="card-body" style="padding:0">
@@ -4198,6 +4438,7 @@ function vSettings(){
   <div class="page-content">
     ${vAccountCard()}
     ${vPrefsCard()}
+    ${vDocsCard()}
     <div class="card" style="margin-bottom:16px"><div class="card-header"><h3>Exchange Rates (to ${baseCur()})</h3><button class="btn btn-s" onclick="fetchLiveRates().then(()=>render())">↻ Refresh Rates</button></div><div class="card-body">
       <p style="font-size:11px;color:var(--text3);margin-bottom:12px">How much 1 unit of each currency is worth in ${baseCur()}. Rates refresh automatically; edit one to override it. Every currency is supported. These are the ones in your trips plus common ones.</p>
       <p style="font-size:11px;color:var(--text3);margin:-6px 0 12px;padding:8px 10px;border-left:2px solid var(--orange);background:rgba(251,146,60,.06);border-radius:4px">⚠ ${ratesCaveat()}</p>
@@ -6752,6 +6993,17 @@ document.addEventListener('click',e=>{
     case 'show-all-clashes':e.stopPropagation();showClashModal();break;
     case 'c-tab':S._cTab=el.dataset.t;saveUI();render();break;
     case 'ph-open':case 'ph-all':{e.preventDefault();const k=a==='ph-open'?'_phOpen':'_phAll';window[k]=window[k]||{};window[k][el.dataset.cc]=!window[k][el.dataset.cc];render();break;}
+    case 'lw-max':S._lwMax=+el.dataset.n;S._lwAll=false;render();break;
+    case 'lw-all':e.preventDefault();S._lwAll=!S._lwAll;render();break;
+    case 'lw-plan':{const f=el.dataset.from,t=el.dataset.to;fEvent();setTimeout(()=>{const m=document.querySelector('.modal');if(!m)return;const set=(n,v)=>{const i=m.querySelector('[name="'+n+'"]');if(i){i.value=v;i.dispatchEvent(new Event('change',{bubbles:true}));}};set('sd',f);set('ed',t);const nm=m.querySelector('[name="name"]');if(nm)nm.focus();},60);break;}
+    case 'doc-add':fDoc();break;
+    case 'doc-edit':fDoc((S.docs||[]).find(d=>d.id===el.dataset.id));break;
+    case 'doc-del':{const d=(S.docs||[]).find(x=>x.id===el.dataset.id);if(!d)break;acctAsk({title:'Delete this document?',body:esc(docName(d))+' will be removed from your account and your devices.',yes:'Delete',no:'Cancel'}).then(ok=>{if(!ok)return;S.docs=S.docs.filter(x=>x.id!==d.id);saveS();render();toast('Document deleted');});break;}
+    case 'share-trip':showShareTrip(el.dataset.id);break;
+    case 'sh-create':case 'sh-save':{const m=document.querySelector('#mbg .modal');if(m&&m.dataset.shareTid)shareSave(m.dataset.shareTid,a==='sh-create');break;}
+    case 'sh-stop':{const m=document.querySelector('#mbg .modal');if(m&&m.dataset.shareTid)shareStop(m.dataset.shareTid);break;}
+    case 'sh-copy':{const i=document.getElementById('sh-url');if(i){navigator.clipboard.writeText(i.value).then(()=>toast('Link copied')).catch(()=>{i.select();document.execCommand('copy');toast('Link copied');});}break;}
+    case 'sh-native':{const i=document.getElementById('sh-url'),m=document.querySelector('#mbg .modal'),t=m&&S.events.find(x=>x.id===m.dataset.shareTid);if(i&&navigator.share)navigator.share({title:t?t.name:'Trip',text:t?t.name+' itinerary':'Trip itinerary',url:i.value}).catch(()=>{});break;}
     case 'toggle-country':{
       const cid=el.dataset.cid;
       if(!S.visitedCountries)S.visitedCountries=[];
