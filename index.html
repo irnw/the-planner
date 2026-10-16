@@ -2563,7 +2563,8 @@ function vGuideCard(){
     ]))}
     ${sec('Payments and budget',ul([
       'In a booking, enter the <b>Deposit</b> and <b>Full Payment</b> amounts and a due date. The card shows the balance and the Dashboard reminds you.',
-      `Enter costs in any currency. Totals are converted to ${esc(baseCur())} as <b>estimates</b> using daily rates (adjustable in <b>Settings → Exchange Rates</b>). For exact figures, enter the amount from your bank statement.`,
+      `Enter each cost in the currency you paid. Totals are shown in <b>your own currency</b>, which comes from your home country and can be changed in <b>Settings → Region &amp; Preferences</b> (yours is currently ${esc(baseCur())}).`,
+      'Converted totals are <b>estimates</b> based on daily exchange rates, which you can adjust in <b>Settings → Exchange Rates</b>. Your bank or card applies its own rate and fees, so for an exact figure enter the amount from your statement, in your own currency.',
       '<b>Budget</b> totals your spending by year, event and category.'
     ]))}
     ${sec('Apple Calendar, Google Calendar and Outlook',`${sub('See your trips in your calendar')}${ol([
