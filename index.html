@@ -1157,6 +1157,15 @@ body.sb-collapsed .topbar{left:68px}
 .more-list button:first-child{border-top:0}
 .more-list button svg{width:20px;height:20px;color:var(--primary-deep)}
 .more-list button span.chev{margin-left:auto;color:var(--text3);font-family:var(--font)!important}
+/* Sign out: small and quiet, under the last nav item (sidebar) or the More sheet (phones) */
+.sb-signout{display:flex;align-items:center;gap:12px;margin-top:22px;padding:10px 12px;background:none;border:0;color:var(--text3);font:inherit;font-size:8.6px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;cursor:pointer;text-align:left}
+.sb-signout svg{width:14px;height:14px;flex-shrink:0;stroke-width:1.6}
+.sb-signout:hover{color:var(--primary-deep)}
+.sidebar.collapsed .sb-signout{justify-content:center;padding-left:0;padding-right:0}
+.sidebar.collapsed .sb-signout span{display:none}
+.more-signout{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px auto 2px;padding:8px 14px;background:none;border:0;color:var(--text3);font:inherit;font-size:9.6px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;cursor:pointer}
+.more-signout svg{width:14px;height:14px;stroke-width:1.6}
+.more-signout:hover{color:var(--primary-deep)}
 /* Booking card menu, lists and misc carried over */
 .entry-acts{display:flex;align-items:center;gap:6px}
 .more-menu{position:relative}
@@ -2650,7 +2659,8 @@ function renderTabbar(){
 function showMoreSheet(){
   const item=id=>{const n=NAVS.find(x=>x.id===id);return `<button data-action="nav-more" data-to="${id}">${n.icon}<span>${n.label}</span><span class="chev">›</span></button>`;};
   modal('More',`<div class="more-list">${['budget','countries','settings','guide'].map(item).join('')}</div>
-    <div class="more-list" style="margin-top:14px"><button data-action="more-theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><span>${S.theme==='dark'?'Light appearance':'Dark appearance'}</span></button></div>`,null,{noSave:true});
+    <div class="more-list" style="margin-top:14px"><button data-action="more-theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg><span>${S.theme==='dark'?'Light appearance':'Dark appearance'}</span></button></div>
+    ${_acct?`<button class="more-signout" data-action="acct-signout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span>Sign out</span></button>`:''}`,null,{noSave:true});
 }
 function renderSidebar(){
   try{renderTabbar();}catch(e){}
@@ -2659,6 +2669,7 @@ function renderSidebar(){
     <div class="sidebar-brand" data-action="nav" data-to="dashboard" title="${APP_TAGLINE}"><span class="wordmark">The <em>Planner</em></span><span class="monogram">T<em>P</em></span></div>
     <div class="nav">
       ${NAVS.map((n,i)=>`<div class="nav-item${S.v===n.id||(S.v==='detail'&&n.id==='events')?' active':''}" data-action="nav" data-to="${n.id}" role="button" tabindex="0" title="${n.label}" aria-label="${n.label}">${n.icon}<span>${n.label}</span></div>`).join('')}
+      ${_acct?`<button class="sb-signout" data-action="acct-signout" title="Sign out" aria-label="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span>Sign out</span></button>`:''}
     </div>
     <button class="sb-collapse" onclick="toggleSidebarCollapse()" title="Collapse or expand the sidebar" aria-label="Collapse or expand the sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>`;
   renderTopbar();
