@@ -5024,6 +5024,55 @@ function setupDZTabs(container){
   });
 }
 
+// Screenshot text, rebuilt from word positions: on wide layouts two columns can share a row
+// ("Hilton Niseko Village        Total fees ¥40,320"); a wide gap between two runs of words starts a new line.
+// Label/value rows ("Total fees    ¥40,320", "Check-in:    7 Mar") stay together.
+function ocrLayoutText(d){
+  if(!d||!d.lines||!d.lines.length)return d&&d.text||'';
+  const words=t=>(t.match(/[A-Za-z]{3,}/g)||[]).length;
+  return d.lines.map(ln=>{
+    const ws=(ln.words||[]).filter(w=>w.text&&w.text.trim());if(!ws.length)return(ln.text||'').trim();
+    const hs=ws.map(w=>w.bbox.y1-w.bbox.y0).sort((a,b)=>a-b),h=Math.max(8,hs[hs.length>>1]);
+    const segs=[[ws[0].text]];
+    for(let i=1;i<ws.length;i++){
+      const gap=ws[i].bbox.x0-ws[i-1].bbox.x1,left=segs[segs.length-1].join(' '),rest=ws.slice(i).map(w=>w.text).join(' ');
+      if(gap>h*2.5&&words(left)>=2&&words(rest)>=2&&!/[:：]$/.test(left))segs.push([ws[i].text]);else segs[segs.length-1].push(ws[i].text);
+    }
+    return segs.map(x=>x.join(' ')).join('\n');
+  }).join('\n');
+}
+// How much of a booking a reading gave (used to keep the better of two readings)
+function parseScore(p){
+  if(!p)return 0;let n=0;
+  ['hotelName','date','dateTo','cost','pnr','flightNumber','departureTime','from','to'].forEach(k=>{if(p[k])n++;});
+  (p.legs||[]).forEach(l=>['flightNumber','date','from','to','departureTime','arrivalTime'].forEach(k=>{if(l[k])n+=.5;}));
+  return n;
+}
+function parseComplete(p){
+  if(!p)return false;
+  if(p.type==='hotel')return!!(p.hotelName&&p.date&&(p.dateTo||p.nights)&&p.cost);
+  if(p.type==='flight'&&p.legs&&p.legs.length)return p.legs.every(l=>l.flightNumber&&l.date&&l.from&&l.to&&l.departureTime);
+  return parseScore(p)>=4;
+}
+// Read an image. If the reading misses key details, read it again at another size (OCR struggles with very
+// large headline text and with small text) and keep whichever reading gives more of the booking.
+async function ocrImage(src,onStep){
+  const bmp=await createImageBitmap(src);
+  const pass=async sc=>{
+    const c=document.createElement('canvas');c.width=Math.max(1,Math.round(bmp.width*sc));c.height=Math.max(1,Math.round(bmp.height*sc));
+    const x=c.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(bmp,0,0,c.width,c.height);
+    const r=await Tesseract.recognize(c,'eng',{tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'});
+    return ocrLayoutText(r.data)||r.data.text||'';
+  };
+  const first=await pass(1);
+  let p1=null;try{p1=parseBookingText(first);}catch(e){}
+  if(parseComplete(p1))return first;
+  const sc=bmp.width>=1400?0.5:bmp.width<=900?2:0.7;
+  if(onStep)onStep();
+  const second=await pass(sc);
+  let p2=null;try{p2=parseBookingText(second);}catch(e){}
+  return parseScore(p2)>parseScore(p1)?second:first;
+}
 async function runOCR(file,id){
   const p=document.getElementById('op-'+id),r=document.getElementById('or-'+id);
   p.style.display='flex';p.innerHTML='<div class="spinner"></div> Processing…';r.style.display='none';
@@ -5059,8 +5108,7 @@ async function runOCR(file,id){
       p.innerHTML='<div class="spinner"></div> Running OCR on image…';
       if(typeof Tesseract!=='undefined'){
         // Use higher quality settings for screenshots
-        const r2=await Tesseract.recognize(file,'eng',{tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'});
-        txt=r2.data.text;
+        txt=await ocrImage(file,()=>{p.innerHTML='<div class="spinner"></div> Reading again at a different size…';});
       }else{txt='Tesseract not loaded yet. Try again in a moment.';}
     }else{txt='Unsupported file type: '+file.type;}
     r.textContent=txt.trim()||'No text detected.';r.style.display='block';
@@ -6273,8 +6321,60 @@ function _extractCost(txt,r){
     if(symCost){r.cost=symCost[2].replace(/,/g,'');const sym=symCost[1].toLowerCase().replace(/\.$/,'');r.currency=CURRENCY_SYMBOLS[sym]||baseCur();}}
 }
 
+// Hotel apps show big day numbers beside stacked month/weekday labels ("7 MAR SUN — 11 MAR THU"); OCR gives
+//   "MAR MAR" then "7 SUN 11 THU" (a big digit can be lost or split: "/ SUN 1 1 THU"). Rewrite as check-in/out
+//   dates, using the weekday to pick the year and the number of nights for a lost day.
+const _WD='(MON|TUE|WED|THU|FRI|SAT|SUN)[A-Z]*';
+function normStackedDates(txt){
+  const L=txt.split('\n'),MO=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  for(let i=0;i<L.length-1;i++){
+    const mm=L[i].toUpperCase().match(/^\W*(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*\W+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*\W*$/);
+    if(!mm)continue;
+    for(let j=i+1;j<=Math.min(i+2,L.length-1);j++){
+      const w=L[j].toUpperCase().match(new RegExp('^\\W*([\\dIl|/ ]{0,4}?)\\s*'+_WD+'\\W+([\\d ]{1,4}?)\\s*'+_WD+'\\b'));
+      if(!w)continue;
+      const m1=MO.indexOf(mm[1]),m2=MO.indexOf(mm[2]),wd={SUN:0,MON:1,TUE:2,WED:3,THU:4,FRI:5,SAT:6};
+      const d2=parseInt(w[3].replace(/\s/g,''),10);let d1=parseInt(w[1].replace(/\s/g,''),10);
+      if(!(d2>=1&&d2<=31))continue;
+      const now=new Date(),y0=now.getFullYear();let y=null;
+      for(const yy of [y0,y0+1,y0+2,y0-1]){const dt=new Date(yy,m2,d2);if(dt.getDay()===wd[w[4]]&&dt>=new Date(y0,now.getMonth()-6,1)){y=yy;break;}}
+      if(y===null)continue;
+      const out=new Date(y,m2,d2);let inD=null;
+      if(d1>=1&&d1<=31){inD=new Date(m1>m2?y-1:y,m1,d1);if(inD.getDay()!==wd[w[2]])inD=null;}
+      if(!inD){const nm=txt.match(/(\d{1,2})\s*nights?\b/i);if(nm){inD=new Date(out);inD.setDate(inD.getDate()-parseInt(nm[1],10));if(inD.getDay()!==wd[w[2]]||inD.getMonth()!==m1)inD=null;}}
+      if(!inD)continue;
+      const f=d=>d.getDate()+' '+MO[d.getMonth()][0]+MO[d.getMonth()].slice(1).toLowerCase()+' '+d.getFullYear();
+      L[i]='Check-in: '+f(inD);L[j]='Check-out: '+f(out)+L[j].slice(w[0].length);
+      return L.join('\n');
+    }
+  }
+  return txt;
+}
+// Last resort for the total: a line saying "total" (or "amount paid"/"price") with a currency symbol or code.
+// Skips part-totals (room charge, fees, taxes, subtotal); the largest remaining amount wins.
+function _totalFallback(txt,r){
+  const iso='SGD|USD|MYR|IDR|EUR|GBP|THB|PHP|AUD|CNY|MVR|EGP|TWD|KRW|INR|JPY|HKD|NZD|CHF|CAD|VND|LKR|AED|QAR';
+  const syms='Rp\\.?|RM|S\\$|A\\$|HK\\$|NT\\$|US\\$|₱|¥|฿|€|£|₫|₹|\\$';
+  const amt='(\\d[\\d,]*(?:\\.\\d{1,2})?)';
+  const re=new RegExp('^.*\\b(?:total|amount\\s+(?:paid|charged|due)|price|you\\s+paid)\\b.*?(?:\\b('+iso+')\\s?'+amt+'|('+syms+')\\s?'+amt+'|'+amt+'\\s?('+iso+')\\b)','gim');
+  const c=[];let m;
+  while((m=re.exec(txt))){
+    const line=m[0];if(/sub-?total|room\s*charge|fees?\b|tax|per\s+night/i.test(line))continue;
+    let cur,a;
+    if(m[1]){cur=m[1].toUpperCase();a=m[2];}
+    else if(m[3]){const k=m[3].toLowerCase().replace(/\.$/,'');cur={'hk$':'HKD','nt$':'TWD','us$':'USD'}[k]||CURRENCY_SYMBOLS[k];a=m[4];}
+    else{cur=m[6].toUpperCase();a=m[5];}
+    if(!cur)continue;
+    c.push({v:parseFloat(a.replace(/,/g,'')),raw:a.replace(/,/g,''),cur,strong:/stay|grand|trip|booking|paid|payable|charged/i.test(line)});
+  }
+  if(!c.length)return;
+  const best=c.sort((x,y)=>(y.strong-x.strong)||(y.v-x.v))[0];
+  r.cost=best.raw;r.currency=best.cur;
+}
+// "¥" is yen or yuan: yen unless the booking says China
+function _yenOrYuan(txt,r){if(r.currency==='CNY'&&/¥/.test(txt)&&!/\b(?:CNY|RMB|China|中国|元)\b/i.test(txt))r.currency='JPY';}
 function parseBookingText(rawTxt){
-  const txt=dedupeLines(rawTxt);
+  const txt=normStackedDates(dedupeLines(rawTxt));
   const r={};const t=txt.toUpperCase();
 
   // ===== 0. Known airline layouts first, then generic multi-segment parsing =====
@@ -6365,7 +6465,7 @@ function parseBookingText(rawTxt){
       /your\s+stay\s+at\s+([A-Z][A-Za-z\s&'\-]{2,50})/i,
     ];
     // Chain hotels: the line naming the brand ("Hilton Niseko Village", "Park Hyatt Tokyo")
-    const brandRe=new RegExp('(?:^|\\n)[^A-Za-z\\n]*((?:[A-Z][\\w\'’&.-]*[ \\t]+){0,3}(?:'+HOTEL_BRANDS+')(?:[ \\t]+(?:[A-Z][\\w\'’&.-]*|by|at|de|la|&)){0,5})','');
+    const brandRe=new RegExp('(?:^|\\n)[^A-Za-z\\n]*(?:[a-z]{1,4}[ \\t]+)?((?:[A-Z][\\w\'’&.-]*[ \\t]+){0,3}(?:'+HOTEL_BRANDS+')(?:[ \\t]+(?!Total|Check|Room|Rate|Edit|Confirm|Booking|Stay\\b)(?:[A-Z][\\w\'’&.-]*|by|at|de|la|&)){0,5})','');
     const bm=txt.match(brandRe);
     if(bm){const nm=bm[1].trim().replace(/[ \t]+(?:by|at|de|la|&)$/,'');hotelPats.splice(4,0,new RegExp('('+nm.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')'));}
     // Vouchers print the property name just before its address (label OCR'd as "Adress"/"Addres" too).
@@ -6549,6 +6649,10 @@ function parseBookingText(rawTxt){
 
   // ===== 10. Cost — with currency symbol mapping =====
   _extractCost(txt,r);
+
+  if(!r.cost)_totalFallback(txt,r);
+  _yenOrYuan(txt,r);
+  ['date','dateTo'].forEach(k=>{if(r[k]&&/-00$|-00-/.test(r[k]))delete r[k];});
 
   // ===== 11. Hotel extras: room type, nights =====
   if(r.type==='hotel'){
