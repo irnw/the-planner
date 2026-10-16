@@ -1228,10 +1228,16 @@ body.gated .main{margin-left:0!important;padding:0!important;max-width:none!impo
 .guide .guide-sub:first-child{margin-top:0}
 /* iOS gives date/time fields an intrinsic width (they spill out of cards) and centred text */
 input.fc[type=date],input.fc[type=time],input.fc[type=datetime-local],input.fc[type=month]{-webkit-appearance:none;appearance:none;display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;text-align:left}
+/* One height for every single-line field (text, number, date, time, dropdown). Empty iOS date fields otherwise collapse */
+input.fc:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]),select.fc{height:calc(1.25em + 18px);line-height:1.25;box-sizing:border-box}
+input.fc::-webkit-date-and-time-value{min-height:1.25em;line-height:1.25}
 input.fc[type=date]::-webkit-date-and-time-value,input.fc[type=time]::-webkit-date-and-time-value,input.fc[type=datetime-local]::-webkit-date-and-time-value{text-align:left;margin:0}
 .fi,.fg>*{min-width:0}
 .back-row{display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
 .back-row .back-link.back-alt{color:var(--text3)!important}
+/* Country search uses the standard field style */
+.country-picker input.fc{width:100%;padding:8px 11px;font-size:13px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg)}
+@media(max-width:700px){.country-picker input.fc{font-size:16px}}
 </style>
 
 </head>
@@ -6172,7 +6178,7 @@ function fEvent(t){
     <div class="fi full"><label>Locations (comma-separated)</label><input class="fc" name="locs" value="${esc(t.locations.join(', '))}"></div>
     <div class="fi full"><label>Countries</label>
       <div class="country-chips" id="ev-country-chips">${(t.countries||[]).map(cid=>`<span class="country-chip" data-cid="${cid}">${esc(COUNTRY_DATA[cid]||cid)} <span class="chip-x" data-action="rm-country-chip" data-cid="${cid}">×</span></span>`).join('')}</div>
-      <div class="country-picker" style="margin-top:6px"><input type="text" placeholder="Search and add countries…" id="ev-country-search" autocomplete="off"><div class="country-picker-dd" id="ev-country-dd"></div></div>
+      <div class="country-picker" style="margin-top:6px"><input type="text" class="fc" placeholder="Search and add countries…" id="ev-country-search" autocomplete="off"><div class="country-picker-dd" id="ev-country-dd"></div></div>
       <input type="hidden" name="countries" value="${(t.countries||[]).join(',')}">
     </div>
     <div class="fi full"><label>Shared Link</label><input class="fc" name="link" value="${esc(t.sharedLink||'')}"></div>
