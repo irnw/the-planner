@@ -1080,6 +1080,74 @@ body.sb-collapsed .topbar{left:68px}
 .cp-pop button:hover{color:var(--primary-deep);background:var(--primary-dim)}
 .cp-pop button.on{background:var(--primary-deep);color:var(--on-primary)}
 .cp-pop button.now:not(.on){color:var(--primary-deep)}
+/* ===== Phones: no sidebar at all (must come last so it overrides every desktop width rule) ===== */
+@media(max-width:860px){
+  .sidebar,.sb-collapse{display:none!important}
+  .main,.main.sidebar-collapsed{margin-left:0!important}
+  .topbar,body.sb-collapsed .topbar{left:0!important}
+}
+/* ===== Phone experience ===== */
+.tb-filters-btn{display:none}
+@media(max-width:860px){
+  /* No iOS zoom-on-focus: fields at 16px */
+  .fc,select.fc,input.fc,textarea.fc,.search-bar input,.tb-search input{font-size:16px!important}
+  .fi,.fg>*{min-width:0}
+  .fc,select.fc{max-width:100%;min-width:0;width:100%}
+  .fg{grid-template-columns:minmax(0,1fr)!important}
+  /* Home-screen app: clear the status bar */
+  .topbar{padding-top:env(safe-area-inset-top)!important;height:calc(58px + env(safe-area-inset-top))!important}
+  .main,.main.sidebar-collapsed{padding-top:calc(58px + env(safe-area-inset-top))!important}
+  .gs-results{top:calc(58px + env(safe-area-inset-top))!important}
+  /* Sync status as a small dot beside the wordmark */
+  .tb-sync{display:block!important;order:-1;margin-left:-4px}
+  .tb-brand{margin-right:0}
+  .tb-sync .sync-dot{font-size:0!important;gap:0;padding:0}
+  .tb-sync .sync-dot .sd-icon{width:7px;height:7px}
+  .topbar{justify-content:flex-start}
+  .tb-search{margin-left:auto}
+  /* Scan: round icon button above the tab bar; pages leave room for it */
+  .fab{width:52px!important;height:52px!important;padding:0!important;justify-content:center;border-radius:999px}
+  .fab .fab-label{display:none}
+  .fab svg{width:22px;height:22px}
+  .page-content{padding-bottom:90px}
+  .sig{padding-bottom:130px}
+  /* Comfortable tap targets */
+  .btn{min-height:40px}
+  .btn.btn-ghost{min-height:auto}
+  .seg button{padding:9px 14px}
+  /* Calendar controls on one row: ← Month Year → Today */
+  .cal-nav{display:grid!important;grid-template-columns:auto 1fr auto auto;align-items:center;gap:6px!important}
+  .cal-nav>*{grid-row:1;order:0!important}
+  .cal-nav>.cal-tools{grid-row:2}
+  .cal-nav>[data-action=cal-prev]{grid-column:1}
+  .cal-nav .cal-picker{grid-column:2;justify-content:center;flex-wrap:nowrap}
+  .cal-nav>[data-action=cal-next]{grid-column:3}
+  .cal-nav>[data-action=cal-today]{grid-column:4;padding:6px 4px!important}
+  .cal-nav .cal-tools{grid-column:1/-1;margin-left:0!important;justify-content:space-between}
+  .cal-nav>.btn-s{padding:8px 12px!important}
+  .cp>button{padding:4px 4px 4px 6px}
+  .cp>button span{font-size:16px}
+  .cp-pop{left:50%;transform:translateX(-50%)}
+  /* My Events: filters fold away; the top-bar search covers searching */
+  .tb-filters-btn{display:inline-flex}
+  .toolbar .ev-search{display:none}
+  .toolbar>:not(.tb-filters-btn){display:none!important}
+  .toolbar.open>:not(.tb-filters-btn):not(.ev-search){display:flex!important}
+  .toolbar.open .tb-sel,.toolbar.open .sort-ctrl{flex:1 1 45%}
+  /* Event rows: details sit under the dates */
+  .evr-facts,.evr-when{margin-top:6px!important}
+  .evr-when{margin-left:auto}
+  /* Event page stats: the odd last item spans the row */
+  .stats .stat:last-child:nth-child(odd){grid-column:1/-1;border-left:none!important;border-top:1px solid var(--line)}
+  .stats .stat .s-val{font-size:20px}
+  /* Event tabs: scroll sideways without a scrollbar */
+  .tabs{scrollbar-width:none;-webkit-overflow-scrolling:touch;max-width:100%}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{white-space:nowrap}
+  /* Sheets: a grab handle */
+  .modal::before{content:'';display:block;width:38px;height:4px;border-radius:2px;background:var(--line-strong);margin:8px auto 0}
+  .modal-foot .btn{flex:1;justify-content:center}
+}
 @keyframes sheetIn{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 .more-list{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line)}
 .more-list button{display:flex;align-items:center;gap:12px;padding:15px 16px;background:none;border:0;border-top:1px solid var(--line);color:var(--text);font:inherit;font-size:17px;text-align:left;cursor:pointer}
@@ -2740,10 +2808,10 @@ function evRowHtml(t,opts){
 // ===== DASHBOARD =====
 // What matters now: the next trip, anything needing attention, what's coming up. The full list lives in My Events.
 function vDash(){
-  const ft=tpFilter(S.events),td=ymd(new Date()),curYear=new Date().getFullYear();
+  const ft=S.events,td=ymd(new Date()),curYear=new Date().getFullYear();
   const lyTotals=leaveJobTotals((S.leave[curYear]||{}).jobs||[]);
   // Leave still needed this year: workdays of trips from today on that aren't applied for yet (past trips are in "taken")
-  const leaveAhead=(()=>{let n=0;const end=String(curYear)+'-12-31';tpFilter(S.events).forEach(t=>{if(t.requiresLeave===false||!t.startDate||!t.endDate)return;
+  const leaveAhead=(()=>{let n=0;const end=String(curYear)+'-12-31';S.events.forEach(t=>{if(t.requiresLeave===false||!t.startDate||!t.endDate)return;
     let c=new Date((t.startDate>td?t.startDate:td)+'T00:00:00');const e=new Date((t.endDate<end?t.endDate:end)+'T00:00:00');
     while(c<=e){const ds=ymd(c);if(isWorkday(ds)&&!getAppliedForDate(ds))n++;c.setDate(c.getDate()+1);}});return n;})();
   const live=ft.filter(t=>eventStatus(t)!=='completed').sort((a,b)=>a.startDate.localeCompare(b.startDate));
@@ -2811,8 +2879,9 @@ function vEvents(){
   return `
   <div class="page-header"><div><h2>My Events</h2><div class="subtitle">${list.length===S.events.length?list.length+' events':list.length+' of '+S.events.length+' events'}</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${tpHtml()}<button class="btn btn-p" data-action="add-event">+ New Event</button></div></div>
   <div class="page-content">
-    <div class="toolbar">
-      <div class="search-bar tb-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search events…" value="${esc(S._searchQ||'')}" data-action="search-events"></div>
+    <div class="toolbar${ui.filtersOpen?' open':''}">
+      <button class="btn btn-s tb-filters-btn" data-action="ev-filters">Filters${(catF!=='all'||S.tfY||!showApple||eventSortKey!=='date')?' ·':''}</button>
+      <div class="search-bar tb-search ev-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search events…" value="${esc(S._searchQ||'')}" data-action="search-events"></div>
       <select class="fc tb-sel" data-action="ev-cat" aria-label="Type"><option value="all">All types</option>${cats.map(c=>`<option value="${c.id}"${catF===c.id?' selected':''}>${c.label}</option>`).join('')}</select>
       <select class="fc tb-sel" data-action="ev-year" aria-label="Year"><option value="">All years</option>${yrs.map(y=>`<option value="${y}"${S.tfY==y?' selected':''}>${y}</option>`).join('')}</select>
       ${sortCtrlHtml('event',eventSortKey,eventSortDir)}
@@ -3209,7 +3278,7 @@ function vLeave(){
   // MY national public holidays for this year
   const myPH=(PH_DATA.MY[y]||[]);
   return `
-  <div class="page-header"><div><h2>Leave Tracker</h2><div class="subtitle">${activeEmployers} · ${y}</div></div><div>${tpHtml()}</div></div>
+  <div class="page-header"><div><h2>Leave Tracker</h2><div class="subtitle">${activeEmployers} · ${y}</div></div></div>
   <div class="page-content">
     <div class="ytabs">${yrs.map(yr=>`<div class="yt${y==yr?' active':''}" data-action="sly" data-y="${yr}">${yr}</div>`).join('')}<button class="btn btn-s" style="font-size:11px" data-action="aly">+ Year</button></div>
     <div class="leave-boxes">
@@ -6203,6 +6272,7 @@ document.addEventListener('click',e=>{
     case 'cat-filter':S._catFilter=el.dataset.cat||'all';S.tfY=null;saveUI();render();break;
     case 'cat-group':S._catGroup=!S._catGroup;saveUI();render();break;
     case 'ev-view':setListUI({view:el.dataset.v});render();break;
+    case 'ev-filters':setListUI({filtersOpen:!listUI().filtersOpen});render();break;
     case 'ev-past-all':setListUI({pastAll:true});render();break;
     case 'sly':S.ly=parseInt(el.dataset.y);saveS();render();break;
     case 'aly':{const y=prompt('Year:');if(y&&parseInt(y)){S.leave[parseInt(y)]={jobs:[{employer:'',startDate:'',endDate:'',al:0,bp:0,ot:0,ph:0,taken:0}],holidays:[]};S.ly=parseInt(y);saveS();render();}break;}
