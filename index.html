@@ -5176,6 +5176,19 @@ function ocrLayoutText(d){
     return segs.map(x=>x.join(' ')).join('\n');
   }).join('\n');
 }
+// PDF text items in reading order as one run. Pieces of one word (browser-printed emails split words:
+// "B","oo","ki","n","g") join without a space; a real gap or a new line becomes one space.
+function pdfJoin(items){
+  // Same as joining every piece with a space (other readers rely on that spacing), except pieces that touch
+  let out='',prev=null;
+  items.forEach((it,i)=>{
+    const str=it.str||'',x=it.transform[4],y=it.transform[5],h=Math.abs(it.transform[3])||it.height||10;
+    let sep=i?' ':'';
+    if(prev&&prev.word&&/^\S/.test(str)&&Math.abs(prev.y-y)<=Math.max(2,h*0.45)){const gap=x-prev.end;if(gap>-h*0.3&&gap<h*0.12)sep='';}
+    out+=sep+str;prev={y,end:x+(it.width||0),word:/\S$/.test(str)};
+  });
+  return out;
+}
 // PDF text items → lines, from their position on the page (a wide gap inside a line becomes 3 spaces)
 function pdfLines(items){
   const its=items.filter(it=>it.str&&it.str.trim()).map(it=>({s:it.str,x:it.transform[4],y:it.transform[5],w:it.width||0,h:Math.abs(it.transform[3])||it.height||10}));
@@ -5243,7 +5256,7 @@ async function runOCR(file,id){
           p.innerHTML=`<div class="spinner"></div> Reading page ${i}/${pdf.numPages}…`;
           const pg=await pdf.getPage(i);
           const tc=await pg.getTextContent();
-          const pageTxt=tc.items.map(it=>it.str).join(' ');
+          const pageTxt=pdfJoin(tc.items);
           txt+=pageTxt+'\n\n';lined+=pdfLines(tc.items)+'\n\n';
         }
         // The page as one run of text suits some layouts; the page's real lines suit others
@@ -5802,7 +5815,8 @@ function parseDate(str,yearHint){
 }
 
 function findAirports(str){
-  const t=str.toUpperCase(),found=[];
+  // Codes are printed in capitals: "you can" and "Add to calendar" aren't CAN and ADD
+  const t=str,found=[];
   for(const[code,city]of Object.entries(AIRPORTS)){
     const re=new RegExp('\\b'+code+'\\b','g');let m;
     while((m=re.exec(t))!==null)found.push({code,city,pos:m.index});
@@ -6680,7 +6694,9 @@ function _parseBookingText(rawTxt){
     (new RegExp('\\b(?:'+HOTEL_BRANDS+'|Bonvoy|World\\s+of\\s+Hyatt|IHG|Accor)\\b').test(txt)&&/\b(?:arrival|departure|check.?in|check.?out|nights?|stay|room|guests?|reservation|confirmation)\b/i.test(txt)&&!/\b(?:flight|boarding|gate|terminal)\b/i.test(txt));
   // Booking/order references ("KL88231") aren't flight numbers
   const txtNoRefs=txt.replace(/(?:[Bb]ooking|BOOKING|[Oo]rder|ORDER|[Rr]eference|REFERENCE|[Rr]ef\.?|[Cc]onfirmation|CONFIRMATION|[Vv]oucher|PNR)(?:[ \t]+(?:[Rr]eference|REFERENCE|[Rr]ef\.?|[Nn]o\.?|NO\.?|[Nn]umber|NUMBER|ID|[Cc]ode|CODE|#))?[ \t]*[:：#]?[ \t]*[A-Z0-9-]{4,20}\b/g,' ');
-  const strongFlightKw=/\b(FLIGHT|BOARDING\s*PASS|AIRLINE|AIRWAYS|GATE\s*\d|TERMINAL\s*\d|BAGGAGE\s*ALLOW|FLIGHT\s*DURATION|FLIGHT\s*SUMMARY)\b/i.test(txt);
+  // Adverts in booking emails ("Book flights to Phuket", "Cheapest flight deals") don't make it a flight booking
+  const txtKw=txt.replace(/\b(?:book|cheap(?:est)?|find|search|compare|explore|deals?\s+on)\s+(?:\w+\s+){0,2}flights?\b[^\n.]{0,60}|\bflights?\s+(?:deals?|offers?|sale)\b/gi,' ');
+  const strongFlightKw=/\b(FLIGHT|BOARDING\s*PASS|AIRLINE|AIRWAYS|GATE\s*\d|TERMINAL\s*\d|BAGGAGE\s*ALLOW|FLIGHT\s*DURATION|FLIGHT\s*SUMMARY)\b/i.test(txtKw);
   const groundKw=/\b(ferry|fast\s*boat|speed\s*boat|train|railway|bus|coach|shuttle|car\s*(?:rental|hire)|KTM|ETS|shinkansen)\b/i.test(txt);
   const fnSeen=new RegExp('\\b(?:'+_FNCODES+')\\s?\\d{2,5}\\b').test(txtNoRefs);
   const flightKw=strongFlightKw||(!groundKw&&(fnSeen||(!hotelKw&&/\b(E-?TICKET|ITINERARY\s*(?:RECEIPT)?)\b/i.test(txt))));
@@ -6689,7 +6705,8 @@ function _parseBookingText(rawTxt){
   const title=titleM?titleM[1].trim():'';
   const transTitleKw=/\b(ferry|boat|speed\s*boat|train|rail(?:way)?|bus|coach|shuttle|transfer|taxi|car\s*(?:rental|hire)|KTM|ETS|shinkansen)\b/i;
   const transTextKw=/\b(ferry|fast\s*boat|speed\s*boat|train\s*ticket|railway|bus\s*ticket|coach\s*ticket|car\s*(?:rental|hire)|shinkansen|KTM|ETS)\b/i;
-  if(hotelKw&&!flightKw)r.type='hotel';
+  const stayDates=/\bcheck.?in\b/i.test(txt)&&/\bcheck.?out\b/i.test(txt);
+  if(hotelKw&&(!flightKw||(stayDates&&!fnSeen)))r.type='hotel';
   else if(flightKw)r.type='flight';
   // Tours that merely include a transfer ("Snorkeling Tour with Boat Transfer") stay activities
   else if(title?(transTitleKw.test(title)&&!/\b(tour|snorkel\w*|div(?:e|ing)|excursion|experience|class|lesson|admission|museum|safari|hike|trek|day\s*trip)\b/i.test(title)):transTextKw.test(txt))r.type='transport';
@@ -6725,7 +6742,7 @@ function _parseBookingText(rawTxt){
   // ===== 4. Hotel name extraction (platform-aware) =====
   if(r.type==='hotel'){
     const hotelPats=[
-      /([A-Z][\w&'’-]*(?: [\w&'’-]+){0,6})\s+\d(?:\.\d)?\s*stars?\s*rating/,// Agoda: "Bobo Bungalow 3.5 stars rating"
+      /([A-Z][\w&'’-]*(?: (?:[A-Z0-9][\w&'’.-]*|de|la|du|del|di|by|at|on|of|and|&)){0,6})\s+\d(?:\.\d)?\s*stars?\s*rating/,// Agoda: "Bobo Bungalow 3.5 stars rating" (not "Manage my booking …")
       /We\s+notified\s+([A-Z][^()\n]{1,50}?)\s*(?:\(|of\s+your)/,// "We notified Bobo Bungalow (…) of your upcoming booking"
       /Pay\s+at\s+([A-Z][^\n]{1,50}?)\s+check-?in\b/,
       /([A-Z][A-Za-z\s&'\-]{2,50})\s+is\s+expecting\s+you/,
