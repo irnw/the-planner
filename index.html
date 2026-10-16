@@ -1226,6 +1226,12 @@ body.gated .main{margin-left:0!important;padding:0!important;max-width:none!impo
 @media(min-width:701px){.dz-paste-area{font-size:12px}}
 .guide .guide-sub{margin:14px 0 4px;font-size:13px}
 .guide .guide-sub:first-child{margin-top:0}
+/* iOS gives date/time fields an intrinsic width (they spill out of cards) and centred text */
+input.fc[type=date],input.fc[type=time],input.fc[type=datetime-local],input.fc[type=month]{-webkit-appearance:none;appearance:none;display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;text-align:left}
+input.fc[type=date]::-webkit-date-and-time-value,input.fc[type=time]::-webkit-date-and-time-value,input.fc[type=datetime-local]::-webkit-date-and-time-value{text-align:left;margin:0}
+.fi,.fg>*{min-width:0}
+.back-row{display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
+.back-row .back-link.back-alt{color:var(--text3)!important}
 </style>
 
 </head>
@@ -2876,8 +2882,10 @@ function render(){
 }
 // Changing page is view state: saved on this device, not counted as an edit to sync
 function nav(v,x){
-  // Coming back to the Calendar from another page always shows the current month
-  if(v==='calendar'&&S.v!=='calendar'){const d=new Date();S.calY=d.getFullYear();S.calM=d.getMonth();}
+  // Opening an event from the Calendar remembers the month, so its back link returns there
+  if(v==='detail'&&S.v!=='detail')S._from=S.v==='calendar'?{v:'calendar',y:S.calY,m:S.calM}:null;
+  // Coming back to the Calendar from another page shows the current month (unless returning from an event opened there)
+  if(v==='calendar'&&S.v!=='calendar'){if(x&&x._back&&S._from&&S._from.v==='calendar'){S.calY=S._from.y;S.calM=S._from.m;}else{const d=new Date();S.calY=d.getFullYear();S.calM=d.getMonth();}if(x)delete x._back;}
   S.v=v;if(x)Object.assign(S,x);saveUI();render();window.scrollTo(0,0);}
 
 // ===== DASHBOARD =====
@@ -3074,7 +3082,7 @@ function vDetail(){
   return `
   <div class="page-header">
     <div>
-      <div class="back-link" data-action="nav" data-to="events">&larr; All Events</div>
+      ${S._from&&S._from.v==='calendar'?`<div class="back-row"><span class="back-link" data-action="cal-back">&larr; Calendar · ${new Date(S._from.y,S._from.m,1).toLocaleDateString(dloc(),{month:'long',year:'numeric'})}</span><span class="back-link back-alt" data-action="nav" data-to="events">All Events</span></div>`:`<div class="back-link" data-action="nav" data-to="events">&larr; All Events</div>`}
       <h2>${esc(t.name)}</h2>
       <div class="subtitle">${fmt(t.startDate)} — ${fmt(t.endDate)} · ${dayN(t.startDate)} · ${days(t.startDate,t.endDate)} days, ${nights(t.startDate,t.endDate)} nights</div>
     </div>
@@ -6397,16 +6405,23 @@ function fTrans(ev,x){
   setTimeout(()=>{const m=document.querySelector('.modal');if(m)wireFullPayment(m);},50);
 }
 
+// A date field's change handler that waits until the picker is closed on touch screens
+function whenPicked(el,fn){
+  if(!/^(date|time|datetime-local|month)$/.test(el.type)||!matchMedia('(pointer:coarse)').matches)return fn;
+  let pending=false;
+  el.addEventListener('blur',()=>{if(pending){pending=false;fn();}});
+  return()=>{if(document.activeElement===el)pending=true;else fn();};
+}
 // ===== EVENTS =====
 function bind(){
-  document.querySelectorAll('[data-lj]').forEach(el=>el.onchange=()=>{
+  document.querySelectorAll('[data-lj]').forEach(el=>el.onchange=whenPicked(el,()=>{
     const y=S.ly||2026;if(!S.leave[y])S.leave[y]={jobs:[{}]};
     if(!S.leave[y].jobs)S.leave[y]=migrateLeaveJobs(S.leave[y]);
     const ji=parseInt(el.dataset.lj),f=el.dataset.jf;
     if(!S.leave[y].jobs[ji])S.leave[y].jobs[ji]={};
     S.leave[y].jobs[ji][f]=el.type==='number'?parseFloat(el.value)||0:el.value;
     saveS();render();
-  });
+  }));
   document.querySelectorAll('[data-rc]').forEach(el=>el.onchange=()=>{const v=parseFloat(el.value)||0;if(v>0){S.rates[el.dataset.rc]=v*(rateOf(baseCur())||1);saveS();}});
 }
 
@@ -6437,6 +6452,7 @@ document.addEventListener('click',e=>{
   const a=el.dataset.action,ev=S.events.find(t=>t.id===S.tid);
   switch(a){
     case 'nav':nav(el.dataset.to);break;
+    case 'cal-back':nav('calendar',{_back:true});break;
     case 'gs-open':{const i=document.getElementById('gsearch');if(i){i.value='';i.blur();}renderSearchResults();nav('detail',{tid:el.dataset.id,tab:'timeline'});break;}
     case 'more-sheet':showMoreSheet();break;
     case 'nav-more':xm();nav(el.dataset.to);break;
@@ -6649,8 +6665,7 @@ document.addEventListener('change',e=>{
   if(e.target.matches('[data-action="entry-sort-key"]')){sortKey=e.target.value;render();}
   if(e.target.matches('[data-action="event-sort-key"]')){eventSortKey=e.target.value;render();}
   if(e.target.matches('[data-action="tp-change"]')){S._tp=e.target.value;saveS();render();}
-  if(e.target.matches('[data-action="tp-from"]')){S._tpFrom=e.target.value;saveS();render();}
-  if(e.target.matches('[data-action="tp-to"]')){S._tpTo=e.target.value;saveS();render();}
+  if(e.target.matches('[data-action="tp-from"],[data-action="tp-to"]')){const el=e.target;whenPicked(el,()=>{if(el.dataset.action==='tp-from')S._tpFrom=el.value;else S._tpTo=el.value;saveS();render();})();}
 });
 
 document.addEventListener('input',e=>{if(e.target&&e.target.id==='gsearch')renderSearchResults();});
