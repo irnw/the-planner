@@ -26,7 +26,7 @@ if(location.hostname==='irnw.github.io')location.replace('https://theplanner.pag
   --primary:#a89cff;--primary-deep:#c1b8ff;--primary-dim:rgba(168,156,255,.14);--primary-glow:rgba(168,156,255,.28);--on-primary:#0f1014;
   --accent:#ff7b7b;--accent-dim:rgba(255,123,123,.12);--green:#5fd38a;--green-dim:rgba(95,211,138,.12);
   --orange:#f2a65a;--orange-dim:rgba(242,166,90,.12);--purple:#a89cff;--purple-dim:rgba(168,156,255,.14);
-  --text:#f2f1ed;--text2:#a4a7b4;--text3:#7f8495;--line:#2a2e3a;--line-strong:#4d4578;--border:#2a2e3a;--border2:#4d4578;
+  --text:#f2f1ed;--text2:#a4a7b4;--text3:#8b90a0;--line:#2a2e3a;--line-strong:#4d4578;--border:#2a2e3a;--border2:#4d4578;
   --input-bg:#191c24;--radius:0px;--radius-lg:0px;--shadow:none;--shadow2:0 30px 80px rgba(0,0,0,.5);
   --header-bg:rgba(15,16,20,.92);--overlay:rgba(5,6,10,.62);
   --sg:#7fa8ff;--sg-dim:rgba(127,168,255,.15);--leave:#f28fb0;--leave-dim:rgba(242,143,176,.15);--synced:#8fdcae;--my:#f2a65a;--my-dim:rgba(242,166,90,.14);
@@ -43,7 +43,7 @@ if(location.hostname==='irnw.github.io')location.replace('https://theplanner.pag
   --primary:#8a7fe8;--primary-deep:#5f52d6;--primary-dim:#f1efff;--primary-glow:rgba(138,127,232,.25);--on-primary:#ffffff;
   --accent:#d65050;--accent-dim:rgba(214,80,80,.07);--green:#2f9e5b;--green-dim:rgba(47,158,91,.08);
   --orange:#c97a2b;--orange-dim:rgba(201,122,43,.08);--purple:#8a7fe8;--purple-dim:#f1efff;
-  --text:#111111;--text2:#6f6f78;--text3:#a0a0aa;--line:#e7e3ef;--line-strong:#ddd6f3;--border:#e7e3ef;--border2:#ddd6f3;
+  --text:#111111;--text2:#6f6f78;--text3:#7c7c86;--line:#e7e3ef;--line-strong:#ddd6f3;--border:#e7e3ef;--border2:#ddd6f3;
   --input-bg:#ffffff;--radius:0px;--radius-lg:0px;--shadow:none;--shadow2:0 30px 80px rgba(17,17,17,.14);
   --header-bg:rgba(247,246,243,.92);--overlay:rgba(17,17,17,.28);
   --sg:#3d7ad6;--sg-dim:rgba(61,122,214,.1);--leave:#d6608a;--leave-dim:rgba(214,96,138,.1);--synced:#4fae73;--my:#c97a2b;--my-dim:rgba(201,122,43,.1);
@@ -64,7 +64,7 @@ a{color:var(--primary);text-decoration:none}
 .sidebar-brand .logo svg{width:18px;height:18px;color:#fff}
 .sidebar-brand h1{font-size:11px;color:rgba(255,255,255,.7);font-weight:600;letter-spacing:2px;text-transform:uppercase}
 .nav{flex:1;padding:8px}
-.nav-section{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.25);padding:20px 12px 6px;font-weight:600}
+.nav-section{font-size:10.5px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.25);padding:20px 12px 6px;font-weight:600}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;transition:all .15s;font-size:13px;border-radius:8px;color:rgba(255,255,255,.45);margin-bottom:2px;font-weight:400}
 .nav-item:hover{background:var(--sidebar-hover);color:rgba(255,255,255,.75)}
 .nav-item.active{background:var(--sidebar-active);color:#fff;font-weight:500}
@@ -192,17 +192,17 @@ textarea.fc{resize:vertical;min-height:50px}
 .cal-day.other{opacity:.2}
 .cal-day .d-num{font-weight:600;margin-bottom:2px;font-size:12px}
 .cal-day .d-num.weekend{color:var(--accent)}
-.cal-day .d-ph{font-size:8px;font-weight:600;margin-bottom:1px;padding:1px 4px;border-radius:3px;display:inline-block;max-width:100%;line-height:1.25;white-space:normal;overflow-wrap:break-word}
+.cal-day .d-ph{font-size:10px;font-weight:600;margin-bottom:1px;padding:1px 4px;border-radius:3px;display:inline-block;max-width:100%;line-height:1.25;white-space:normal;overflow-wrap:break-word}
 .cal-day .d-ph.ph-sg,.d-ph.ph-c0{background:var(--sg-dim);color:var(--sg)}
 .cal-day .d-ph.ph-my,.d-ph.ph-c1{background:var(--my-dim);color:var(--my)}
 .d-ph.ph-c2{background:rgba(245,158,11,.15);color:#f59e0b}.d-ph.ph-c3{background:rgba(34,197,94,.15);color:#22c55e}.d-ph.ph-c4,.d-ph.ph-c5{background:rgba(148,163,184,.18);color:var(--text2)}.d-ph.ph-c9{background:rgba(236,72,153,.15);color:#ec4899}
-.cal-trip{font-size:9px;padding:1px 4px;border-radius:3px;margin-bottom:1px;line-height:1.3;white-space:normal;overflow-wrap:break-word;hyphens:manual;cursor:pointer;font-weight:500;color:#fff}
+.cal-trip{font-size:10.5px;padding:1px 4px;border-radius:3px;margin-bottom:1px;line-height:1.3;white-space:normal;overflow-wrap:break-word;hyphens:manual;cursor:pointer;font-weight:500;color:#fff}
 
 /* ========== LEAVE ========== */
 .leave-boxes{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:24px}
 .lb{padding:20px 16px;border-radius:var(--radius);text-align:center;border:1px solid var(--glass-border);position:relative;overflow:hidden}
 .lb .lv{font-family:var(--serif);font-size:28px;font-weight:400;letter-spacing:-.3px}
-.lb .ll{font-size:9px;color:var(--text2);margin-top:6px;text-transform:uppercase;letter-spacing:1.5px;font-weight:500}
+.lb .ll{font-size:10.5px;color:var(--text2);margin-top:6px;text-transform:uppercase;letter-spacing:1.5px;font-weight:500}
 .lb.t-total{background:var(--primary-dim);color:var(--primary)}
 .lb.t-taken{background:var(--accent-dim);color:var(--accent)}
 .lb.t-bal{background:var(--green-dim);color:var(--green)}
@@ -225,7 +225,7 @@ textarea.fc{resize:vertical;min-height:50px}
 
 /* ========== YEAR TABS ========== */
 .cat-group{margin-bottom:28px}.cat-group-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}.cat-group-header h3{font-family:var(--serif);font-weight:500}
-.clash-badge{font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:2px}
+.clash-badge{font-size:10.5px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:2px}
 .clash-link{cursor:pointer}
 .world-map-container{position:relative;width:100%;max-width:1000px;margin:0 auto;background:var(--card);border-radius:var(--radius-lg);border:1px solid var(--glass-border);overflow:hidden;padding:20px}
 .world-map-container svg{width:100%;height:auto}
@@ -252,8 +252,8 @@ textarea.fc{resize:vertical;min-height:50px}
 .country-picker-dd .cp-item.sel{color:var(--primary);font-weight:500}
 .country-picker-dd .cp-item .cp-chk{width:14px;height:14px;border-radius:3px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .country-picker-dd .cp-item.sel .cp-chk{background:var(--primary);border-color:var(--primary)}
-.country-tag{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;font-size:9px;border-radius:10px;font-weight:500;letter-spacing:.3px;background:var(--primary-dim);color:var(--primary)}
-.country-link-badge{font-size:9px;color:var(--text3);margin-left:4px;font-weight:400;font-style:italic}
+.country-tag{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;font-size:10.5px;border-radius:10px;font-weight:500;letter-spacing:.3px;background:var(--primary-dim);color:var(--primary)}
+.country-link-badge{font-size:10.5px;color:var(--text3);margin-left:4px;font-weight:400;font-style:italic}
 .region-section{margin-bottom:8px}
 .region-section:last-child{margin-bottom:0}
 .region-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg2);border-radius:8px;cursor:pointer;margin-bottom:6px;border:1px solid var(--glass-border);user-select:none}
@@ -309,7 +309,7 @@ textarea.fc{resize:vertical;min-height:50px}
 .su-leg-rm{font-size:10px;color:var(--accent);padding:2px 6px}
 .su-leg-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .su-lf{display:flex;flex-direction:column;gap:2px;min-width:0}
-.su-lf span{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
+.su-lf span{font-size:10.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
 .su-lf .fc{font-size:12px;padding:6px 8px;min-width:0;width:100%}
 [data-apple-drag]{cursor:grab}
 [data-apple-drag]:active{cursor:grabbing}
@@ -321,7 +321,7 @@ body.apple-dragging [data-drop-ev]{outline:2px dashed var(--primary);outline-off
 .dup-h{font-size:12px;font-weight:600;color:var(--orange);margin-bottom:6px}
 .dup-row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;padding:4px 0}
 .dup-row .btn{font-size:11px;padding:4px 10px}
-.dup-src{font-size:9px;padding:1px 6px;border-radius:8px;border:1px solid var(--glass-border);color:var(--text3)}
+.dup-src{font-size:10.5px;padding:1px 6px;border-radius:8px;border:1px solid var(--glass-border);color:var(--text3)}
 .mg-wrap{overflow-x:auto}
 table.mg{width:100%;border-collapse:collapse;font-size:12px}
 table.mg th{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);text-align:left;padding:4px 6px}
@@ -441,7 +441,7 @@ td.mg-l{color:var(--text3);white-space:nowrap;padding-top:9px}
 .cd-unit{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
 
 /* ========== LEAVE CALENDAR DOTS ========== */
-.cal-day .d-leave{font-size:9px;color:var(--purple);font-weight:500;margin-bottom:1px}
+.cal-day .d-leave{font-size:10.5px;color:var(--purple);font-weight:500;margin-bottom:1px}
 
 /* ========== ATTACHMENT LINK ========== */
 .attach-link{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:var(--primary-dim);border-radius:6px;font-size:11px;color:var(--primary);cursor:pointer;margin-top:4px}
@@ -472,8 +472,8 @@ td.mg-l{color:var(--text3);white-space:nowrap;padding-top:9px}
   .cal-day{min-height:60px;padding:3px 2px;font-size:10px}
   .cal-day .d-num{font-size:11px}
   .cal-day .d-ph{font-size:7px}
-  .cal-trip{font-size:8px;padding:1px 2px;letter-spacing:-.1px}
-  .cal-head{padding:6px 4px;font-size:9px}
+  .cal-trip{font-size:10px;padding:1px 2px;letter-spacing:-.1px}
+  .cal-head{padding:6px 4px;font-size:10.5px}
   .cal-head .ch-full{display:none}
   .cal-head .ch-short{display:inline}
 }
@@ -499,7 +499,7 @@ td.mg-l{color:var(--text3);white-space:nowrap;padding-top:9px}
   .entry-grid{grid-template-columns:1fr}
   .entry-top h4{font-size:13px}
   .entry-top{flex-wrap:wrap;gap:6px}
-  .clash-badge{font-size:8px;padding:1px 4px}
+  .clash-badge{font-size:10px;padding:1px 4px}
   .sidebar-collapse-btn{display:none}
 }
 .guide-intro{font-size:12px;color:var(--text2);margin:0 0 10px}
@@ -606,7 +606,7 @@ td.mg-l{color:var(--text3);white-space:nowrap;padding-top:9px}
 .calm-top.other{opacity:.45}
 .calm-num{font-weight:600;font-size:12px}
 .calm-num.wk{color:var(--accent)}
-.calm-top .d-ph{display:block;font-size:9px;font-weight:600;margin-top:2px;padding:1px 4px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.calm-top .d-ph{display:block;font-size:10.5px;font-weight:600;margin-top:2px;padding:1px 4px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .calm-top .cal-clash{top:6px;right:6px}
 .cal-leave-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--purple);margin-left:5px;vertical-align:middle}
 .calm-bar{position:relative;z-index:2;margin:0 3px;padding:2px 6px;border-radius:5px;font-size:11px;font-weight:500;color:#fff;line-height:1.35;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -622,10 +622,10 @@ td.mg-l{color:var(--text3);white-space:nowrap;padding-top:9px}
 .calL-day.today{box-shadow:inset 3px 0 0 var(--primary)}
 .calL-date{width:44px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;line-height:1.2}
 .calL-date b{font-size:18px}.calL-date span{font-size:10px;color:var(--text3);text-transform:uppercase}
-.calL-date.cont{justify-content:center;gap:1px}.calL-date.cont span{font-size:9px;letter-spacing:.4px;line-height:1.3}
+.calL-date.cont{justify-content:center;gap:1px}.calL-date.cont span{font-size:10.5px;letter-spacing:.4px;line-height:1.3}
 .calL-phs{display:flex;flex-wrap:wrap;gap:6px}
 .calL-ph{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;line-height:1.3;max-width:100%}
-.calL-ph em{font-style:normal;font-weight:500;font-size:9px;opacity:.7}
+.calL-ph em{font-style:normal;font-weight:500;font-size:10.5px;opacity:.7}
 .calL-items{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
 .calL-ev{display:flex;gap:10px;align-items:center;cursor:pointer;min-width:0}
 .calL-bar{width:4px;align-self:stretch;min-height:28px;border-radius:2px;flex-shrink:0}
@@ -639,8 +639,8 @@ td.mg-l{color:var(--text3);white-space:nowrap;padding-top:9px}
   .calm-top{padding:3px 3px 1px}
   .calm-num{font-size:11px}
   .calm-top .d-ph{font-size:7px;padding:1px 2px}
-  .calm-bar{font-size:9px;padding:1px 3px;margin:0 1px;border-radius:3px}
-  .calm-more{font-size:9px;padding:0 2px}
+  .calm-bar{font-size:10.5px;padding:1px 3px;margin:0 1px;border-radius:3px}
+  .calm-more{font-size:10.5px;padding:0 2px}
   .cal-tools{margin-left:0;width:100%}
 }
 </style>
@@ -671,7 +671,7 @@ code,.kbd,.mono{font-family:var(--mono)!important}
 .nav-item.active{color:var(--primary-deep);font-weight:500}
 .nav-item.active::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--primary-deep)}
 .sidebar-footer{display:flex;align-items:center;gap:14px;padding:0;border:none;flex-shrink:0}
-.sidebar-footer .sync-dot{font-size:9.5px;text-transform:uppercase;letter-spacing:.16em;color:var(--text3);background:none!important;padding:0}
+.sidebar-footer .sync-dot{font-size:10.5px;text-transform:uppercase;letter-spacing:.16em;color:var(--text3);background:none!important;padding:0}
 .theme-toggle{font-size:0;padding:6px;border-radius:999px;color:var(--text)}
 .theme-toggle:hover{background:var(--primary-dim)}
 .theme-toggle svg{width:17px;height:17px}
@@ -690,8 +690,8 @@ code,.kbd,.mono{font-family:var(--mono)!important}
 .entry-top h4{font-size:16px}
 
 /* Section headers: title left, lavender caps link right, hairline below */
-.sec-h{display:flex;justify-content:space-between;align-items:baseline;font-size:9.6px;color:var(--text2);padding-bottom:12px;margin:0 0 0;border-bottom:1px solid var(--line)}
-.sec-h a{font-size:9.6px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;color:var(--primary-deep)}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;font-size:10.5px;color:var(--text2);padding-bottom:12px;margin:0 0 0;border-bottom:1px solid var(--line)}
+.sec-h a{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;color:var(--primary-deep)}
 .sec-h .cnt{letter-spacing:.1em}
 
 /* Panels: square, hairline rules, flat */
@@ -709,9 +709,9 @@ code,.kbd,.mono{font-family:var(--mono)!important}
 .evr-bar{width:2px;border-radius:0}
 .evr-name{font-size:16px;font-weight:700}
 .evr.apple .evr-name{font-family:var(--font)!important;font-weight:400;font-size:14px;letter-spacing:0;color:var(--text2)}
-.evr-meta{font-size:9px;color:var(--text2);margin-top:6px}
+.evr-meta{font-size:10.5px;color:var(--text2);margin-top:6px}
 .evr-facts{font-size:12px;color:var(--text2)}
-.evr-when{font-size:9.6px;text-transform:uppercase;letter-spacing:.16em;color:var(--primary-deep);font-weight:500}
+.evr-when{font-size:10.5px;text-transform:uppercase;letter-spacing:.16em;color:var(--primary-deep);font-weight:500}
 .evr-when.now{color:var(--green)}
 .sec{margin-bottom:36px}
 .dash{gap:40px}
@@ -721,11 +721,11 @@ code,.kbd,.mono{font-family:var(--mono)!important}
 .hero::before{display:none}
 .hero:hover{background:transparent}
 .hero:hover .hero-name{color:var(--primary-deep)}
-.hero-k{font-size:9.6px;color:var(--primary-deep);margin-bottom:14px}
+.hero-k{font-size:10.5px;color:var(--primary-deep);margin-bottom:14px}
 .hero-name{font-size:38px;line-height:1.08;letter-spacing:-.025em;transition:color .2s}
 .hero-meta{font-size:15px;color:var(--text2);margin-top:12px}
 .hero-cd b{font-family:var(--serif);font-size:56px;font-weight:700;color:var(--primary);letter-spacing:-.03em}
-.hero-cd span{font-size:9.6px;text-transform:uppercase;letter-spacing:.18em;color:var(--text2)}
+.hero-cd span{font-size:10.5px;text-transform:uppercase;letter-spacing:.18em;color:var(--text2)}
 .hero-facts{gap:8px 22px;margin-top:20px;font-size:13px}
 .att-list{gap:0;border:1px solid var(--line)}
 .att{border:none!important;border-top:1px solid var(--line)!important;background:var(--card)!important;padding:16px 20px}
@@ -738,7 +738,7 @@ code,.kbd,.mono{font-family:var(--mono)!important}
 .stats .stat,.leave-boxes .lb{background:transparent!important;border:none;border-left:1px solid var(--line);border-radius:0;padding:20px 22px}
 .stats .stat:first-child,.leave-boxes .lb:nth-child(4n+1){border-left:none}
 .leave-boxes .lb:nth-child(n+5){border-top:1px solid var(--line)}
-.stat .s-label,.leave-boxes .lb .ll{font-size:9px;color:var(--text2)!important}
+.stat .s-label,.leave-boxes .lb .ll{font-size:10.5px;color:var(--text2)!important}
 .stat .s-val,.leave-boxes .lb .lv{font-family:var(--serif)!important;font-weight:700;letter-spacing:-.02em;color:var(--text)!important}
 .stat .s-val{font-size:30px;margin-top:6px}
 .leave-boxes .lb .lv{font-size:32px}
@@ -746,7 +746,7 @@ code,.kbd,.mono{font-family:var(--mono)!important}
 .leave-boxes .lb.t-req .lv{color:var(--orange)!important}
 
 /* Buttons: pills with tracked caps; primary filled lavender, secondary outlined, tertiary text link */
-.btn{border-radius:999px;font-size:9.6px;padding:10px 18px;border:1px solid transparent;font-family:var(--font)}
+.btn{border-radius:999px;font-size:10.5px;padding:10px 18px;border:1px solid transparent;font-family:var(--font)}
 .btn-p{background:var(--primary-deep);color:var(--on-primary);border-color:var(--primary-deep)}
 .btn-p:hover{filter:brightness(1.08)}
 .btn-s{background:transparent;color:var(--text);border:1px solid var(--line-strong)}
@@ -757,27 +757,27 @@ code,.kbd,.mono{font-family:var(--mono)!important}
 .btn-d{background:transparent;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}
 .btn-ghost{background:none;border:none;color:var(--primary-deep);padding:6px 4px}
 .btn-ghost:hover{background:none;color:var(--primary)}
-.fab{border-radius:999px;background:var(--primary-deep);color:var(--on-primary)!important;font-size:9.6px;text-transform:uppercase;letter-spacing:.18em;font-weight:500;box-shadow:0 10px 30px rgba(95,82,214,.28)}
+.fab{border-radius:999px;background:var(--primary-deep);color:var(--on-primary)!important;font-size:10.5px;text-transform:uppercase;letter-spacing:.18em;font-weight:500;box-shadow:0 10px 30px rgba(95,82,214,.28)}
 
 /* Fields: pill inputs on a light surface with a hairline border */
 .fc{background:var(--input-bg);border:1px solid var(--line);border-radius:999px;font-family:var(--font);font-size:14.5px;color:var(--text);padding:11px 16px}
 textarea.fc{border-radius:18px}
 .fc:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-dim);outline:none}
-.fi label{font-size:9px;color:var(--text2)}
+.fi label{font-size:10.5px;color:var(--text2)}
 .search-bar input{background:var(--input-bg);border:1px solid var(--line);border-radius:999px}
 input[type=checkbox],input[type=radio]{accent-color:var(--primary-deep)}
 
 /* Tabs & switches: tracked caps with an underline, like the nav */
 .tabs{background:transparent;border:none;border-bottom:1px solid var(--line);border-radius:0;padding:0;gap:28px;justify-content:flex-start}
-.tab{flex:0 0 auto;padding:12px 0;border-radius:0;font-size:9.6px;color:var(--text2);background:none!important;box-shadow:none!important;position:relative}
+.tab{flex:0 0 auto;padding:12px 0;border-radius:0;font-size:10.5px;color:var(--text2);background:none!important;box-shadow:none!important;position:relative}
 .tab.active{color:var(--primary-deep)!important;font-weight:500}
 .tab.active::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--primary-deep)}
 .seg{background:transparent;border:1px solid var(--line-strong);border-radius:999px;padding:2px}
-.seg button{border-radius:999px;font-size:9px;padding:6px 12px;color:var(--text2)}
+.seg button{border-radius:999px;font-size:10.5px;padding:6px 12px;color:var(--text2)}
 .seg button.on{background:var(--primary-deep);color:var(--on-primary);box-shadow:none}
-.yt{background:transparent;border:1px solid var(--line-strong);color:var(--text);border-radius:999px;font-size:9px}
+.yt{background:transparent;border:1px solid var(--line-strong);color:var(--text);border-radius:999px;font-size:10.5px}
 .yt.active{background:var(--primary-deep)!important;border-color:var(--primary-deep)!important;color:var(--on-primary)!important}
-.tag{border-radius:999px;font-size:8.6px;padding:3px 9px;background:transparent!important;border:1px solid var(--line-strong)!important;color:var(--text2)!important}
+.tag{border-radius:999px;font-size:10.5px;padding:3px 9px;background:transparent!important;border:1px solid var(--line-strong)!important;color:var(--text2)!important}
 
 /* Dialogs: square sheets with ruled header */
 .modal{background:var(--bg);border:1px solid var(--line);border-radius:0;box-shadow:0 30px 80px rgba(17,17,17,.18)}
@@ -790,7 +790,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--primary-deep)}
 /* Calendar: ruled grid, Playfair month */
 .cal-nav h3{font-size:24px}
 .calm{border:1px solid var(--line)!important;background:var(--line)!important}
-.calm-hc{background:var(--card);font-size:9px;color:var(--text2)}
+.calm-hc{background:var(--card);font-size:10.5px;color:var(--text2)}
 .calm-bg{background:var(--card)}
 .calm-bg.other{background:var(--bg);opacity:1}
 .calm-top.other .calm-num{color:var(--text3)}
@@ -801,7 +801,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--primary-deep)}
 .calL-date span{letter-spacing:.16em}
 
 /* Booking card details */
-.eg .ek{font-size:8.6px;color:var(--text2)}
+.eg .ek{font-size:10.5px;color:var(--text2)}
 .eg .ev{font-size:14px}
 .more-menu summary{color:var(--text2)}
 .more-menu .mm{border-radius:0;border:1px solid var(--line);box-shadow:0 20px 50px rgba(17,17,17,.14)}
@@ -840,7 +840,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--primary-deep)}
   .tabs{gap:20px;overflow-x:auto;flex-wrap:nowrap}
 }
 /* Fixes: elements with their own inline sizes/backgrounds follow the editorial style */
-.btn{font-size:9.6px!important;padding:10px 18px!important}
+.btn{font-size:10.5px!important;padding:10px 18px!important}
 .btn.btn-ghost{padding:6px 4px!important}
 .page-header .sync-dot{display:none!important}
 .dash .card,.page-content>.card[style*="gradient"]{background:var(--card)!important;border:1px solid var(--line)!important;border-radius:0!important}
@@ -855,7 +855,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--primary-deep)}
 }
 @media(max-width:860px){.sidebar-footer{margin-left:auto}}
 .dz-tabs{border:1px solid var(--line-strong)!important;border-radius:999px!important;padding:2px!important;background:transparent!important;overflow:hidden}
-.dz-tab{border-radius:999px!important;font-size:9.6px!important;text-transform:uppercase;letter-spacing:.18em;font-weight:500;font-family:var(--font)!important;border:none!important}
+.dz-tab{border-radius:999px!important;font-size:10.5px!important;text-transform:uppercase;letter-spacing:.18em;font-weight:500;font-family:var(--font)!important;border:none!important}
 .dz-tab.active{background:var(--primary-deep)!important;color:var(--on-primary)!important}
 .dz{border-radius:0!important;border-color:var(--line-strong)!important;background:var(--card)!important}
 /* Exact Surface Interval components (from its globals.css) */
@@ -917,7 +917,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--primary-deep)}
 .leave-boxes .lb{padding:16px 8px!important;border-left:1px solid var(--line)!important;border-top:none!important}
 .leave-boxes .lb:first-child{border-left:none!important}
 .leave-boxes .lb .lv{font-size:22px!important}
-.leave-boxes .lb .ll{font-size:8px!important;letter-spacing:.14em!important;line-height:1.5;margin-top:4px}
+.leave-boxes .lb .ll{font-size:10px!important;letter-spacing:.14em!important;line-height:1.5;margin-top:4px}
 @media(max-width:860px){
   .leave-boxes{grid-template-columns:repeat(4,minmax(0,1fr))!important}
   .leave-boxes .lb:nth-child(5){border-left:none!important}
@@ -951,7 +951,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--primary-deep)}
 .mt-row{display:flex;align-items:center;gap:6px}
 .mt-flag{width:16px;height:12px;object-fit:cover;border-radius:2px;box-shadow:0 0 0 1px var(--line);flex-shrink:0}
 .mt-name{font-family:var(--font);font-weight:500;font-size:12px;color:var(--text);line-height:1.4}
-.mt-sub{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text2);margin-top:3px}
+.mt-sub{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text2);margin-top:3px}
 /* ===== Layout v4: editorial sidebar (collapsible) + top bar with search, sync and theme ===== */
 .sidebar{position:fixed!important;top:0;bottom:0;left:0;right:auto!important;width:232px!important;height:100vh!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:0!important;padding:22px 14px 16px!important;background:var(--bg)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border-right:1px solid var(--line)!important;border-bottom:none!important;z-index:110;transition:width .2s ease}
 .sidebar-brand{padding:4px 10px 0!important;display:flex;align-items:center;min-height:34px}
@@ -959,14 +959,14 @@ input[type=checkbox],input[type=radio]{accent-color:var(--primary-deep)}
 .monogram{display:none;font-family:var(--serif);font-weight:700;font-size:20px;letter-spacing:-.04em;color:var(--text)}
 .monogram em{font-style:normal;color:var(--primary)}
 .sidebar .nav{display:flex!important;flex:1;flex-direction:column!important;justify-content:flex-start!important;align-items:stretch!important;gap:2px!important;margin-top:30px;padding:0!important}
-.sidebar .nav-item{display:flex!important;align-items:center;gap:12px;padding:10px 12px!important;border-radius:0;font-size:9.6px!important;letter-spacing:.18em;text-transform:uppercase;color:var(--text)!important;position:relative;white-space:nowrap}
+.sidebar .nav-item{display:flex!important;align-items:center;gap:12px;padding:10px 12px!important;border-radius:0;font-size:10.5px!important;letter-spacing:.18em;text-transform:uppercase;color:var(--text)!important;position:relative;white-space:nowrap}
 .sidebar .nav-item svg{display:block!important;width:17px;height:17px;flex-shrink:0;color:var(--text2);stroke-width:1.6}
 .sidebar .nav-item:hover{color:var(--primary-deep)!important;background:var(--primary-dim)!important}
 .sidebar .nav-item:hover svg{color:var(--primary-deep)}
 .sidebar .nav-item.active{color:var(--primary-deep)!important;background:var(--primary-dim)!important}
 .sidebar .nav-item.active svg{color:var(--primary-deep)}
 .sidebar .nav-item.active::after{content:'';position:absolute;left:0;top:8px;bottom:8px;width:2px;height:auto;right:auto;background:var(--primary-deep)}
-.sb-collapse{display:flex;align-items:center;gap:12px;background:none;border:none;border-top:1px solid var(--line);padding:14px 12px 4px;color:var(--text2);font:inherit;font-size:9.6px;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;width:100%}
+.sb-collapse{display:flex;align-items:center;gap:12px;background:none;border:none;border-top:1px solid var(--line);padding:14px 12px 4px;color:var(--text2);font:inherit;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;width:100%}
 .sb-collapse svg{width:17px;height:17px;flex-shrink:0;transition:transform .2s}
 .sb-collapse:hover{color:var(--primary-deep)}
 /* Collapsed: a slim icon rail */
@@ -997,11 +997,11 @@ body.sb-collapsed .topbar{left:68px}
 .gs-item{display:flex;flex-direction:column;gap:3px;padding:12px 16px;border-bottom:1px solid var(--line);cursor:pointer}
 .gs-item:last-child{border-bottom:none}
 .gs-item.sel,.gs-item:hover{background:var(--primary-dim)}
-.gs-kick{font-size:8.6px;letter-spacing:.18em;text-transform:uppercase;color:var(--purple);font-weight:500}
+.gs-kick{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--purple);font-weight:500}
 .gs-name{font-family:var(--serif);font-weight:700;font-size:15px;color:var(--text)}
 .gs-why{font-size:12px;color:var(--text2)}
 .gs-empty{padding:14px 16px;font-size:13px;color:var(--text2)}
-.tb-sync .sync-dot{display:inline-flex;font-size:9.5px;text-transform:uppercase;letter-spacing:.16em;color:var(--text3);background:none!important;padding:0}
+.tb-sync .sync-dot{display:inline-flex;font-size:10.5px;text-transform:uppercase;letter-spacing:.16em;color:var(--text3);background:none!important;padding:0}
 .tb-theme{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:none;border:none;color:var(--text);cursor:pointer}
 .tb-theme:hover{background:var(--primary-dim);color:var(--primary-deep)}
 .tb-theme svg{width:18px;height:18px}
@@ -1055,7 +1055,7 @@ body.sb-collapsed .topbar{left:68px}
 .trip-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))!important;gap:10px!important;margin-top:14px;align-items:start}
 .trip-card.ec .trip-body{padding:14px 16px 13px}
 .trip-card.ec .trip-name{font-size:15px;line-height:1.3;margin:4px 0 4px}
-.ec-kick{font-size:8.6px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;color:var(--purple)}
+.ec-kick{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;color:var(--purple)}
 .trip-card.ec.apple .ec-kick{color:var(--text3)}
 .trip-card.ec.apple .trip-name{font-weight:600;font-size:14px}
 .ec-dates{font-size:11.5px;color:var(--text2)}
@@ -1079,7 +1079,7 @@ body.sb-collapsed .topbar{left:68px}
 .cp.open .cp-pop{display:grid}
 .cp-months{width:204px}
 .cp-years{width:204px;max-height:220px;overflow:auto}
-.cp-pop button{background:none;border:none;padding:8px 0;font-family:var(--font);font-size:9.6px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--text2);cursor:pointer;border-radius:999px}
+.cp-pop button{background:none;border:none;padding:8px 0;font-family:var(--font);font-size:10.5px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--text2);cursor:pointer;border-radius:999px}
 .cp-pop button:hover{color:var(--primary-deep);background:var(--primary-dim)}
 .cp-pop button.on{background:var(--primary-deep);color:var(--on-primary)}
 .cp-pop button.now:not(.on){color:var(--primary-deep)}
@@ -1158,12 +1158,12 @@ body.sb-collapsed .topbar{left:68px}
 .more-list button svg{width:20px;height:20px;color:var(--primary-deep)}
 .more-list button span.chev{margin-left:auto;color:var(--text3);font-family:var(--font)!important}
 /* Sign out: small and quiet, under the last nav item (sidebar) or the More sheet (phones) */
-.sb-signout{display:flex;align-items:center;gap:12px;margin-top:22px;padding:10px 12px;background:none;border:0;color:var(--text3);font:inherit;font-size:8.6px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;cursor:pointer;text-align:left}
+.sb-signout{display:flex;align-items:center;gap:12px;margin-top:22px;padding:10px 12px;background:none;border:0;color:var(--text3);font:inherit;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;cursor:pointer;text-align:left}
 .sb-signout svg{width:14px;height:14px;flex-shrink:0;stroke-width:1.6}
 .sb-signout:hover{color:var(--primary-deep)}
 .sidebar.collapsed .sb-signout{justify-content:center;padding-left:0;padding-right:0}
 .sidebar.collapsed .sb-signout span{display:none}
-.more-signout{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px auto 2px;padding:8px 14px;background:none;border:0;color:var(--text3);font:inherit;font-size:9.6px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;cursor:pointer}
+.more-signout{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px auto 2px;padding:8px 14px;background:none;border:0;color:var(--text3);font:inherit;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;cursor:pointer}
 .more-signout svg{width:14px;height:14px;stroke-width:1.6}
 .more-signout:hover{color:var(--primary-deep)}
 /* Booking card menu, lists and misc carried over */
@@ -1190,10 +1190,10 @@ body.gated .main{margin-left:0!important;padding:0!important;max-width:none!impo
 .landing{max-width:1040px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding:28px 40px 24px}
 .ld-top{display:flex;align-items:center;justify-content:space-between}
 .ld-top .wordmark{font-size:23px}
-.ld-theme{background:none;border:0;color:var(--text2);font:inherit;font-size:9.6px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;cursor:pointer;padding:6px 0}
+.ld-theme{background:none;border:0;color:var(--text2);font:inherit;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;cursor:pointer;padding:6px 0}
 .ld-theme:hover{color:var(--primary-deep)}
 .ld-hero{max-width:520px;margin:auto 0;padding:64px 0 48px}
-.ld-kick{font-size:9.6px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;color:var(--primary-deep);margin-bottom:16px}
+.ld-kick{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;color:var(--primary-deep);margin-bottom:16px}
 .ld-hero h1{font-family:var(--serif);font-weight:700;font-size:44px;line-height:1.08;letter-spacing:-.02em;margin:0 0 16px;color:var(--text)}
 .ld-sub{font-size:15px;line-height:1.6;color:var(--text2);margin:0 0 28px;max-width:440px}
 .ld-err{font-size:13px;line-height:1.5;color:var(--accent,var(--orange));margin:0 0 16px}
@@ -1238,6 +1238,60 @@ input.fc[type=date]::-webkit-date-and-time-value,input.fc[type=time]::-webkit-da
 /* Country search uses the standard field style */
 .country-picker input.fc{width:100%;padding:8px 11px;font-size:13px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg)}
 @media(max-width:700px){.country-picker input.fc{font-size:16px}}
+/* Dashboard: Apple Calendar appointments as a compact list */
+.sec-n{font-family:var(--font);font-size:11px;font-weight:400;color:var(--text3);letter-spacing:.02em}
+.appt-list{display:flex;flex-direction:column}
+.appt{display:flex;gap:14px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px;min-width:0}
+.appt:hover .appt-n{color:var(--primary-deep)}
+.appt-d{flex:none;width:118px;color:var(--text3);font-size:12px}
+.appt-n{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.appt-more{display:block;padding:10px 0;font-size:12px;color:var(--primary-deep)}
+/* Countries: tabs, folded regions, travel stats */
+.c-tabs{align-self:flex-end}
+details.c-region{border-bottom:1px solid var(--line)}
+details.c-region>summary{display:flex;justify-content:space-between;align-items:center;padding:14px 2px;cursor:pointer;list-style:none;font-size:13px;font-weight:500;color:var(--text)}
+details.c-region>summary::-webkit-details-marker{display:none}
+details.c-region>summary::after{content:'›';margin-left:10px;color:var(--text3);transition:transform .15s}
+details.c-region[open]>summary::after{transform:rotate(90deg)}
+details.c-region>summary .region-count{margin-left:auto;color:var(--text3);font-size:12px}
+details.c-region .country-grid{margin:0 0 14px}
+.c-search{max-width:240px}
+.c-search input{font-size:13px}
+.ts-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.ts-y{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)}
+.ts-y select{width:auto}
+.ts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
+.ts-grid .card{margin:0}
+.ts-list{list-style:none;margin:0;padding:0}
+.ts-list li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.ts-list li:last-child{border-bottom:0}
+.ts-list li span{display:flex;align-items:center;gap:8px;min-width:0}
+.ts-list li b{font-weight:500;color:var(--text2);white-space:nowrap;font-size:12px}
+@media(max-width:900px){.ts-grid{grid-template-columns:1fr}}
+@media(max-width:700px){.c-search{max-width:none;width:100%;margin-top:10px}.page-header .c-tabs{width:100%;margin-top:12px}.page-header .c-tabs button{flex:1}}
+.c-chips{display:flex;flex-wrap:wrap;gap:6px}
+.c-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;font-size:12px;color:var(--text);background:var(--input-bg)}
+.c-chip .flag{width:16px;height:12px;border-radius:2px;object-fit:cover}
+.ts-list .flag{width:20px;height:15px;object-fit:cover;border-radius:2px;box-shadow:0 0 0 1px var(--line);flex:none}
+.ts-grid>*{min-width:0}
+.ph-row{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.ph-row.past{color:var(--text3)}
+.ph-row .ph-st{font-size:11px;color:var(--text3)}
+.ph-row .ph-d{color:var(--text3);white-space:nowrap}
+.ph-cap{font-size:11px;color:var(--text3);padding:4px 0 2px}
+.ph-more{display:flex;gap:16px;flex-wrap:wrap;padding:10px 0 4px;font-size:12px}
+.ph-more a{color:var(--primary-deep)}
+/* Leave job card: two columns on phones too (employer across the top) */
+@media(max-width:700px){.fg.job-fg{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px}.job-fg .fi:first-child{grid-column:1/-1}.job-fg .fi label{min-height:2.4em;display:flex;align-items:flex-end}}
+/* Phone month grid: colour only (names don't fit); tap a day for the list */
+.cal-tap-hint{display:none}
+@media(max-width:700px){
+  .calm-bar{font-size:0!important;color:transparent!important;height:7px;padding:0!important;line-height:0;margin-top:2px}
+  .calm-more{font-size:10px}
+  .calm-top .d-ph{font-size:0!important;width:7px;height:7px;padding:0!important;border-radius:50%;margin:3px 0 0;display:inline-block}
+  .calm-week{min-height:58px}
+  .cal-tap-hint{display:block;font-size:12px;color:var(--text3);margin:10px 2px 0}
+}
 </style>
 
 </head>
@@ -1385,7 +1439,7 @@ function clashCardHtml(t){
   return`<div class="entry clash-ev-card" style="cursor:pointer;border-left:3px solid ${cc};margin:6px 0;padding:10px 12px" data-clash-nav="${t.id}">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
       <div style="font-weight:600;font-size:13px;color:var(--text)">${esc(t.name)}</div>
-      <div style="display:flex;gap:4px;align-items:center"><span class="tag" style="font-size:9px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span></div>
+      <div style="display:flex;gap:4px;align-items:center"><span class="tag" style="font-size:10.5px;background:${cc}22;color:${cc}">${catLabel(t.category||'trip')}</span><span class="badge badge-${st}">${st}</span></div>
     </div>
     <div style="font-size:11px;color:var(--text2);margin-top:4px">${fmtS(t.startDate)}${t.startTime?' '+t.startTime:''} — ${fmtS(t.endDate)}${t.endTime?' '+t.endTime:''}</div>
     <div style="font-size:11px;color:var(--text3);margin-top:2px">${t.locations.join(', ')||'No locations'}</div>
@@ -3011,7 +3065,11 @@ function vDash(){
       ${facts.length?`<div class="hero-facts">${facts.map(f=>`<span>${f}</span>`).join('')}</div>`:''}
     </div>`;})()
     :`<div class="hero empty-hero"><div class="hero-name">No trips planned yet</div><div class="hero-meta">Add one, or drop a booking confirmation on the Scan button.</div><button class="btn btn-p" data-action="add-event" style="margin-top:12px">+ New Event</button></div>`;
-  const rest=live.filter(t=>t!==hero).slice(0,7);
+  // Coming up: trips and events only; Apple Calendar appointments get their own compact list (next 7 days)
+  const rest=trips.filter(t=>t!==hero).slice(0,6);
+  const wk=ymd(new Date(Date.now()+7*864e5));
+  const appts=live.filter(t=>t.source==='apple'&&t.startDate<=wk&&(t.endDate||t.startDate)>=td);
+  const apptHtml=appts.length?`<div class="sec"><div class="sec-h">Appointments<span class="sec-n">next 7 days</span></div><div class="appt-list">${appts.slice(0,6).map(t=>`<div class="appt" data-action="view" data-id="${t.id}"><span class="appt-d">${t.startDate===td?'Today':esc(new Date(t.startDate+'T00:00:00').toLocaleDateString(dloc(),{weekday:'short',day:'numeric',month:'short'}))}${t.startTime?' · '+esc(t.startTime):''}</span><span class="appt-n">${esc(t.name)}</span></div>`).join('')}${appts.length>6?`<a href="#" class="appt-more" data-action="nav" data-to="calendar">${appts.length-6} more in the Calendar ›</a>`:''}</div></div>`:'';
   const yr=ft.filter(t=>t.source!=='apple'&&t.startDate&&t.startDate.startsWith(String(curYear)));
   const away=yr.reduce((s,t)=>s+days(t.startDate,t.endDate),0);
   const subtitle=[`${yr.length} event${yr.length!==1?'s':''} in ${curYear}`,away?`${away} days away`:'',lyTotals.tot?`${lyTotals.bal} leave day${lyTotals.bal!==1?'s':''} left`:''].filter(Boolean).join(' · ');
@@ -3024,12 +3082,13 @@ function vDash(){
     <div class="sec"><div class="sec-h">Coming up<a href="#" data-action="nav" data-to="events">See all events ›</a></div>
       ${rest.length?`<div class="evr-list">${rest.map(t=>evRowHtml(t)).join('')}</div>`:'<p class="quiet">Nothing else planned yet.</p>'}
     </div>
+    ${apptHtml}
   </div>`;
 }
 
 // ===== MY EVENTS =====
 function vEvents(){
-  const ui=listUI(),q=(S._searchQ||'').toLowerCase(),catF=S._catFilter||'all',showApple=ui.apple!==false,view=ui.view==='cards'?'cards':'list';
+  const ui=listUI(),q=(S._searchQ||'').toLowerCase(),catF=S._catFilter||'all',showApple=ui.apple===true,view=ui.view==='cards'?'cards':'list';
   const yrs=[...new Set(S.events.map(t=>t.year||new Date(t.startDate).getFullYear()))].filter(Boolean).sort((a,b)=>b-a);
   let list=tpFilter(S.events).filter(t=>!S.tfY||(t.year||new Date(t.startDate).getFullYear())==S.tfY);
   if(catF!=='all')list=list.filter(t=>(t.category||'trip')===catF);
@@ -3123,7 +3182,7 @@ function rFlights(t){
   ${dupBannerHtml(t,'flights')}
   ${sorted.length?sorted.map(f=>`
     <div class="entry">
-      <div class="entry-top"><h4>${esc(f.airline||'')} ${esc(f.flightNumber||'')}${f.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div class="entry-acts"><button class="btn btn-ghost" data-action="edit-flight" data-eid="${f.id}">Edit</button><details class="more-menu"><summary aria-label="More actions" title="More actions">⋯</summary><div class="mm">${f.appleUid?`<button  data-action="apple-detach" data-eid="${f.id}" title="Make it a separate Apple event again">Detach from Apple Calendar</button>`:''}<button  data-action="dup-flight" data-eid="${f.id}" title="Duplicate (return flight)">Duplicate</button><button class="mm-del" data-action="del-flight" data-eid="${f.id}">Delete</button></div></details></div></div>
+      <div class="entry-top"><h4>${esc(f.airline||'')} ${esc(f.flightNumber||'')}${f.appleUid?' <span class="tag" style="font-size:10.5px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div class="entry-acts"><button class="btn btn-ghost" data-action="edit-flight" data-eid="${f.id}">Edit</button><details class="more-menu"><summary aria-label="More actions" title="More actions">⋯</summary><div class="mm">${f.appleUid?`<button  data-action="apple-detach" data-eid="${f.id}" title="Make it a separate Apple event again">Detach from Apple Calendar</button>`:''}<button  data-action="dup-flight" data-eid="${f.id}" title="Duplicate (return flight)">Duplicate</button><button class="mm-del" data-action="del-flight" data-eid="${f.id}">Delete</button></div></details></div></div>
       <div class="entry-grid">
         ${f.from||f.to?`<div class="eg"><span class="ek">Route</span><span class="ev">${esc(f.from||'?')} → ${esc(f.to||'?')}</span></div>`:''}
         ${f.pnr?`<div class="eg"><span class="ek">PNR</span><span class="ev" style="font-family:monospace">${esc(f.pnr)}</span></div>`:''}
@@ -3144,7 +3203,7 @@ function rHotels(t){
   ${dupBannerHtml(t,'hotels')}
   ${sorted.length?sorted.map(h=>`
     <div class="entry">
-      <div class="entry-top"><h4>${esc(h.name||'Hotel')}${h.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div class="entry-acts"><button class="btn btn-ghost" data-action="edit-hotel" data-eid="${h.id}">Edit</button><details class="more-menu"><summary aria-label="More actions" title="More actions">⋯</summary><div class="mm">${h.appleUid?`<button  data-action="apple-detach" data-eid="${h.id}" title="Make it a separate Apple event again">Detach from Apple Calendar</button>`:''}<button class="mm-del" data-action="del-hotel" data-eid="${h.id}">Delete</button></div></details></div></div>
+      <div class="entry-top"><h4>${esc(h.name||'Hotel')}${h.appleUid?' <span class="tag" style="font-size:10.5px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div class="entry-acts"><button class="btn btn-ghost" data-action="edit-hotel" data-eid="${h.id}">Edit</button><details class="more-menu"><summary aria-label="More actions" title="More actions">⋯</summary><div class="mm">${h.appleUid?`<button  data-action="apple-detach" data-eid="${h.id}" title="Make it a separate Apple event again">Detach from Apple Calendar</button>`:''}<button class="mm-del" data-action="del-hotel" data-eid="${h.id}">Delete</button></div></details></div></div>
       <div class="entry-grid">
         ${h.bookingNumber?`<div class="eg"><span class="ek">Booking #</span><span class="ev">${esc(h.bookingNumber)}</span></div>`:''}
         ${h.checkIn?`<div class="eg"><span class="ek">Check-in</span><span class="ev">${fmt(h.checkIn)}</span></div>`:''}
@@ -3164,7 +3223,7 @@ function rActs(t){
   ${dupBannerHtml(t,'activities')}
   ${sorted.length?sorted.map(a=>`
     <div class="entry">
-      <div class="entry-top"><h4>${esc(a.name||'Activity')}${a.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div class="entry-acts"><button class="btn btn-ghost" data-action="edit-act" data-eid="${a.id}">Edit</button><details class="more-menu"><summary aria-label="More actions" title="More actions">⋯</summary><div class="mm">${a.appleUid?`<button  data-action="apple-detach" data-eid="${a.id}" title="Make it a separate Apple event again">Detach from Apple Calendar</button>`:''}<button class="mm-del" data-action="del-act" data-eid="${a.id}">Delete</button></div></details></div></div>
+      <div class="entry-top"><h4>${esc(a.name||'Activity')}${a.appleUid?' <span class="tag" style="font-size:10.5px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div class="entry-acts"><button class="btn btn-ghost" data-action="edit-act" data-eid="${a.id}">Edit</button><details class="more-menu"><summary aria-label="More actions" title="More actions">⋯</summary><div class="mm">${a.appleUid?`<button  data-action="apple-detach" data-eid="${a.id}" title="Make it a separate Apple event again">Detach from Apple Calendar</button>`:''}<button class="mm-del" data-action="del-act" data-eid="${a.id}">Delete</button></div></details></div></div>
       <div class="entry-grid">
         ${a.location?`<div class="eg"><span class="ek">Location</span><span class="ev">${esc(a.location)}</span></div>`:''}
         ${a.date&&a.endDate?`<div class="eg"><span class="ek">Dates</span><span class="ev">${fmt(a.date)} — ${fmt(a.endDate)} (${calcNights(a.date,a.endDate)||'?'}d)</span></div>`:a.date?`<div class="eg"><span class="ek">Date</span><span class="ev">${fmt(a.date)}</span></div>`:''}
@@ -3184,7 +3243,7 @@ function rTrans(t){
   ${dupBannerHtml(t,'transport')}
   ${sorted.length?sorted.map(x=>`
     <div class="entry">
-      <div class="entry-top"><h4>${esc(x.type||'')} ${esc(x.name||'Transport')}${x.appleUid?' <span class="tag" style="font-size:9px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div class="entry-acts"><button class="btn btn-ghost" data-action="edit-trans" data-eid="${x.id}">Edit</button><details class="more-menu"><summary aria-label="More actions" title="More actions">⋯</summary><div class="mm">${x.appleUid?`<button  data-action="apple-detach" data-eid="${x.id}" title="Make it a separate Apple event again">Detach from Apple Calendar</button>`:''}<button class="mm-del" data-action="del-trans" data-eid="${x.id}">Delete</button></div></details></div></div>
+      <div class="entry-top"><h4>${esc(x.type||'')} ${esc(x.name||'Transport')}${x.appleUid?' <span class="tag" style="font-size:10.5px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div class="entry-acts"><button class="btn btn-ghost" data-action="edit-trans" data-eid="${x.id}">Edit</button><details class="more-menu"><summary aria-label="More actions" title="More actions">⋯</summary><div class="mm">${x.appleUid?`<button  data-action="apple-detach" data-eid="${x.id}" title="Make it a separate Apple event again">Detach from Apple Calendar</button>`:''}<button class="mm-del" data-action="del-trans" data-eid="${x.id}">Delete</button></div></details></div></div>
       <div class="entry-grid">
         ${x.location?`<div class="eg"><span class="ek">Location</span><span class="ev">${esc(x.location)}</span></div>`:''}
         ${x.date?`<div class="eg"><span class="ek">Date</span><span class="ev">${fmt(x.date)}</span></div>`:''}
@@ -3278,7 +3337,7 @@ function vCal(){
         ${mode==='month'?`<div class="seg" role="group" aria-label="Density"><button class="${!showAll?'on':''}" data-action="cal-all" data-v="0">Compact</button><button class="${showAll?'on':''}" data-action="cal-all" data-v="1">Show all</button></div>`:''}
       </div>
     </div>`;
-  const legend=`<div class="ph-legend">
+  const legend=`<p class="cal-tap-hint">Tap a day to see what's on.</p><div class="ph-legend">
       ${(P().holidays||[]).map((cc,ci)=>`<div class="ph-legend-item"><div class="ph-dot c${ci}"></div>${esc(phLabel(cc))}</div>`).join('')}
       ${(P().customHolidays||[]).length?'<div class="ph-legend-item"><div class="ph-dot c9"></div>My holidays</div>':''}
       <div class="ph-legend-item"><span class="cal-leave-dot"></span>Leave day</div>
@@ -3489,7 +3548,7 @@ function vLeave(){
 
     ${jobs.map((j,i)=>`
     <div class="card" style="margin-bottom:12px"><div class="card-header"><h3>${j.employer||'Job '+(i+1)}${j.startDate||j.endDate?' <span style="font-weight:400;font-size:11px;color:var(--text3)">'+(j.startDate?fmtS(j.startDate):'?')+' — '+(j.endDate?fmtS(j.endDate):'present')+'</span>':''}</h3><button class="btn btn-ghost" style="color:var(--accent);font-size:11px" data-action="del-job" data-ji="${i}">Remove</button></div><div class="card-body">
-      <div class="fg">
+      <div class="fg job-fg">
         <div class="fi"><label>Employer</label><input class="fc" data-lj="${i}" data-jf="employer" value="${esc(j.employer||'')}"></div>
         <div class="fi"><label>Start Date</label><input class="fc" type="date" data-lj="${i}" data-jf="startDate" value="${j.startDate||''}"></div>
         <div class="fi"><label>End Date</label><input class="fc" type="date" data-lj="${i}" data-jf="endDate" value="${j.endDate||''}" placeholder="Leave blank if current"></div>
@@ -3502,9 +3561,18 @@ function vLeave(){
     </div></div>`).join('')}
 
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
-      ${(P().holidays||[]).map((cc,ci)=>{const list=holidaysFor(cc,parseInt(y));const work=cc===P().workHolidays;
-        return `<div class="card"><div class="card-header"><h3><span style="display:inline-flex;align-items:center;gap:6px"><span class="ph-dot c${ci}" style="width:8px;height:8px;border-radius:50%;display:inline-block"></span>${esc(phLabel(cc))} ${y}</span></h3>${work?'<span style="font-size:10px;color:var(--text3)">Not counted as leave</span>':''}</div><div class="card-body" style="padding:8px 16px">
-        ${list.length?list.map(h=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--glass-border);font-size:12px"><span>${esc(h.n)}${h.s!=='all'?` <span style="font-size:10px;color:var(--text3)">(${esc(fmtStates(h.s))})</span>`:''}</span><span style="color:var(--text3);white-space:nowrap">${fmt(h.d)}</span></div>`).join('')
+      ${(P().holidays||[]).map((cc,ci)=>{const full=holidaysFor(cc,parseInt(y));const work=cc===P().workHolidays,reg=work?P().region:'';
+        // National holidays, plus your own state's when one is chosen; other states' only on request
+        const mine=h=>h.s==='all'||(reg&&(Array.isArray(h.s)?h.s.includes(reg):h.s===reg));
+        const showAll=!!(window._phAll&&window._phAll[cc]),others=full.filter(h=>!mine(h)).length;
+        const list=showAll?full:full.filter(mine);
+        const today=ymd(new Date()),up=list.filter(h=>h.d>=today);
+        const open=!!(window._phOpen&&window._phOpen[cc]);
+        const shown=open?list:(up.length?up:list).slice(0,5);
+        const row=h=>`<div class="ph-row${h.d<today?' past':''}"><span>${esc(h.n)}${h.s!=='all'?` <span class="ph-st">(${esc(fmtStates(h.s))})</span>`:''}</span><span class="ph-d">${fmt(h.d)}</span></div>`;
+        return `<div class="card"><div class="card-header"><h3><span style="display:inline-flex;align-items:center;gap:6px"><span class="ph-dot c${ci}" style="width:8px;height:8px;border-radius:50%;display:inline-block"></span>${esc(phLabel(cc))} ${y}</span></h3>${work?'<span style="font-size:11px;color:var(--text3)">Not counted as leave</span>':''}</div><div class="card-body" style="padding:8px 16px">
+        ${list.length?`${!open&&up.length?'<div class="ph-cap">Coming up</div>':''}${shown.map(row).join('')}
+          <div class="ph-more">${list.length>shown.length||open?`<a href="#" data-action="ph-open" data-cc="${cc}">${open?'Show fewer':`Show all ${list.length}`}</a>`:''}${others?`<a href="#" data-action="ph-all" data-cc="${cc}">${showAll?'Hide other states':`+ ${others} state holiday${others>1?'s':''}${work&&!reg?' (pick your state in Settings)':''}`}</a>`:''}</div>`
           :`<div style="font-size:12px;color:var(--text3);padding:8px 0">${phAvailable(cc)?'Loading…':'Holidays for this country aren\'t available automatically. Add them under <b>My holidays</b>.'}</div>`}
         </div></div>`;}).join('')}
       <div class="card"><div class="card-header"><h3><span style="display:inline-flex;align-items:center;gap:6px"><span class="ph-dot c9" style="width:8px;height:8px;border-radius:50%;display:inline-block"></span>My holidays</span></h3><div style="display:flex;gap:6px"><button class="btn btn-s" data-action="ph-import" style="font-size:11px">Import .ics</button><button class="btn btn-p" data-action="ph-add" style="font-size:11px">+ Add</button></div></div><div class="card-body" style="padding:8px 16px">
@@ -3528,12 +3596,12 @@ function vBudget(){
   <div class="page-header"><div><h2>Budget</h2><div class="subtitle">Spending overview</div></div><div>${tpHtml()}</div></div>
   <div class="page-content">
     <div class="stats">
-      <div class="stat green"><div class="s-label">Total (${baseCur()})</div><div class="s-val">${fmtM(total,'')}</div></div>
-      ${Object.entries(byCur).map(([c,v])=>`<div class="stat"><div class="s-label">${c}</div><div class="s-val" style="font-size:20px">${parseFloat(v).toLocaleString('en',{minimumFractionDigits:2})}</div></div>`).join('')}
+      <div class="stat green"><div class="s-label">Total in ${baseCur()}</div><div class="s-val">${fmtM(total,'')}</div><div class="s-sub">all currencies, converted</div></div>
+      ${Object.entries(byCur).map(([c,v])=>`<div class="stat"><div class="s-label">Paid in ${c}</div><div class="s-val" style="font-size:20px">${parseFloat(v).toLocaleString('en',{minimumFractionDigits:2})}</div></div>`).join('')}
     </div>
     ${Object.keys(byCur).some(c=>c!==baseCur())?`<p style="font-size:11px;color:var(--text3);margin:-4px 0 14px">⚠ ${ratesCaveat(true)} <a href="#" data-action="go-rates" style="color:var(--primary)">Details</a></p>`:''}
     ${total>0?`<div class="card" style="margin-bottom:16px"><div class="card-header"><h3>By Category</h3></div><div class="card-body">
-      ${Object.entries(byCat).map(([k,v])=>`<div class="budget-bar"><span class="bb-label">${k.charAt(0).toUpperCase()+k.slice(1)}</span><div class="bb-track"><div class="bb-fill" style="width:${(v/maxCat*100).toFixed(1)}%;background:${catColors[k]}"></div></div><span class="bb-val">${fmtM(v,baseCur())}</span></div>`).join('')}
+      ${Object.entries(byCat).map(([k,v])=>`<div class="budget-bar"><span class="bb-label">${k.charAt(0).toUpperCase()+k.slice(1)}</span><div class="bb-track"><div class="bb-fill" style="width:${v>0?Math.max(1.5,v/maxCat*100).toFixed(1):0}%;background:${catColors[k]}"></div></div><span class="bb-val">${fmtM(v,baseCur())}</span></div>`).join('')}
     </div></div>`:''}
     <div class="card">
       <div class="card-header"><h3>By Event</h3></div>
@@ -3933,37 +4001,30 @@ const COUNTRY_ISO2=(()=>{const m={};'004:AF 008:AL 012:DZ 020:AD 024:AO 028:AG 0
 function flagHtml(cid,cls){const a=COUNTRY_ISO2[String(cid)];return a?`<img class="${cls||'flag'}" src="https://flagcdn.com/${a}.svg" alt="" loading="lazy" decoding="async">`:'';}
 function vCountries(){
   if(!S.visitedCountries)S.visitedCountries=[];
-  const vc=S.visitedCountries;
+  const vc=S.visitedCountries,tab=S._cTab==='stats'?'stats':'map';
   const allCountries=Object.entries(COUNTRY_DATA).map(([id,name])=>({id,name})).sort((a,b)=>a.name.localeCompare(b.name));
   const visited=allCountries.filter(c=>vc.includes(c.id));
+  const tabs=`<div class="seg c-tabs" role="tablist"><button class="${tab==='map'?'on':''}" data-action="c-tab" data-t="map">Map</button><button class="${tab==='stats'?'on':''}" data-action="c-tab" data-t="stats">Travel stats</button></div>`;
+  const head=`<div class="page-header"><div><h2>Countries</h2><div class="subtitle">${visited.length} of ${allCountries.length} countries visited</div></div>${tabs}</div>`;
+  if(tab==='stats')return head+`<div class="page-content">${vTravelStats()}</div>`;
   const searchQ=(S._countrySearch||'').toLowerCase();
   const regionNames={1:'Oceania',2:'Americas — North & Central',3:'Americas — South',4:'Europe',5:'Asia',6:'Middle East',7:'Africa'};
   const regionOrder=[5,4,2,3,6,7,1];
   const cMap=countContinentMap();
-  function renderItem(c){const linked=eventsForCountry(c.id);const linkTxt=linked.length?`<span class="country-link-badge">${linked.map(e=>e.name).join(', ')}</span>`:'';return `<div class="country-item${vc.includes(c.id)?' visited':''}" data-action="toggle-country" data-cid="${c.id}"><div class="ci-check">${vc.includes(c.id)?'<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}</div>${flagHtml(c.id)}<span>${esc(c.name)}${linkTxt}</span></div>`;}
-  let gridHtml='';
+  const open=window._cOpen||(window._cOpen=new Set());
+  function renderItem(c){const linked=eventsForCountry(c.id);const linkTxt=linked.length?`<span class="country-link-badge">${linked.map(e=>esc(e.name)).join(', ')}</span>`:'';return `<div class="country-item${vc.includes(c.id)?' visited':''}" data-action="toggle-country" data-cid="${c.id}" role="checkbox" aria-checked="${vc.includes(c.id)}" tabindex="0"><div class="ci-check">${vc.includes(c.id)?'<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}</div>${flagHtml(c.id)}<span>${esc(c.name)}${linkTxt}</span></div>`;}
+  let listHtml;
   if(searchQ){
     const filtered=allCountries.filter(c=>c.name.toLowerCase().includes(searchQ));
-    gridHtml=`<div class="country-grid">${filtered.map(renderItem).join('')}</div>`;
-    if(!filtered.length)gridHtml='<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">No countries match your search</div>';
-  } else {
-    gridHtml=regionOrder.map(r=>{
-      const countries=allCountries.filter(c=>cMap[c.id]===r);
-      if(!countries.length)return '';
-      const visitedInRegion=countries.filter(c=>vc.includes(c.id)).length;
-      return `<div class="region-section">
-        <div class="region-header" data-action="toggle-region" data-region="${r}">
-          <span class="region-name">${regionNames[r]}</span>
-          <span class="region-count">${visitedInRegion} / ${countries.length}</span>
-        </div>
-        <div class="country-grid">${countries.map(renderItem).join('')}</div>
-      </div>`;
+    listHtml=filtered.length?`<div class="country-grid">${filtered.map(renderItem).join('')}</div>`:'<p class="quiet" style="padding:12px 0">No countries match your search.</p>';
+  }else{
+    listHtml=regionOrder.map(r=>{
+      const countries=allCountries.filter(c=>cMap[c.id]===r);if(!countries.length)return '';
+      const n=countries.filter(c=>vc.includes(c.id)).length;
+      return `<details class="c-region" data-region="${r}"${open.has(String(r))?' open':''}><summary><span>${regionNames[r]}</span><span class="region-count">${n} / ${countries.length}</span></summary><div class="country-grid">${countries.map(renderItem).join('')}</div></details>`;
     }).join('');
   }
-
-  return `
-  <div class="page-header"><div><h2>Countries</h2><div class="subtitle">${visited.length} of ${allCountries.length} countries visited</div></div></div>
-  <div class="page-content">
+  return head+`<div class="page-content">
     <div class="stats">
       <div class="stat blue"><div class="s-label">Visited</div><div class="s-val">${visited.length}</div><div class="s-sub">countries</div></div>
       <div class="stat green"><div class="s-label">Continents</div><div class="s-val">${countContinents(vc)}</div><div class="s-sub">of 7</div></div>
@@ -3972,12 +4033,65 @@ function vCountries(){
     </div>
     <div class="world-map-container" id="world-map"><div style="text-align:center;padding:40px;color:var(--text3);font-size:12px">Loading map...</div></div>
     <div class="card" style="margin-top:16px">
-      <div class="card-header"><h3>All Countries</h3><div class="search-bar" style="max-width:200px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search countries..." value="${esc(S._countrySearch||'')}" data-action="country-search" style="font-size:11px;padding:5px 10px 5px 28px"></div></div>
-      <div class="card-body">${gridHtml}</div>
+      <div class="card-header"><h3>Your countries</h3></div>
+      <div class="card-body">${visited.length?`<div class="c-chips">${visited.map(c=>`<span class="c-chip">${flagHtml(c.id)}<span>${esc(c.name)}</span></span>`).join('')}</div><p class="quiet" style="margin:12px 0 0;font-size:12px">To unmark a country, tap it on the map or in the list below.</p>`:'<p class="quiet" style="margin:0">None yet. Tap a country on the map, or find it below.</p>'}</div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="card-header"><h3>Add countries</h3><div class="search-bar c-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="search" placeholder="Search countries…" value="${esc(S._countrySearch||'')}" data-action="country-search" aria-label="Search countries"></div></div>
+      <div class="card-body">${searchQ?'':'<p class="quiet" style="margin:0 0 10px;font-size:12px">Search, or open a region and tap the countries you\'ve been to.</p>'}${listHtml}</div>
     </div>
   </div>`;
 }
-
+// ===== TRAVEL STATS (Countries → Travel stats) =====
+// A trip's countries: the ones attached to it, else worked out from its places ("Kuala Lumpur" → Malaysia)
+function tripCountries(t){
+  if((t.countries||[]).length)return t.countries.map(String);
+  const byName={};for(const[id,n]of Object.entries(COUNTRY_DATA))byName[n.toLowerCase()]=id;
+  const out=new Set();
+  for(const raw of t.locations||[]){const l=String(raw).trim().toLowerCase();if(!l)continue;
+    if(byName[l]){out.add(byName[l]);continue;}
+    const c=CITIES.find(x=>x.toLowerCase().split(',')[0].trim()===l);const cn=c&&c.includes(',')?c.split(',').pop().trim().toLowerCase():'';
+    if(cn&&byName[cn])out.add(byName[cn]);
+    else{const tail=l.split(',').pop().trim();if(byName[tail])out.add(byName[tail]);}}
+  return [...out];
+}
+function _durMin(s){const m=String(s||'').match(/(?:(\d+)\s*h)?\s*(?:(\d+)\s*m)?/i);return m&&(m[1]||m[2])?(+m[1]||0)*60+(+m[2]||0):0;}
+function vTravelStats(){
+  const all=(S.events||[]).filter(t=>t.source!=='apple'&&t.startDate&&t.endDate&&(t.category||'trip')==='trip');
+  const td=ymd(new Date());
+  const years=[...new Set(all.map(t=>t.startDate.slice(0,4)))].sort().reverse();
+  const y=S._statY&&(S._statY==='all'||years.includes(S._statY))?S._statY:'all';
+  const T=all.filter(t=>(y==='all'||t.startDate.startsWith(y))&&t.startDate<=td);// trips that have started
+  const flights=T.flatMap(t=>t.flights||[]);
+  // Flight time: the saved duration, else worked out from departure and arrival in their airports' time zones
+  const fMin=f=>{const d=_durMin(f.duration);if(d)return d;const z=flightTzs(f),a=zonedToUtc(f.departureTime,z.dep),b=zonedToUtc(f.arrivalTime,z.arr),m=(b-a)/6e4;return m>0&&m<24*60?Math.round(m):0;};
+  const airMin=flights.reduce((s,f)=>s+fMin(f),0),timed=flights.filter(f=>fMin(f)).length;
+  const daysAway=T.reduce((s,t)=>s+days(t.startDate,t.endDate<td?t.endDate:td),0);
+  const hotelN=T.reduce((s,t)=>s+(t.hotels||[]).reduce((a,h)=>a+(h.checkIn&&h.checkOut?nights(h.checkIn,h.checkOut):0),0),0);
+  const cCount={};T.forEach(t=>tripCountries(t).forEach(c=>cCount[c]=(cCount[c]||0)+1));
+  const topC=Object.entries(cCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const alCount={};flights.forEach(f=>{const a=(f.airline||'').trim();if(a)alCount[a]=(alCount[a]||0)+1;});
+  const topA=Object.entries(alCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const longest=[...T].sort((a,b)=>days(b.startDate,b.endDate)-days(a.startDate,a.endDate))[0];
+  const mCount=Array(12).fill(0);T.forEach(t=>mCount[+t.startDate.slice(5,7)-1]++);
+  const busiest=Math.max(...mCount)?mCount.indexOf(Math.max(...mCount)):-1;
+  const mName=i=>new Date(2000,i,1).toLocaleDateString(dloc(),{month:'long'});
+  const hrs=airMin?(airMin>=60?`${Math.floor(airMin/60)}h${airMin%60?' '+(airMin%60)+'m':''}`:airMin+'m'):'—';
+  const list=(rows,empty)=>rows.length?`<ol class="ts-list">${rows.map(([k,n])=>`<li><span>${k}</span><b>${n}</b></li>`).join('')}</ol>`:`<p class="quiet" style="margin:0;font-size:12px">${empty}</p>`;
+  const perYear=years.map(yy=>{const ts=all.filter(t=>t.startDate.startsWith(yy)&&t.startDate<=td);return{yy,n:ts.length,d:ts.reduce((s,t)=>s+days(t.startDate,t.endDate<td?t.endDate:td),0),f:ts.reduce((s,t)=>s+(t.flights||[]).length,0)};}).filter(r=>r.n);
+  return `<div class="ts-bar"><label class="ts-y">Year <select class="fc" data-action="stat-year"><option value="all"${y==='all'?' selected':''}>All time</option>${years.map(yy=>`<option${yy===y?' selected':''}>${yy}</option>`).join('')}</select></label><span class="quiet" style="font-size:12px">Trips you've started. Appointments aren't counted.</span></div>
+    <div class="stats">
+      <div class="stat purple"><div class="s-label">Trips</div><div class="s-val">${T.length}</div><div class="s-sub">${daysAway} days away</div></div>
+      <div class="stat blue"><div class="s-label">Flights</div><div class="s-val">${flights.length}</div><div class="s-sub">${hrs} in the air${timed&&timed<flights.length?` (${timed} with times)`:''}</div></div>
+      <div class="stat green"><div class="s-label">Hotel nights</div><div class="s-val">${hotelN}</div><div class="s-sub">from your bookings</div></div>
+      <div class="stat orange"><div class="s-label">Longest trip</div><div class="s-val" style="font-size:14px">${longest?esc(longest.name):'—'}</div><div class="s-sub">${longest?days(longest.startDate,longest.endDate)+' days':''}</div></div>
+    </div>
+    <div class="ts-grid">
+      <div class="card"><div class="card-header"><h3>Most visited</h3></div><div class="card-body">${list(topC.map(([c,n])=>[`${flagHtml(c)} ${esc(COUNTRY_DATA[c]||c)}`,n+' trip'+(n>1?'s':'')]),'Add countries to your trips to see this.')}</div></div>
+      <div class="card"><div class="card-header"><h3>Airlines</h3></div><div class="card-body">${list(topA.map(([a,n])=>[esc(a),n+' flight'+(n>1?'s':'')]),'No flights yet.')}</div></div>
+      <div class="card"><div class="card-header"><h3>${y==='all'?'By year':'When you travel'}</h3></div><div class="card-body">${y==='all'?list(perYear.map(r=>[r.yy,`${r.n} trip${r.n>1?'s':''} · ${r.d} days · ${r.f} flight${r.f!==1?'s':''}`]),'No trips yet.'):(busiest>=0?`<p style="margin:0;font-size:13px">Busiest month: <b>${mName(busiest)}</b> (${mCount[busiest]} trip${mCount[busiest]>1?'s':''})</p>`:'<p class="quiet" style="margin:0;font-size:12px">No trips this year yet.</p>')}</div></div>
+    </div>`;
+}
 function countContinentMap(){
   return {'036':1,'554':1,'242':1,'548':1,'598':1,'585':1,'296':1,'584':1,'583':1,'520':1,'882':1,'090':1,'776':1,'798':1,'540':1,'260':1,'010':1,
     '840':2,'124':2,'484':2,'320':2,'340':2,'222':2,'558':2,'188':2,'591':2,'044':2,'052':2,'212':2,'214':2,'332':2,'388':2,'780':2,'084':2,'192':2,'308':2,'659':2,'662':2,'670':2,'028':2,'304':2,'630':2,
@@ -4180,7 +4294,7 @@ function vSettings(){
       <button class="btn btn-s" data-action="export">Export JSON</button>
       <button class="btn btn-s" data-action="export-csv">Export CSV</button>
       <button class="btn btn-s" data-action="import">Import JSON</button>
-      ${localStorage.getItem('htV5_backup')?`<button class="btn btn-s" data-action="restore-backup" style="border-color:var(--orange);color:var(--orange)">Restore Backup <span style="font-size:9px;opacity:.7">(${localStorage.getItem('htV5_backup_ts')||'unknown'})</span></button>`:''}
+      ${localStorage.getItem('htV5_backup')?`<button class="btn btn-s" data-action="restore-backup" style="border-color:var(--orange);color:var(--orange)">Restore Backup <span style="font-size:10.5px;opacity:.7">(${localStorage.getItem('htV5_backup_ts')||'unknown'})</span></button>`:''}
       <button class="btn btn-d" data-action="reset">Reset All Data</button>
       <input type="file" id="imp-f" accept=".json" style="display:none">
     </div></div>
@@ -4878,7 +4992,25 @@ function suMergeDocs(docs){
   if(!ps.length)return null;
   const rawText=docs.map(d=>docs.length>1?`----- ${d.name} -----\n${d.txt}`:d.txt).join('\n\n');
   const flights=ps.filter(p=>p.type==='flight');
-  if(!flights.length)return{...ps[ps.length-1],rawText};
+  // No flights (e.g. a hotel confirmation + its rate page): combine them, each document filling what the others lack
+  if(!flights.length){
+    if(ps.length===1)return{...ps[0],rawText};
+    const kinds=ps.map(p=>p.type),type=['hotel','activity','transport'].find(k=>kinds.includes(k))||ps[0].type;
+    const same=ps.filter(p=>p.type===type),rest=ps.filter(p=>p.type!==type),order=[...same,...rest];
+    const out={type};
+    for(const f of ['hotelName','bookingNumber','pnr','date','dateTo','roomType','nights','title','provider','transportType','departureTime','arrivalTime'])
+      for(const p of order)if(p[f]&&!out[f]){out[f]=p[f];}
+    out.locations=[...new Set(order.flatMap(p=>p.locations||[]))];
+    // A real document name beats the fallbacks ("Hotel Booking", "Uploaded Booking")
+    const fallback=/^(?:Hotel Booking|Uploaded Booking|.+ Hotel)$/;
+    out.name=(order.find(p=>p.name&&!fallback.test(p.name))||order[0]).name;
+    if(out.hotelName)out.name=out.hotelName;
+    // The largest amount is the booking total (a rate page has per-night and total figures)
+    const costed=ps.filter(p=>p.cost&&!isNaN(parseFloat(p.cost))).sort((a,b)=>parseFloat(b.cost)-parseFloat(a.cost));
+    if(costed[0]){out.cost=costed[0].cost;out.currency=costed[0].currency;}
+    if(!out.nights&&out.date&&out.dateTo)out.nights=Math.round((new Date(out.dateTo)-new Date(out.date))/864e5);
+    return{...out,rawText};
+  }
   const asLegs=p=>p.multiLeg&&p.legs?p.legs:[{airline:p.airline,flightNumber:p.flightNumber,from:p.from,to:p.to,date:p.date,departureTime:p.departureTime,arrivalDate:p.dateTo,arrivalTime:p.arrivalTime,seat:p.seat}];
   const key=l=>{const fn=(l.flightNumber||'').replace(/\s+/g,'').toUpperCase().replace(/^([A-Z0-9]{2})0+(?=\d)/,'$1');return fn||((l.from||'')+'>'+(l.to||'')+'@'+(l.date||''));};
   const byKey=new Map();
@@ -5035,6 +5167,7 @@ function showSmartUpload(){
 }
 
 // ===== SHARED PARSING HELPERS =====
+const HOTEL_BRANDS=['Hilton','DoubleTree','Conrad','Waldorf Astoria','Hampton','Embassy Suites','Curio','Marriott','JW Marriott','Courtyard','Sheraton','Westin','W Hotel','St\\.? Regis','Ritz-Carlton','Le M[ée]ridien','Renaissance','Aloft','Moxy','Four Points','Fairfield','Hyatt','Park Hyatt','Grand Hyatt','Andaz','InterContinental','Crowne Plaza','Holiday Inn','Hotel Indigo','Kimpton','voco','Regent','Six Senses','Novotel','Ibis','Mercure','Pullman','Sofitel','Swiss[oô]tel','Fairmont','Raffles','M[öo]venpick','Shangri-La','Four Seasons','Mandarin Oriental','Peninsula','Rosewood','Capella','Aman','Banyan Tree','Anantara','Avani','Dusit','Centara','Radisson','Kempinski','Best Western','Wyndham','Ramada','Travelodge','Premier Inn','citizenM','YOTEL','Ascott','Citadines','Somerset','Oakwood','Fraser','Okura','Tokyu','Prince Hotel','APA Hotel','Toyoko Inn','Dormy Inn','Mitsui Garden','Lotte','Shilla','Parkroyal','Pan Pacific','Hard Rock','Mövenpick'].join('|');
 const MMAP={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
 const AIRLINE_MAP={'SQ':'Singapore Airlines','TR':'Scoot','GA':'Garuda','ID':'Batik Air','CI':'China Airlines','CX':'Cathay Pacific','FY':'Firefly','AK':'AirAsia','MH':'Malaysia Airlines','TG':'Thai Airways','EK':'Emirates','QR':'Qatar Airways','3K':'Jetstar Asia','JT':'Lion Air','5J':'Cebu Pacific','PR':'Philippine Airlines','QZ':'AirAsia Indonesia','OD':'Batik Air Malaysia','ET':'Ethiopian Airlines','QG':'Citilink','IN':'NAM Air','JL':'Japan Airlines','NH':'ANA','KE':'Korean Air','OZ':'Asiana','VN':'Vietnam Airlines','WJ':'Susi Air','IW':'Wings Air','QF':'Qantas','NZ':'Air New Zealand','AI':'Air India','BR':'EVA Air','TK':'Turkish Airlines','LH':'Lufthansa','BA':'British Airways','AF':'Air France','KL':'KLM','SK':'SAS','AY':'Finnair','LX':'Swiss','OS':'Austrian','UA':'United Airlines','AA':'American Airlines','DL':'Delta','WN':'Southwest','AC':'Air Canada','CZ':'China Southern','MU':'China Eastern','CA':'Air China','HU':'Hainan Airlines','SL':'Thai Lion Air','FD':'Thai AirAsia','DD':'Nok Air','PG':'Bangkok Airways','BI':'Royal Brunei','UL':'SriLankan Airlines','WY':'Oman Air','GF':'Gulf Air','SV':'Saudia','RJ':'Royal Jordanian','MS':'EgyptAir','SA':'South African Airways','KQ':'Kenya Airways','ET':'Ethiopian Airlines','TP':'TAP Portugal','IB':'Iberia','AZ':'ITA Airways','TW':"T'way Air",'RS':'Air Seoul','7C':'Jeju Air','LJ':'Jin Air','BX':'Air Busan','ZE':'Eastar Jet'};
 const AIRLINE_NAMES=['Singapore Airlines','Scoot','Garuda','Batik Air','China Airlines','Cathay Pacific','Firefly','AirAsia','Malaysia Airlines','Thai Airways','Emirates','Qatar Airways','Jetstar','Jetstar Asia','Lion Air','Cebu Pacific','Philippine Airlines','Ethiopian Airlines','Citilink','Japan Airlines','ANA','Korean Air','Asiana','Vietnam Airlines','Qantas','Air New Zealand','Air India','EVA Air','Turkish Airlines','Lufthansa','British Airways','Air France','KLM','SAS','Finnair','Swiss','Austrian','United Airlines','American Airlines','Delta','Southwest','Air Canada','China Southern','China Eastern','Air China','Hainan Airlines','Thai Lion Air','Thai AirAsia','Nok Air','Bangkok Airways','Royal Brunei','SriLankan Airlines','Oman Air','Gulf Air','Saudia','Royal Jordanian','EgyptAir','South African Airways','Kenya Airways','TAP Portugal','Iberia','ITA Airways','Ryanair','easyJet','Wizz Air','IndiGo','SpiceJet','Vietjet','Bamboo Airways','Starlux','Peach Aviation','Spring Airlines','AirAsia X','Batik Air Malaysia',"T'way Air",'Air Seoul','Jeju Air','Jin Air','Air Busan','Eastar Jet'];
@@ -5084,7 +5217,7 @@ function fmtFlightDT(dt,place,tz){
   const placeLbl=place||tz.split('/').pop().replace(/_/g,' ');
   return `${main} <span class="tz-place">${esc(placeLbl)}</span><div class="tz-home">${esc(home)} ${esc(homeTzLabel())} time</div>`;
 }
-const CITIES=['Singapore','Kuala Lumpur, Malaysia','Penang, Malaysia','Langkawi, Malaysia','Johor Bahru, Malaysia','Kota Kinabalu, Malaysia','Ipoh, Malaysia','Melaka, Malaysia','Tioman, Malaysia','Redang, Malaysia','Perhentian, Malaysia','Cameron Highlands, Malaysia','Jakarta, Indonesia','Bali, Indonesia','Denpasar, Indonesia','Yogyakarta, Indonesia','Surabaya, Indonesia','Manado, Indonesia','Labuan Bajo, Indonesia','Tarakan, Indonesia','Komodo, Indonesia','Lembeh, Indonesia','Halmahera, Indonesia','Nusa Lembongan, Indonesia','Nusa Penida, Indonesia','Nusa Dua, Indonesia','Ubud, Indonesia','Seminyak, Indonesia','Canggu, Indonesia','Sanur, Indonesia','Lombok, Indonesia','Gili Trawangan, Indonesia','Gili Air, Indonesia','Flores, Indonesia','Raja Ampat, Indonesia','Bunaken, Indonesia','Derawan, Indonesia','Bandung, Indonesia','Semarang, Indonesia','Medan, Indonesia','Makassar, Indonesia','Tokyo, Japan','Osaka, Japan','Kyoto, Japan','Hokkaido, Japan','Okinawa, Japan','Fukuoka, Japan','Nagoya, Japan','Hiroshima, Japan','Nara, Japan','Sapporo, Japan','Yokohama, Japan','Kobe, Japan','Bangkok, Thailand','Phuket, Thailand','Chiang Mai, Thailand','Koh Samui, Thailand','Krabi, Thailand','Phi Phi, Thailand','Koh Tao, Thailand','Koh Lipe, Thailand','Chiang Rai, Thailand','Pattaya, Thailand','Hua Hin, Thailand','Koh Phangan, Thailand','Seoul, South Korea','Busan, South Korea','Jeju, South Korea','Incheon, South Korea','Shanghai, China','Beijing, China','Hangzhou, China','Shenzhen, China','Guangzhou, China','Chengdu, China','Xian, China','Hong Kong','Macau','Taipei, Taiwan','Kaohsiung, Taiwan','Hualien, Taiwan','Tainan, Taiwan','Manila, Philippines','Cebu, Philippines','Boracay, Philippines','El Nido, Philippines','Coron, Philippines','Siargao, Philippines','Palawan, Philippines','Malapascua, Philippines','Hanoi, Vietnam','Ho Chi Minh City, Vietnam','Da Nang, Vietnam','Hoi An, Vietnam','Nha Trang, Vietnam','Phu Quoc, Vietnam','Sapa, Vietnam','Siem Reap, Cambodia','Phnom Penh, Cambodia','Luang Prabang, Laos','Vientiane, Laos','Yangon, Myanmar','Bagan, Myanmar','Colombo, Sri Lanka','Kandy, Sri Lanka','Ella, Sri Lanka','Galle, Sri Lanka','New Delhi, India','Mumbai, India','Goa, India','Jaipur, India','Agra, India','Varanasi, India','Kerala, India','Kathmandu, Nepal','Pokhara, Nepal','Male, Maldives','Maldives','Dubai, UAE','Abu Dhabi, UAE','Doha, Qatar','Muscat, Oman','Istanbul, Turkey','Cappadocia, Turkey','Antalya, Turkey','Bodrum, Turkey','Tel Aviv, Israel','Jerusalem, Israel','Amman, Jordan','Petra, Jordan','Tbilisi, Georgia','Baku, Azerbaijan','London, UK','Edinburgh, UK','Manchester, UK','Paris, France','Nice, France','Lyon, France','Marseille, France','Amsterdam, Netherlands','Rotterdam, Netherlands','Berlin, Germany','Munich, Germany','Frankfurt, Germany','Hamburg, Germany','Zurich, Switzerland','Geneva, Switzerland','Interlaken, Switzerland','Rome, Italy','Venice, Italy','Florence, Italy','Milan, Italy','Amalfi, Italy','Barcelona, Spain','Madrid, Spain','Seville, Spain','Mallorca, Spain','Ibiza, Spain','Lisbon, Portugal','Porto, Portugal','Athens, Greece','Santorini, Greece','Mykonos, Greece','Crete, Greece','Prague, Czech Republic','Vienna, Austria','Budapest, Hungary','Warsaw, Poland','Krakow, Poland','Dublin, Ireland','Copenhagen, Denmark','Stockholm, Sweden','Oslo, Norway','Bergen, Norway','Helsinki, Finland','Reykjavik, Iceland','Brussels, Belgium','Bruges, Belgium','Dubrovnik, Croatia','Split, Croatia','Bucharest, Romania','Sofia, Bulgaria','Tallinn, Estonia','Riga, Latvia','Vilnius, Lithuania','Moscow, Russia','St Petersburg, Russia','Sydney, Australia','Melbourne, Australia','Brisbane, Australia','Gold Coast, Australia','Perth, Australia','Adelaide, Australia','Cairns, Australia','Auckland, New Zealand','Queenstown, New Zealand','Wellington, New Zealand','Fiji','Bora Bora, French Polynesia','Tahiti, French Polynesia','New York, USA','Los Angeles, USA','San Francisco, USA','Las Vegas, USA','Miami, USA','Chicago, USA','Seattle, USA','Boston, USA','Washington DC, USA','Honolulu, USA','Toronto, Canada','Vancouver, Canada','Montreal, Canada','Banff, Canada','Mexico City, Mexico','Cancun, Mexico','Tulum, Mexico','Lima, Peru','Cusco, Peru','Machu Picchu, Peru','Bogota, Colombia','Cartagena, Colombia','Buenos Aires, Argentina','Rio de Janeiro, Brazil','Sao Paulo, Brazil','Santiago, Chile','Cape Town, South Africa','Johannesburg, South Africa','Nairobi, Kenya','Dar es Salaam, Tanzania','Zanzibar, Tanzania','Kilimanjaro, Tanzania','Cairo, Egypt','Luxor, Egypt','Marrakech, Morocco','Fez, Morocco','Addis Ababa, Ethiopia','Accra, Ghana','Lagos, Nigeria','Mauritius','Seychelles'];
+const CITIES=['Singapore','Kuala Lumpur, Malaysia','Penang, Malaysia','Langkawi, Malaysia','Johor Bahru, Malaysia','Kota Kinabalu, Malaysia','Ipoh, Malaysia','Melaka, Malaysia','Tioman, Malaysia','Redang, Malaysia','Perhentian, Malaysia','Cameron Highlands, Malaysia','Jakarta, Indonesia','Bali, Indonesia','Denpasar, Indonesia','Yogyakarta, Indonesia','Surabaya, Indonesia','Manado, Indonesia','Labuan Bajo, Indonesia','Tarakan, Indonesia','Komodo, Indonesia','Lembeh, Indonesia','Halmahera, Indonesia','Nusa Lembongan, Indonesia','Nusa Penida, Indonesia','Nusa Dua, Indonesia','Ubud, Indonesia','Seminyak, Indonesia','Canggu, Indonesia','Sanur, Indonesia','Lombok, Indonesia','Gili Trawangan, Indonesia','Gili Air, Indonesia','Flores, Indonesia','Raja Ampat, Indonesia','Bunaken, Indonesia','Derawan, Indonesia','Bandung, Indonesia','Semarang, Indonesia','Medan, Indonesia','Makassar, Indonesia','Tokyo, Japan','Osaka, Japan','Kyoto, Japan','Hokkaido, Japan','Okinawa, Japan','Fukuoka, Japan','Nagoya, Japan','Hiroshima, Japan','Nara, Japan','Sapporo, Japan','Niseko, Japan','Hakuba, Japan','Yokohama, Japan','Kobe, Japan','Bangkok, Thailand','Phuket, Thailand','Chiang Mai, Thailand','Koh Samui, Thailand','Krabi, Thailand','Phi Phi, Thailand','Koh Tao, Thailand','Koh Lipe, Thailand','Chiang Rai, Thailand','Pattaya, Thailand','Hua Hin, Thailand','Koh Phangan, Thailand','Seoul, South Korea','Busan, South Korea','Jeju, South Korea','Incheon, South Korea','Shanghai, China','Beijing, China','Hangzhou, China','Shenzhen, China','Guangzhou, China','Chengdu, China','Xian, China','Hong Kong','Macau','Taipei, Taiwan','Kaohsiung, Taiwan','Hualien, Taiwan','Tainan, Taiwan','Manila, Philippines','Cebu, Philippines','Boracay, Philippines','El Nido, Philippines','Coron, Philippines','Siargao, Philippines','Palawan, Philippines','Malapascua, Philippines','Hanoi, Vietnam','Ho Chi Minh City, Vietnam','Da Nang, Vietnam','Hoi An, Vietnam','Nha Trang, Vietnam','Phu Quoc, Vietnam','Sapa, Vietnam','Siem Reap, Cambodia','Phnom Penh, Cambodia','Luang Prabang, Laos','Vientiane, Laos','Yangon, Myanmar','Bagan, Myanmar','Colombo, Sri Lanka','Kandy, Sri Lanka','Ella, Sri Lanka','Galle, Sri Lanka','New Delhi, India','Mumbai, India','Goa, India','Jaipur, India','Agra, India','Varanasi, India','Kerala, India','Kathmandu, Nepal','Pokhara, Nepal','Male, Maldives','Maldives','Dubai, UAE','Abu Dhabi, UAE','Doha, Qatar','Muscat, Oman','Istanbul, Turkey','Cappadocia, Turkey','Antalya, Turkey','Bodrum, Turkey','Tel Aviv, Israel','Jerusalem, Israel','Amman, Jordan','Petra, Jordan','Tbilisi, Georgia','Baku, Azerbaijan','London, UK','Edinburgh, UK','Manchester, UK','Paris, France','Nice, France','Lyon, France','Marseille, France','Amsterdam, Netherlands','Rotterdam, Netherlands','Berlin, Germany','Munich, Germany','Frankfurt, Germany','Hamburg, Germany','Zurich, Switzerland','Geneva, Switzerland','Interlaken, Switzerland','Rome, Italy','Venice, Italy','Florence, Italy','Milan, Italy','Amalfi, Italy','Barcelona, Spain','Madrid, Spain','Seville, Spain','Mallorca, Spain','Ibiza, Spain','Lisbon, Portugal','Porto, Portugal','Athens, Greece','Santorini, Greece','Mykonos, Greece','Crete, Greece','Prague, Czech Republic','Vienna, Austria','Budapest, Hungary','Warsaw, Poland','Krakow, Poland','Dublin, Ireland','Copenhagen, Denmark','Stockholm, Sweden','Oslo, Norway','Bergen, Norway','Helsinki, Finland','Reykjavik, Iceland','Brussels, Belgium','Bruges, Belgium','Dubrovnik, Croatia','Split, Croatia','Bucharest, Romania','Sofia, Bulgaria','Tallinn, Estonia','Riga, Latvia','Vilnius, Lithuania','Moscow, Russia','St Petersburg, Russia','Sydney, Australia','Melbourne, Australia','Brisbane, Australia','Gold Coast, Australia','Perth, Australia','Adelaide, Australia','Cairns, Australia','Auckland, New Zealand','Queenstown, New Zealand','Wellington, New Zealand','Fiji','Bora Bora, French Polynesia','Tahiti, French Polynesia','New York, USA','Los Angeles, USA','San Francisco, USA','Las Vegas, USA','Miami, USA','Chicago, USA','Seattle, USA','Boston, USA','Washington DC, USA','Honolulu, USA','Toronto, Canada','Vancouver, Canada','Montreal, Canada','Banff, Canada','Mexico City, Mexico','Cancun, Mexico','Tulum, Mexico','Lima, Peru','Cusco, Peru','Machu Picchu, Peru','Bogota, Colombia','Cartagena, Colombia','Buenos Aires, Argentina','Rio de Janeiro, Brazil','Sao Paulo, Brazil','Santiago, Chile','Cape Town, South Africa','Johannesburg, South Africa','Nairobi, Kenya','Dar es Salaam, Tanzania','Zanzibar, Tanzania','Kilimanjaro, Tanzania','Cairo, Egypt','Luxor, Egypt','Marrakech, Morocco','Fez, Morocco','Addis Ababa, Ethiopia','Accra, Ghana','Lagos, Nigeria','Mauritius','Seychelles'];
 const CURRENCY_SYMBOLS={'rp':'IDR','idr':'IDR','rm':'MYR','myr':'MYR','₱':'PHP','php':'PHP','¥':'CNY','cny':'CNY','jpy':'JPY','฿':'THB','thb':'THB','₫':'VND','vnd':'VND','$':'USD','usd':'USD','sgd':'SGD','s$':'SGD','a$':'AUD','aud':'AUD','€':'EUR','eur':'EUR','£':'GBP','gbp':'GBP','kr':'SEK','₹':'INR','inr':'INR','egp':'EGP','mvr':'MVR','twd':'TWD','krw':'KRW'};
 
 function parseDate(str,yearHint){
@@ -5268,8 +5401,10 @@ function _findDates(str){
   const d0=/\b(20\d{2})-(\d{2})-(\d{2})(?![\d:])/g;
   while((m=d0.exec(str))!==null)if(+m[2]>=1&&+m[2]<=12&&+m[3]>=1&&+m[3]<=31)out.push({date:`${m[1]}-${m[2]}-${m[3]}`,pos:m.index,end:m.index+m[0].length});
   const d1=new RegExp('\\b(\\d{1,2})[\\s/.-]*('+_MON+')(?![a-z])\\.?,?(?:[\\s/.-]*(\\d{4}|\\d{2}(?!\\s*(?:'+_MON+')))(?![\\d:]))?','gi');
-  while((m=d1.exec(str))!==null){if(!out.some(o=>m.index<o.end&&m.index+m[0].length>o.pos))mk(m[1],m[2],m[3],m.index,m[0].length);}
-  const d2=new RegExp('\\b('+_MON+')\\.?\\s*(\\d{1,2})(?:st|nd|rd|th)?(?![\\d:])(?:,?\\s*(\\d{4}))?','gi');
+  // "Mar 07 Mar 12": a day number right after a month name belongs to that month, not to the next one
+  const monBefore=new RegExp('(?:'+_MON+')\\.?\\s*$','i');
+  while((m=d1.exec(str))!==null){if(monBefore.test(str.slice(Math.max(0,m.index-12),m.index))){d1.lastIndex=m.index+m[1].length;continue;}if(!out.some(o=>m.index<o.end&&m.index+m[0].length>o.pos))mk(m[1],m[2],m[3],m.index,m[0].length);}
+  const d2=new RegExp('\\b('+_MON+')\\.?(?:\\s*|-)(\\d{1,2})(?:st|nd|rd|th)?(?![\\d:])(?:(?:,?\\s*|-)(\\d{4}))?','gi');
   while((m=d2.exec(str))!==null){if(!out.some(o=>m.index<o.end&&m.index+m[0].length>o.pos))mk(m[2],m[1],m[3],m.index,m[0].length);}
   const OCR_MON={an:'Jan',eb:'Feb',ar:'Mar',pr:'Apr',ay:'May',un:'Jun',ul:'Jul',ug:'Aug',ep:'Sep',ct:'Oct',ov:'Nov',ec:'Dec'};
   const d3=/\b(\d{1,2})\s+(an|eb|ar|pr|ay|un|ul|ug|ep|ct|ov|ec)\s+(\d{4})\b/gi;
@@ -5822,6 +5957,12 @@ function _extractCost(txt,r){
     // "Total 3,106,856" (amount only)
     /(?:Grand\s*total|Total\s*(?:Amount|Price|Cost|Fare|Charge[ds]?|Paid|Due|Payable)?)\s*[:#]?\s*[\$]?\s*([\d,]+\.?\d{0,2})\b/i,
   ];
+  const ISO='SGD|USD|MYR|IDR|EUR|GBP|THB|PHP|AUD|CNY|MVR|EGP|TWD|KRW|INR|JPY|HKD|NZD|CHF|CAD|VND|LKR|AED|QAR|TZS|KES';
+  const firstFound=costPats.slice(0,5).some(p=>p.test(txt));
+  if(!firstFound){
+    const tl=[...txt.matchAll(new RegExp('^[^\\n]*\\btotal\\b[^\\n]*?([\\d][\\d,]*(?:\\.\\d{1,2})?)\\s*('+ISO+')\\b','gim'))].map(m=>({v:parseFloat(m[1].replace(/,/g,'')),c:m[2].toUpperCase(),raw:m[1]}));
+    if(tl.length){const b=tl.sort((a,b)=>b.v-a.v)[0];r.cost=b.raw.replace(/,/g,'');r.currency=b.c;return;}
+  }
   for(const pat of costPats){const m=txt.match(pat);if(m){
     if(m[2]){
       if(/^[A-Z]{3}$/.test(m[1])){r.currency=m[1].toUpperCase();r.cost=m[2].replace(/,/g,'');}
@@ -5873,6 +6014,7 @@ function parseBookingText(rawTxt){
   // ===== 1. Detect booking type (hotel-first to prevent CHECK-IN false positives) =====
   const hotelKw=/\b(BOOKING\.COM|AGODA|EXPEDIA|HOTELS\.COM|HOSTELWORLD|AIRBNB|VRBO)\b/i.test(txt)||
     /\b(HOTEL|RESORT|HOSTEL|VILLA|INN|GUESTHOUSE|BUNGALOW|HOMESTAY|LODGE|APARTMENT|ACCOMMODATION)\b/i.test(txt)||
+    /\b(?:rate\s+per\s+night|per\s+room\s*per\s+night|total\s+(?:price\s+)?for\s+(?:the\s+)?stay|room\s+rate)\b/i.test(txt)||
     (/\bcheck.?in\b/i.test(txt)&&/\bcheck.?out\b/i.test(txt)&&/\b\d+\s*nights?\b/i.test(txt))||
     /\byour\s+booking\s+in\b/i.test(txt)||/\bexpecting\s+you\b/i.test(txt)||
     /\b(?:hotel\s+voucher|check-?in\s+voucher|accommodation\s+voucher)\b/i.test(txt)||(/\bcheck.?in\b/i.test(txt)&&/\bcheck.?out\b/i.test(txt));
@@ -5931,6 +6073,10 @@ function parseBookingText(rawTxt){
       /(?:Hotel|Resort|Property|Accommodation|Stay\s*at)\s*[:#]?\s*([A-Za-z][A-Za-z\s&'\-,]{2,60})(?:\n|$)/i,
       /your\s+stay\s+at\s+([A-Z][A-Za-z\s&'\-]{2,50})/i,
     ];
+    // Chain hotels: the line naming the brand ("Hilton Niseko Village", "Park Hyatt Tokyo")
+    const brandRe=new RegExp('(?:^|\\n)[^A-Za-z\\n]*((?:[A-Z][\\w\'’&.-]*[ \\t]+){0,3}(?:'+HOTEL_BRANDS+')(?:[ \\t]+(?:[A-Z][\\w\'’&.-]*|by|at|de|la|&)){0,5})','');
+    const bm=txt.match(brandRe);
+    if(bm){const nm=bm[1].trim().replace(/[ \t]+(?:by|at|de|la|&)$/,'');hotelPats.splice(4,0,new RegExp('('+nm.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')'));}
     // Vouchers print the property name just before its address (label OCR'd as "Adress"/"Addres" too).
     // PDFs give one long line split by wide gaps; screenshots give lines with OCR specks ("__ 1 Name", "- 4 Address:")
     const ai=txt.search(/(?:^|[\s\W])(?:Hotel\s+)?(?:Ad{1,2}re?s{1,2}|Addr\.?|Alamat)\s*[:：.]/i);
@@ -6016,7 +6162,9 @@ function parseBookingText(rawTxt){
       if(ciL>=0&&coL>=0){
         const after=txt.substring(ciL,ciL+260),ds=_findDates(after);
         const coRel=coL-ciL;
+        const before=_findDates(txt.substring(Math.max(0,ciL-120),ciL));
         if(ds.length>=2&&coRel>0&&coRel<ds[0].pos){r.date=r.date||ds[0].date;r.dateTo=r.dateTo||ds[1].date;}// labels side by side, dates below
+        else if(!ds.length&&before.length>=2&&coRel>0&&coRel<160){const b=before.slice(-2);r.date=b[0].date;r.dateTo=b[1].date;}// dates above the labels
         else{
           if(!r.date&&ds[0])r.date=ds[0].date;
           const dco=_findDates(txt.substring(coL,coL+160));if(!r.dateTo&&dco[0])r.dateTo=dco[0].date;
@@ -6024,6 +6172,16 @@ function parseBookingText(rawTxt){
         if(r.date&&r.dateTo&&r.dateTo<=r.date)r.dateTo='';
       }
     }
+  }
+  // Hotel stay written as a range ("Mar-07-2027 - Mar-12-2027", "7 Mar – 12 Mar 2027")
+  if(r.type==='hotel'&&!r.dateTo){
+    const ds=_findDates(txt);
+    for(let i=0;i+1<ds.length;i++){const gap=txt.slice(ds[i].end,ds[i+1].pos);if(/^\s*(?:-|–|—|to|until)\s*$/i.test(gap)&&ds[i+1].date>ds[i].date){if(!r.date||r.date===ds[i].date){r.date=ds[i].date;r.dateTo=ds[i+1].date;}break;}}
+  }
+  // Hotel with a check-in date and a night count but no check-out date: check-out = check-in + nights
+  if(r.type==='hotel'&&r.date&&!r.dateTo){
+    const nm=txt.match(/(\d{1,2})\s*nights?\b/i)||txt.match(/\b(\d{1,2})\b[^\n\d]{0,40}\n\s*nights?\b/i);
+    const n=r.nights||(nm?parseInt(nm[1]):0);if(n>0&&n<90){r.nights=n;r.dateTo=_addDays(r.date,n);}
   }
   // For flights, try structured "Depart: Day, DD Mon YYYY" patterns
   if(r.type==='flight'&&!r.date){
@@ -6592,6 +6750,8 @@ document.addEventListener('click',e=>{
     case 'event-sort-dir':eventSortDir=eventSortDir==='asc'?'desc':'asc';render();break;
     case 'show-clash':e.stopPropagation();showClashModal(el.dataset.id);break;
     case 'show-all-clashes':e.stopPropagation();showClashModal();break;
+    case 'c-tab':S._cTab=el.dataset.t;saveUI();render();break;
+    case 'ph-open':case 'ph-all':{e.preventDefault();const k=a==='ph-open'?'_phOpen':'_phAll';window[k]=window[k]||{};window[k][el.dataset.cc]=!window[k][el.dataset.cc];render();break;}
     case 'toggle-country':{
       const cid=el.dataset.cid;
       if(!S.visitedCountries)S.visitedCountries=[];
@@ -6675,6 +6835,8 @@ document.addEventListener('change',e=>{
 });
 
 document.addEventListener('input',e=>{if(e.target&&e.target.id==='gsearch')renderSearchResults();});
+// Countries: remember which regions are open across redraws
+document.addEventListener('toggle',e=>{const d=e.target;if(d instanceof HTMLDetailsElement&&d.classList.contains('c-region')){const o=window._cOpen||(window._cOpen=new Set());d.open?o.add(d.dataset.region):o.delete(d.dataset.region);}},true);
 document.addEventListener('toggle',e=>{const d=e.target;if(!(d instanceof HTMLDetailsElement)||!d.open||!d.classList.contains('guide-sec'))return;
   document.querySelectorAll('details.guide-sec[open]').forEach(o=>{if(o!==d)o.removeAttribute('open');});},true);
 document.addEventListener('keydown',e=>{
@@ -6718,6 +6880,7 @@ document.addEventListener('input',e=>{
   if(e.target.matches('[data-action="dash-search"]')){S._dashSearch=e.target.value;render();
     setTimeout(()=>{const inp=document.querySelector('[data-action="dash-search"]');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}},10);
   }
+  if(e.target.matches('[data-action="stat-year"]')){S._statY=e.target.value;render();return;}
   if(e.target.matches('[data-action="country-search"]')){S._countrySearch=e.target.value;render();
     setTimeout(()=>{const inp=document.querySelector('[data-action="country-search"]');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}},10);
   }
