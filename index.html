@@ -1330,6 +1330,11 @@ details.c-region .country-grid{margin:0 0 14px}
 @media(max-width:700px){.doc{flex-wrap:wrap}.doc-acts{width:100%;justify-content:flex-end}}
 /* Share a trip */
 .sh-on{border-color:var(--primary)!important;color:var(--primary-deep)!important}
+/* Smart Upload: AI reading note */
+.su-ai{font-size:12px;line-height:1.5;color:var(--text2);background:color-mix(in srgb,var(--primary) 8%,transparent);border-radius:10px;padding:8px 12px;margin:0 0 10px;display:flex;gap:8px;align-items:center}
+.su-ai.warn{color:var(--orange);background:color-mix(in srgb,var(--orange) 10%,transparent)}
+.su-ai .spinner{width:12px;height:12px;flex:none}
+.su-ai-privacy{font-size:10.5px;color:var(--text3);line-height:1.5;margin:8px 0 0}
 /* "New version available" bar (offline mode keeps a copy of the app; this offers the newer one) */
 .upd-bar{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:310;display:flex;align-items:center;gap:14px;width:max-content;max-width:calc(100vw - 32px);padding:12px 12px 12px 18px;background:var(--card);border:1px solid var(--line-strong);border-radius:16px;box-shadow:0 14px 40px rgba(30,24,80,.18);animation:tIn .3s}
 .upd-bar .upd-dot{width:8px;height:8px;border-radius:50%;background:var(--primary);flex:none;box-shadow:0 0 0 4px color-mix(in srgb,var(--primary) 20%,transparent)}
@@ -2709,7 +2714,7 @@ function vGuideCard(){
       'Choose a PDF, photo or screenshot, drag a file in, or copy one and tap <b>Paste</b>. You can also paste the email text under <b>Paste text</b>. A PDF and a screenshot of the same booking give the same result.',
       'Booked through Trip.com or Agoda? Add the e-ticket and the receipt together and they become one booking.',
       'Check and edit what it found, choose the event (it suggests one), then tap <b>Save</b>.'
-    ])}${sub('Duplicates and clashes')}<p>If a booking was added twice, the event offers <b>Review &amp; merge</b>: pick the values to keep and the two become one (payments and attachments are kept). <b>⚠ Clash</b> means two things at the same time; <b>⚠ Overlap</b> means events share dates. Tap the label to see which.</p>`)}
+    ])}<p class="guide-note">Layouts the app doesn't recognise yet are read by AI (when you're signed in and online): only the text goes to Anthropic, never the image. The app then learns that layout, so the next booking like it is read straight away, without AI and even offline. Everyone has 20 AI reads a day. Don't upload documents showing full passport or card numbers.</p>${sub('Duplicates and clashes')}<p>If a booking was added twice, the event offers <b>Review &amp; merge</b>: pick the values to keep and the two become one (payments and attachments are kept). <b>⚠ Clash</b> means two things at the same time; <b>⚠ Overlap</b> means events share dates. Tap the label to see which.</p>`)}
     ${sec('Dashboard, calendar and countries',ul([
       '<b>Dashboard</b> shows what\'s happening now or next, anything that needs attention (payments due, leave short, clashes, documents expiring), your coming trips and, in a short list, the next 7 days of Apple Calendar appointments.',
       '<b>Search</b> at the top finds trips, places, flight numbers, hotels and booking references. Press <b>/</b> on a computer.',
@@ -5024,6 +5029,128 @@ function setupDZTabs(container){
   });
 }
 
+// ===== Learned layouts =====
+// When the built-in rules can't read a booking, the AI reads it (Edge Function "ai-scan") and also writes a
+// recipe for that layout: wording that identifies it plus patterns like "Confirmation number: {pnr}".
+// Recipes are shared (supabase/ai_scan.sql: scan_rules) and kept on this device, so the next booking in a
+// known layout is read here, offline too, without the AI. The same pattern engine runs in the function.
+const RULE_FIELDS={pnr:'code',bookingNumber:'code',cost:'amount',currency:'cur',date:'date',dateTo:'date',nights:'int',
+  hotelName:'text',title:'text',provider:'text',roomType:'text',departureTime:'time',arrivalTime:'time',
+  airline:'text',flightNumber:'fn',fromCode:'iata',toCode:'iata',from:'text',to:'text',arrivalDate:'date',seat:'seat'};
+const RULE_VAL={code:'[A-Z0-9][A-Z0-9-]{3,23}',amount:"\\d[\\d,.' ]*\\d|\\d",cur:'[A-Z]{3}|Rp\\.?|RM|[A-Z]{0,2}\\$|[^\\sA-Za-z0-9]{1,2}',
+  date:'[^\\n]{3,32}?',int:'\\d{1,3}',text:'[^\\n]{2,80}?',time:'\\d{1,2}[:.h]\\d{2}(?:\\s*[AaPp]\\.?[Mm]\\.?)?|[0-2]\\d[0-5]\\d',
+  fn:'[A-Z0-9]{2}\\s?\\d{1,4}',iata:'[A-Z]{3}',seat:'\\d{1,2}[A-K]'};
+const _patCache=new Map();
+function compileScanPattern(p,flags){
+  const key=p+'|'+(flags||'');if(_patCache.has(key))return _patCache.get(key);
+  const parts=p.split(/(\{[a-zA-Z]+\})/),fields=[];let re='';
+  parts.forEach((part,i)=>{
+    const ph=part.match(/^\{([a-zA-Z]+)\}$/);
+    if(ph){const t=RULE_FIELDS[ph[1]];if(!t)throw new Error('unknown field '+ph[1]);fields.push(ph[1]);let v=RULE_VAL[t];
+      if(v.endsWith('?')&&!parts.slice(i+1).join('').trim())v=v.slice(0,-1);
+      re+='('+v+')';return;}
+    const toks=part.match(/[A-Za-z]+|\d+|[^\sA-Za-z\d]/g)||[];
+    if(!toks.length){re+='\\s*';return;}
+    re+='\\s*'+toks.map(t=>/^[A-Za-z]+$/.test(t)?t.replace(/[A-Za-z]/g,c=>'['+c.toUpperCase()+c.toLowerCase()+']'):'(?:'+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')?').join('\\s*')+'\\s*';
+  });
+  if(!fields.length)throw new Error('no field');
+  const out={re:new RegExp(re,flags||''),fields};_patCache.set(key,out);return out;
+}
+function ruleValue(f,raw){
+  raw=String(raw||'').trim();if(!raw)return '';
+  switch(RULE_FIELDS[f]){
+    case 'code':case 'fn':case 'iata':case 'seat':return raw.replace(/\s/g,'').toUpperCase();
+    case 'amount':return raw.replace(/[,' ]/g,'');
+    case 'cur':{if(/^[A-Za-z]{3}$/.test(raw))return raw.toUpperCase();const k=raw.toLowerCase().replace(/\.$/,'');return{'hk$':'HKD','nt$':'TWD','us$':'USD'}[k]||CURRENCY_SYMBOLS[k]||'';}
+    case 'date':return parseDate(raw)||((_findDates(raw)[0]||{}).date)||'';
+    case 'int':return parseInt(raw,10)||'';
+    case 'time':{const m=raw.match(/(\d{1,2})[:.h]?(\d{2})\s*([AaPp])?/);if(!m)return '';let h=+m[1];if(m[3]){const pm=/p/i.test(m[3]);if(pm&&h<12)h+=12;if(!pm&&h===12)h=0;}return String(h).padStart(2,'0')+':'+m[2];}
+    default:return raw.replace(/^[\W_]+|[\s,;:|]+$/g,'').replace(/\s+/g,' ');
+  }
+}
+let _scanRulesMem=null,_scanRulesAt=0;
+function scanRules(){if(_scanRulesMem)return _scanRulesMem;try{_scanRulesMem=JSON.parse(localStorage.getItem('htScanRules')||'[]');}catch(e){_scanRulesMem=[];}return _scanRulesMem;}
+async function loadScanRules(force){
+  if(!_acct||!navigator.onLine||!sbClient())return;
+  if(!force&&Date.now()-_scanRulesAt<10*60*1000)return;_scanRulesAt=Date.now();
+  try{const{data,error}=await sbClient().from('scan_rules').select('id,kind,signature,patterns,leg_pattern');
+    if(!error&&Array.isArray(data)){_scanRulesMem=data;_patCache.clear();try{localStorage.setItem('htScanRules',JSON.stringify(data));}catch(e){}}}catch(e){}
+}
+const _ruleWords=t=>' '+String(t).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()+' ';
+function applyLearnedRules(txt,r){
+  const rules=scanRules();if(!rules.length)return r;
+  const words=_ruleWords(txt);
+  for(const rule of rules){
+    const sig=rule.signature||[];
+    if(sig.length<2||!sig.every(x=>words.includes(_ruleWords(x))))continue;
+    const got={};
+    for(const p of rule.patterns||[]){try{const{re,fields}=compileScanPattern(p.pattern);const m=txt.match(re);if(m)fields.forEach((f,i)=>{const v=ruleValue(f,m[i+1]);if(v!==''&&v!=null)got[f]=v;});}catch(e){}}
+    let legs=null;
+    if(rule.leg_pattern){try{const{re,fields}=compileScanPattern(rule.leg_pattern,'g');const ms=[...txt.matchAll(re)];
+      if(ms.length)legs=ms.map(m=>{const l={};fields.forEach((f,i)=>{const v=ruleValue(f,m[i+1]);if(v!=='')l[f]=v;});return _completeLeg(l,got);});}catch(e){}}
+    if(!Object.keys(got).length&&!legs)continue;
+    const out={...r,...got,type:rule.kind,learnedLayout:rule.id};
+    if(legs&&legs.length)_setLegs(out,legs);
+    _finishParsed(out);
+    return out;
+  }
+  return r;
+}
+function _completeLeg(l,top){
+  if(l.fromCode&&!l.from)l.from=AIRPORTS[l.fromCode]||l.fromCode;
+  if(l.toCode&&!l.to)l.to=AIRPORTS[l.toCode]||l.toCode;
+  if(l.flightNumber){l.flightNumber=l.flightNumber.replace(/\s+/g,'').toUpperCase();if(!l.airline)l.airline=AIRLINE_MAP[l.flightNumber.slice(0,2)]||'';}
+  if(!l.pnr&&top&&top.pnr)l.pnr=top.pnr;
+  if(!l.arrivalDate&&l.date)l.arrivalDate=l.date;
+  return l;
+}
+function _setLegs(r,legs){
+  r.multiLeg=true;r.legs=legs;
+  const ds=legs.map(l=>l.date).filter(Boolean).sort(),es=legs.map(l=>l.arrivalDate||l.date).filter(Boolean).sort();
+  if(ds.length)r.date=ds[0];if(es.length)r.dateTo=es[es.length-1];
+  const f=legs[0],last=legs[legs.length-1];
+  Object.assign(r,{from:f.from||'',to:last.to||'',flightNumber:f.flightNumber||'',departureTime:f.departureTime||'',arrivalTime:f.arrivalTime||'',airline:f.airline||r.airline||''});
+  r.locations=[...new Set(legs.flatMap(l=>[l.from,l.to]).filter(Boolean))];
+}
+function _finishParsed(r){
+  if(!r.locations)r.locations=[];
+  _yenOrYuan(r.rawText||'',r);
+  if(r.type==='hotel'){if(!r.nights&&r.date&&r.dateTo)r.nights=Math.round((new Date(r.dateTo)-new Date(r.date))/864e5);r.name=r.hotelName||r.name||'Hotel Booking';}
+  else if(r.type==='flight'&&r.legs&&r.legs.length)r.name=`${r.airline||'Flight'} ${r.from||''} → ${r.to||''}`+(r.legs.length>1?` (${r.legs.length} legs)`:'');
+  else r.name=r.title||r.provider||r.name||'Uploaded Booking';
+  return r;
+}
+// The AI's reading in the app's own shape
+function aiToParsed(res){
+  const b=res.booking||{},r={type:res.type||'activity'};
+  for(const k of ['hotelName','title','provider','pnr','bookingNumber','date','dateTo','cost','currency','roomType','departureTime','arrivalTime','transportType'])if(b[k]!=null&&String(b[k]).trim())r[k]=String(b[k]).trim();
+  if(b.nights)r.nights=parseInt(b.nights,10)||undefined;
+  if(r.cost)r.cost=String(r.cost).replace(/[^\d.]/g,'');
+  if(r.currency)r.currency=r.currency.toUpperCase().slice(0,3);
+  for(const k of ['date','dateTo'])if(r[k]&&!/^\d{4}-\d{2}-\d{2}$/.test(r[k]))delete r[k];
+  r.locations=Array.isArray(b.locations)?b.locations.filter(Boolean).map(String):[];
+  if(r.type==='flight'&&Array.isArray(res.legs)&&res.legs.length)_setLegs(r,res.legs.map(l=>_completeLeg({...l},r)));
+  return _finishParsed(r);
+}
+// Ask the AI to read a booking the rules couldn't. Returns {parsed, learned, remaining} or {error}.
+async function aiRead(txt){
+  if(!acctEnabled()||!_acct||!navigator.onLine)return null;
+  const{data}=await sbClient().auth.getSession();const tok=data&&data.session&&data.session.access_token;if(!tok)return null;
+  let r;try{r=await fetch(SUPA_URL+'/functions/v1/ai-scan',{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPA_KEY,Authorization:'Bearer '+tok},body:JSON.stringify({text:txt.slice(0,12000)})});}catch(e){return null;}
+  const j=await r.json().catch(()=>({}));
+  if(r.status===404||j.error==='not_enabled')return null;// AI reading not set up
+  if(!r.ok)return{error:j.error==='user_limit'?'You\'ve used today\'s 20 AI reads. Check the details below; AI reading is available again tomorrow.':j.error==='daily_cap'?'AI reading has reached today\'s limit. Check the details below; it\'s available again tomorrow.':(j.error||'AI reading failed'),remaining:j.remaining};
+  if(j.learned)loadScanRules(true);
+  return{parsed:aiToParsed(j),learned:!!j.learned,remaining:j.remaining};
+}
+// The AI's values win; anything it left out keeps the rules' value
+function mergeAiParsed(rules,ai){
+  const out={...rules};
+  for(const[k,v]of Object.entries(ai))if(v!==''&&v!=null&&!(Array.isArray(v)&&!v.length))out[k]=v;
+  if(ai.legs&&ai.legs.length){out.legs=ai.legs;out.multiLeg=true;}
+  return out;
+}
+
 // Screenshot text, rebuilt from word positions: on wide layouts two columns can share a row
 // ("Hilton Niseko Village        Total fees ¥40,320"); a wide gap between two runs of words starts a new line.
 // Label/value rows ("Total fees    ¥40,320", "Check-in:    7 Mar") stay together.
@@ -5052,29 +5179,38 @@ function parseComplete(p){
   if(!p)return false;
   if(p.type==='hotel')return!!(p.hotelName&&p.date&&(p.dateTo||p.nights)&&p.cost);
   if(p.type==='flight'&&p.legs&&p.legs.length)return p.legs.every(l=>l.flightNumber&&l.date&&l.from&&l.to&&l.departureTime);
-  return parseScore(p)>=4;
+  // Activities and transport: what it is, when, and a reference or price
+  return!!((p.title||p.provider||p.hotelName)&&p.date&&(p.cost||p.pnr));
 }
-// Read an image. If the reading misses key details, read it again at another size (OCR struggles with very
-// large headline text and with small text) and keep whichever reading gives more of the booking.
+// Read an image. Small text (desktop screenshots) is read again enlarged, which fixes misread letters and digits
+// ("T5KQ8M" read as "TSKQ8M"); if key details are still missing, it's read again reduced, which recovers very
+// large headline numbers. The reading that gives the most of the booking wins (ties go to the sharper one).
 async function ocrImage(src,onStep){
   const bmp=await createImageBitmap(src);
   const pass=async sc=>{
     const c=document.createElement('canvas');c.width=Math.max(1,Math.round(bmp.width*sc));c.height=Math.max(1,Math.round(bmp.height*sc));
     const x=c.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(bmp,0,0,c.width,c.height);
     const r=await Tesseract.recognize(c,'eng',{tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'});
-    return ocrLayoutText(r.data)||r.data.text||'';
+    const hs=(r.data.words||[]).filter(w=>/[A-Za-z0-9]{2}/.test(w.text)).map(w=>w.bbox.y1-w.bbox.y0).sort((a,b)=>a-b);
+    const text=ocrLayoutText(r.data)||r.data.text||'';let p=null;try{p=parseBookingText(text);}catch(e){}
+    return{text,p,score:parseScore(p),h:hs.length?hs[hs.length>>1]:30};
   };
-  const first=await pass(1);
-  let p1=null;try{p1=parseBookingText(first);}catch(e){}
-  if(parseComplete(p1))return first;
-  const sc=bmp.width>=1400?0.5:bmp.width<=900?2:0.7;
-  if(onStep)onStep();
-  const second=await pass(sc);
-  let p2=null;try{p2=parseBookingText(second);}catch(e){}
-  return parseScore(p2)>parseScore(p1)?second:first;
+  let best=await pass(1);
+  if(best.h<22&&bmp.width*bmp.height<6e6){
+    if(onStep)onStep();
+    const up=await pass(Math.min(3,30/best.h));
+    if(up.score>=best.score)best=up;
+  }
+  if(!parseComplete(best.p)&&bmp.width>=900){
+    if(onStep)onStep();
+    const down=await pass(0.5);
+    if(down.score>best.score)best=down;
+  }
+  return best.text;
 }
 async function runOCR(file,id){
   const p=document.getElementById('op-'+id),r=document.getElementById('or-'+id);
+  loadScanRules();
   p.style.display='flex';p.innerHTML='<div class="spinner"></div> Processing…';r.style.display='none';
   try{
     let txt='';
@@ -5121,11 +5257,20 @@ async function runOCR(file,id){
   }catch(e){p.innerHTML='Error: '+e.message;console.error('OCR error:',e);r.style.display='none';}
 }
 
-function autoFillForm(txt,dzId){
+function autoFillForm(txt,dzId,pre){
   const m=document.querySelector('.modal');if(!m||m.querySelector('#su-result'))return;// Smart Upload has its own review
-  const parsed=parseBookingText(txt);if(!parsed)return;
+  const parsed=pre||parseBookingText(txt);if(!parsed)return;
+  if(!pre&&!parseComplete(parsed)&&_acct&&navigator.onLine){
+    const p=document.getElementById('op-'+dzId);
+    aiRead(txt).then(res=>{
+      if(!res||document.querySelector('.modal')!==m)return;
+      if(res.error){if(p)p.innerHTML=esc(res.error);return;}
+      autoFillForm(txt,dzId,{...mergeAiParsed(parsed,res.parsed),_over:true});
+      if(p)p.innerHTML='✓ Read with AI'+(res.learned?' · layout learned':'')+'. Please check the details.';
+    });
+  }
   window._lastParsed=parsed;console.log('OCR parsed:',JSON.stringify(parsed,null,2));
-  const s=(n,v)=>{const el=m.querySelector(`[name="${n}"]`);if(el&&!el.value&&v)el.value=v;};
+  const s=(n,v)=>{const el=m.querySelector(`[name="${n}"]`);if(el&&(!el.value||parsed._over)&&v)el.value=v;};
   // Detect form type by checking which fields exist
   if(m.querySelector('[name="airline"]')){
     // Flight form
@@ -5381,8 +5526,29 @@ function suRenderDocs(){
 function suAddDoc(name,txt){
   const parsed=parseBookingText(txt);if(!parsed)return;
   parsed.rawText=txt;
-  (window._suDocs=window._suDocs||[]).push({name,txt,parsed});
+  const doc={name,txt,parsed};
+  (window._suDocs=window._suDocs||[]).push(doc);
   suRefreshDocs();
+  suMaybeAi(doc);
+}
+// Rules came up short (and the documents together don't complete the booking either): ask the AI
+async function suMaybeAi(doc){
+  const docs=window._suDocs||[];
+  if(parseComplete(doc.parsed)||parseComplete(suMergeDocs(docs)))return;
+  if(!acctEnabled()||!_acct||!navigator.onLine)return;
+  suAiNote('<span class="spinner"></span> Unfamiliar layout: reading it with AI…');
+  const res=await aiRead(doc.txt);
+  if(!(window._suDocs||[]).includes(doc))return;// removed meanwhile
+  if(!res){suAiNote('');return;}
+  if(res.error){suAiNote(esc(res.error),true);return;}
+  doc.parsed={...mergeAiParsed(doc.parsed,res.parsed),rawText:doc.txt};doc.ai=true;
+  suRefreshDocs();
+  suAiNote('✓ Read with AI'+(res.learned?'. This layout is now learned, so next time it\'s read without AI':'')+(res.remaining!=null?` · ${res.remaining} AI read${res.remaining===1?'':'s'} left today`:'')+'. Please check the details.');
+}
+function suAiNote(html,warn){
+  let el=document.getElementById('su-ai');const box=document.getElementById('su-parsed');
+  if(!el&&box){el=document.createElement('div');el.id='su-ai';el.className='su-ai';box.insertAdjacentElement('beforebegin',el);}
+  if(!el)return;el.innerHTML=html;el.style.display=html?'':'none';el.classList.toggle('warn',!!warn);
 }
 function suRefreshDocs(){
   const docs=window._suDocs||[];
@@ -5394,9 +5560,10 @@ function suRefreshDocs(){
 }
 function showSmartUpload(){
   const dzid='su-'+uid();
+  loadScanRules();
   window._suParsed=null;
   window._suDocs=[];
-  modal('Smart Upload','<p style="font-size:12px;color:var(--text2);margin-bottom:14px">Upload booking confirmations, paste screenshots, or paste email text. You can add several documents for the same booking (e.g. e-ticket + receipt) — every flight goes into one event.</p>'+dzHtml(dzid,true)+`
+  modal('Smart Upload','<p style="font-size:12px;color:var(--text2);margin-bottom:14px">Upload booking confirmations, paste screenshots, or paste email text. You can add several documents for the same booking (e.g. e-ticket + receipt) — every flight goes into one event.</p>'+dzHtml(dzid,true)+(acctEnabled()&&_acct?'<p class="su-ai-privacy">If a layout isn\'t recognised, its text (not the image) is sent to Anthropic\'s AI to read, and the app learns the layout. Avoid uploading documents with passport or card numbers.</p>':'')+`
     <div id="su-result" style="display:none;margin-top:14px">
       <div id="su-docs"></div>
       <div class="su-match" id="su-parsed"></div>
@@ -5739,7 +5906,13 @@ function _findDates(str){
   };
   const d0=/\b(20\d{2})-(\d{2})-(\d{2})(?![\d:])/g;
   while((m=d0.exec(str))!==null)if(+m[2]>=1&&+m[2]<=12&&+m[3]>=1&&+m[3]<=31)out.push({date:`${m[1]}-${m[2]}-${m[3]}`,pos:m.index,end:m.index+m[0].length});
-  const d1=new RegExp('\\b(\\d{1,2})[\\s/.-]*('+_MON+')(?![a-z])\\.?,?(?:[\\s/.-]*(\\d{4}|\\d{2}(?!\\s*(?:'+_MON+')))(?![\\d:]))?','gi');
+  // "15/10/2027", "15.10.2027": day first, unless a date in the text only works month first ("10/25/2027")
+  const nums=[...str.matchAll(/\b(\d{1,2})[\/.](\d{1,2})[\/.](20\d{2})\b/g)];
+  const mFirst=nums.some(x=>+x[2]>12)&&!nums.some(x=>+x[1]>12);
+  for(const x of nums){const dd=+(mFirst?x[2]:x[1]),mo=+(mFirst?x[1]:x[2]);
+    if(mo>=1&&mo<=12&&dd>=1&&dd<=31&&!out.some(o=>x.index<o.end&&x.index+x[0].length>o.pos))out.push({date:`${x[3]}-${String(mo).padStart(2,'0')}-${String(dd).padStart(2,'0')}`,pos:x.index,end:x.index+x[0].length});}
+  // A day number and its month share a line ("Flight 1⏎March 18" is 18 March, not 1 March)
+  const d1=new RegExp('\\b(\\d{1,2})[ \\t/.-]*('+_MON+')(?![a-z])\\.?,?(?:[\\s/.-]*(\\d{4}|\\d{2}(?!\\s*(?:'+_MON+')))(?![\\d:]))?','gi');
   // "Mar 07 Mar 12": a day number right after a month name belongs to that month, not to the next one
   const monBefore=new RegExp('(?:'+_MON+')\\.?\\s*$','i');
   while((m=d1.exec(str))!==null){if(monBefore.test(str.slice(Math.max(0,m.index-12),m.index))){d1.lastIndex=m.index+m[1].length;continue;}if(!out.some(o=>m.index<o.end&&m.index+m[0].length>o.pos))mk(m[1],m[2],m[3],m.index,m[0].length);}
@@ -6326,6 +6499,7 @@ function _extractCost(txt,r){
 //   dates, using the weekday to pick the year and the number of nights for a lost day.
 const _WD='(MON|TUE|WED|THU|FRI|SAT|SUN)[A-Z]*';
 function normStackedDates(txt){
+  txt=_dayOverMonthYear(txt);
   const L=txt.split('\n'),MO=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
   for(let i=0;i<L.length-1;i++){
     const mm=L[i].toUpperCase().match(/^\W*(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*\W+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*\W*$/);
@@ -6350,9 +6524,31 @@ function normStackedDates(txt){
   }
   return txt;
 }
+// Hotel apps: a big day number with "Fri, Jul 2027" under it. OCR gives the day numbers on one line
+// ("9 12") and each "Weekday, Mon YYYY" after; rewrite as "9 Jul 2027" and "12 Jul 2027".
+function _dayOverMonthYear(txt){
+  const MY=/^(?:(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)[a-z]*\.?,?\s*)?(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?,?\s+(20\d{2})$/i;
+  const L=txt.split('\n');
+  for(let i=0;i<L.length;i++){
+    if(!MY.test(L[i].trim()))continue;
+    const run=[];for(let j=i;j<L.length&&MY.test(L[j].trim());j++)run.push(j);
+    for(let b=i-1;b>=Math.max(0,i-3);b--){
+      const days=(L[b].match(/^\s*((?:\d{1,2}\s+){0,3}\d{1,2})(?=\s|$)/)||[])[1];if(!days)continue;
+      let ds=days.trim().split(/\s+/).map(Number);
+      if(ds.length===run.length+1&&ds[ds.length-1]<10&&ds[ds.length-2]<10)ds=[...ds.slice(0,-2),ds[ds.length-2]*10+ds[ds.length-1]];// "9 1 2": the 12 split in two
+      if(ds.length<run.length)continue;
+      ds=ds.slice(0,run.length);if(ds.some(d=>d<1||d>31))break;
+      run.forEach((j,k)=>{const m=L[j].trim().match(MY);L[j]=ds[k]+' '+m[1]+' '+m[2];});
+      return L.join('\n');
+    }
+    i=run[run.length-1];
+  }
+  return txt;
+}
 // Last resort for the total: a line saying "total" (or "amount paid"/"price") with a currency symbol or code.
 // Skips part-totals (room charge, fees, taxes, subtotal); the largest remaining amount wins.
 function _totalFallback(txt,r){
+  txt=txt.replace(/\$\$(?=\s?\d)/g,'S$').replace(/^([^\n\d]*\b(?:total|amount\s+(?:paid|charged|due)|price)\b[^\n\d]{0,30})\n(?=[^\n]{0,6}\d)/gim,'$1 ');
   const iso='SGD|USD|MYR|IDR|EUR|GBP|THB|PHP|AUD|CNY|MVR|EGP|TWD|KRW|INR|JPY|HKD|NZD|CHF|CAD|VND|LKR|AED|QAR';
   const syms='Rp\\.?|RM|S\\$|A\\$|HK\\$|NT\\$|US\\$|₱|¥|฿|€|£|₫|₹|\\$';
   const amt='(\\d[\\d,]*(?:\\.\\d{1,2})?)';
@@ -6374,13 +6570,38 @@ function _totalFallback(txt,r){
 // "¥" is yen or yuan: yen unless the booking says China
 function _yenOrYuan(txt,r){if(r.currency==='CNY'&&/¥/.test(txt)&&!/\b(?:CNY|RMB|China|中国|元)\b/i.test(txt))r.currency='JPY';}
 function parseBookingText(rawTxt){
-  const txt=normStackedDates(dedupeLines(rawTxt));
+  const r=_parseBookingText(rawTxt);
+  try{return applyLearnedRules(normStackedDates(dedupeLines(rawTxt)),r);}catch(e){console.warn('Learned layouts skipped:',e);return r;}
+}
+// Booking reference / confirmation number under its many labels ("Booking reference ID", "Reservation number",
+// "Itinerary #", "Booking Reference (PNR)"); the value may be on the next line or dotted ("4821.930.571")
+function _findRef(txt){
+  const V='([A-Z0-9]{2,}(?:\\.[0-9]{2,}){0,4}|[A-Z0-9]{4,20})';
+  const pats=[
+    /(?:Booking\s*(?:Ref(?:erence)?|No\.?|Number|ID|Code))(?:\s+(?:number|no\.?|is|ID))*(?:\s*\(PNR\))?\s*[:#]?\s*/,
+    /(?:Confirmation\s*(?:Number|Code|No\.?|#)?)\s*[:#]?\s*/,
+    /(?:PNR|Reservation\s*(?:Code|Number|No\.?|ID|#)|Reference\s*(?:Number|Code|ID|#)?|Itinerary\s*(?:#|Number|No\.?)|Order\s*(?:No\.?|Number|ID|#)|Record\s*Locator)\s*[:#]?\s*/,
+  ].map(p=>new RegExp(p.source+V+'(?![A-Za-z0-9])','gi'));
+  // A reference has a digit or is all capitals ("EUPESS"), never an ordinary word like "number"
+  const isRef=c=>/\d/.test(c)||/^[A-Z]{5,}$/.test(c);
+  for(const pat of pats){const c=[...txt.matchAll(pat)].map(m=>m[1].replace(/\./g,'')).find(c=>isRef(c)&&c.length>=4);if(c)return c;}
+  // A header row of labels with the values on the row below ("Booking reference   Total⏎QF8LMN   AUD 742.18")
+  const below=txt.match(/(?:^|\n)[^\n]*\b(?:Booking\s*(?:Ref(?:erence)?|Number|ID|Code)|Confirmation\s*(?:Number|Code|#)|Reservation\s*(?:Number|Code))\b[^\n]{0,40}\n\s*([A-Z0-9]{5,12})(?![A-Za-z0-9])/i);
+  if(below&&isRef(below[1]))return below[1];
+  const et=txt.match(/(?:E-?Ticket\s*(?:number|#)?)\s*[:#]?\s*([\d-]{10,20})/i);
+  return et?et[1]:'';
+}
+function _parseBookingText(rawTxt){
+  const txt=normStackedDates(dedupeLines(rawTxt)).replace(new RegExp('\\b('+_FNCODES+')O(\\d{2,3})\\b','g'),'$10$2');
   const r={};const t=txt.toUpperCase();
 
   // ===== 0. Known airline layouts first, then generic multi-segment parsing =====
   const multiLegs=_parseKnownLayouts(txt)||parseFlightSegments(txt);
   if(multiLegs){
-    r.type='flight';r.multiLeg=true;r.legs=multiLegs;r.pnr=multiLegs[0].pnr||'';
+    // The labelled reference beats a guess from the flight blocks (which can pick up "erence" from a split label)
+    const legRef=multiLegs[0].pnr||'',labRef=_findRef(txt);
+    r.type='flight';r.multiLeg=true;r.legs=multiLegs;r.pnr=(/^[A-Z0-9]{5,8}$/.test(legRef)?legRef:labRef||legRef)||'';
+    if(r.pnr&&labRef&&r.pnr!==legRef)multiLegs.forEach(l=>{if(!/^[A-Z0-9]{5,8}$/.test(l.pnr||''))l.pnr=r.pnr;});
     const alCount={};multiLegs.forEach(l=>{if(l.airline)alCount[l.airline]=(alCount[l.airline]||0)+1;});
     r.airline=Object.entries(alCount).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
     const allDates=multiLegs.map(l=>l.date).filter(Boolean).sort();
@@ -6408,12 +6629,15 @@ function parseBookingText(rawTxt){
     /\b(?:rate\s+per\s+night|per\s+room\s*per\s+night|total\s+(?:price\s+)?for\s+(?:the\s+)?stay|room\s+rate)\b/i.test(txt)||
     (/\bcheck.?in\b/i.test(txt)&&/\bcheck.?out\b/i.test(txt)&&/\b\d+\s*nights?\b/i.test(txt))||
     /\byour\s+booking\s+in\b/i.test(txt)||/\bexpecting\s+you\b/i.test(txt)||
-    /\b(?:hotel\s+voucher|check-?in\s+voucher|accommodation\s+voucher)\b/i.test(txt)||(/\bcheck.?in\b/i.test(txt)&&/\bcheck.?out\b/i.test(txt));
+    /\b(?:hotel\s+voucher|check-?in\s+voucher|accommodation\s+voucher)\b/i.test(txt)||(/\bcheck.?in\b/i.test(txt)&&/\bcheck.?out\b/i.test(txt))||
+    // Chain names ("Park Hyatt Kyoto", "Pullman Bangkok") with stay wording
+    (new RegExp('\\b(?:'+HOTEL_BRANDS+'|Bonvoy|World\\s+of\\s+Hyatt|IHG|Accor)\\b').test(txt)&&/\b(?:arrival|departure|check.?in|check.?out|nights?|stay|room|guests?|reservation|confirmation)\b/i.test(txt)&&!/\b(?:flight|boarding|gate|terminal)\b/i.test(txt));
   // Booking/order references ("KL88231") aren't flight numbers
   const txtNoRefs=txt.replace(/(?:[Bb]ooking|BOOKING|[Oo]rder|ORDER|[Rr]eference|REFERENCE|[Rr]ef\.?|[Cc]onfirmation|CONFIRMATION|[Vv]oucher|PNR)(?:[ \t]+(?:[Rr]eference|REFERENCE|[Rr]ef\.?|[Nn]o\.?|NO\.?|[Nn]umber|NUMBER|ID|[Cc]ode|CODE|#))?[ \t]*[:：#]?[ \t]*[A-Z0-9-]{4,20}\b/g,' ');
   const strongFlightKw=/\b(FLIGHT|BOARDING\s*PASS|AIRLINE|AIRWAYS|GATE\s*\d|TERMINAL\s*\d|BAGGAGE\s*ALLOW|FLIGHT\s*DURATION|FLIGHT\s*SUMMARY)\b/i.test(txt);
   const groundKw=/\b(ferry|fast\s*boat|speed\s*boat|train|railway|bus|coach|shuttle|car\s*(?:rental|hire)|KTM|ETS|shinkansen)\b/i.test(txt);
-  const flightKw=strongFlightKw||(!groundKw&&(/\b(E-?TICKET|ITINERARY\s*(?:RECEIPT)?)\b/i.test(txt)||new RegExp('\\b(?:'+_FNCODES+')\\s?\\d{2,5}\\b').test(txtNoRefs)));
+  const fnSeen=new RegExp('\\b(?:'+_FNCODES+')\\s?\\d{2,5}\\b').test(txtNoRefs);
+  const flightKw=strongFlightKw||(!groundKw&&(fnSeen||(!hotelKw&&/\b(E-?TICKET|ITINERARY\s*(?:RECEIPT)?)\b/i.test(txt))));
   // Product title on OTA receipts (Trip.com/Klook: "Activity  <title>  Departure time…")
   const titleM=txt.match(/(?:^|\n|\s{2,})(?:Activity|Product|Item|Ticket|Package)\s*\n?\s{0,4}([A-Z0-9][^\n\[]{8,140}?)(?:\s*\[|\s{2,}|\n|\s+(?:Departure|Date|Travel|Visit|Usage|Pick-?up)\b)/);
   const title=titleM?titleM[1].trim():'';
@@ -6423,9 +6647,15 @@ function parseBookingText(rawTxt){
   else if(flightKw)r.type='flight';
   // Tours that merely include a transfer ("Snorkeling Tour with Boat Transfer") stay activities
   else if(title?(transTitleKw.test(title)&&!/\b(tour|snorkel\w*|div(?:e|ing)|excursion|experience|class|lesson|admission|museum|safari|hike|trek|day\s*trip)\b/i.test(title)):transTextKw.test(txt))r.type='transport';
-  else if(/\b(TOUR|ACTIVITY|EXCURSION|EXPERIENCE|ADMISSION|TICKET|CONCERT|SHOW|EVENT)\b/i.test(txt))r.type='activity';
+  else if(/\b(TOUR|ACTIVITY|EXCURSION|EXPERIENCE|ADMISSION|TICKET|CONCERT|SHOW|EVENT|PASS|PARTICIPATION|ATTRACTION|THEME\s*PARK|STUDIOS?|MUSEUM|ZOO|AQUARIUM|CLASS|LESSON|SPA)\b/i.test(txt))r.type='activity';
   else r.type='transport';
   if(title)r.title=title.replace(/\s+/g,' ').slice(0,100);
+  // Activity vouchers without a "Product" label: the headline under "Booking confirmed" ("Universal Studios Japan 1-Day Pass")
+  if(r.type==='activity'&&!r.title){
+    const L=txt.split('\n').map(x=>x.trim());const ci=L.findIndex(x=>/\b(?:confirmed|confirmation|booked|voucher)\b/i.test(x));
+    const cand=L.slice(ci+1,ci+4).find(x=>/^[A-Z0-9]/.test(x)&&(x.match(/[A-Za-z]{2,}/g)||[]).length>=3&&!/[:：]|\b(?:booking|reference|date|total|units?|order|price|paid)\b/i.test(x));
+    if(cand)r.title=cand.slice(0,100);
+  }
   if(r.type==='transport'){
     const tt=(title||txt);
     r.transportType=/ferry/i.test(tt)?'Ferry':/boat/i.test(tt)?'Boat':/train|rail|KTM|ETS|shinkansen/i.test(tt)?'Train':/bus|coach|shuttle/i.test(tt)?'Bus':/car\s*(?:rental|hire)/i.test(tt)?'Car Rental':/taxi|grab|transfer/i.test(tt)?'Taxi/Grab':'Other';
@@ -6443,16 +6673,8 @@ function parseBookingText(rawTxt){
     .replace(/Date\s*of\s*Issue\s*[:]\s*\n?\s*\d{1,2}\s+\w+\s+\d{4}/gi,'');
 
   // ===== 3. PNR / Booking reference =====
-  const pnrPats=[
-    /(?:Booking\s*(?:Ref(?:erence)?|No\.?|Number|ID|Code))(?:\s+(?:number|no\.?|is))*\s*[:#]?\s*([A-Z0-9]{4,20})\b/gi,
-    /(?:Confirmation\s*(?:Number|Code|#)?)\s*[:#]?\s*([A-Z0-9]{4,20})\b/gi,
-    /(?:PNR|RESERVATION\s*CODE|Reference\s*(?:Number|Code|#)?)\s*[:#]?\s*([A-Z0-9]{4,15})\b/gi,
-    /(?:E-?Ticket\s*(?:number|#)?)\s*[:#]?\s*([\d-]{10,20})/gi,
-  ];
-  // A reference has a digit or is all capitals ("EUPESS") — never an ordinary word like "number"
-  const isRef=c=>/\d/.test(c)||/^[A-Z]{5,}$/.test(c);
-  for(const pat of pnrPats){const c=[...txt.matchAll(pat)].map(m=>m[1]).find(isRef);if(c){r.pnr=c;r.bookingNumber=c;break;}}
-  if(r.type==='hotel'){const cm=txt.match(/Confirmation\s*(?:no\.?|number|#|code)\s*[:#]?\s*([A-Z0-9-]{4,24})/i);if(cm){r.pnr=cm[1];r.bookingNumber=cm[1];}}
+  {const c=_findRef(txt);if(c){r.pnr=c;r.bookingNumber=c;}}
+  if(r.type==='hotel'){const cm=txt.match(/Confirmation\s*(?:no\.?|number|#|code)\s*[:#]?\s*([A-Z0-9][A-Z0-9.-]{3,24})/i);if(cm){const v=cm[1].replace(/\.(?=\d)/g,'').replace(/[.-]+$/,'');r.pnr=v;r.bookingNumber=v;}}
 
   // ===== 4. Hotel name extraction (platform-aware) =====
   if(r.type==='hotel'){
@@ -6461,7 +6683,8 @@ function parseBookingText(rawTxt){
       /We\s+notified\s+([A-Z][^()\n]{1,50}?)\s*(?:\(|of\s+your)/,// "We notified Bobo Bungalow (…) of your upcoming booking"
       /Pay\s+at\s+([A-Z][^\n]{1,50}?)\s+check-?in\b/,
       /([A-Z][A-Za-z\s&'\-]{2,50})\s+is\s+expecting\s+you/,
-      /(?:Hotel|Resort|Property|Accommodation|Stay\s*at)\s*[:#]?\s*([A-Za-z][A-Za-z\s&'\-,]{2,60})(?:\n|$)/i,
+      /(?:^|\n)[ \t]*(Hotel[ \t]+[A-Z][\w'’&.-]*(?:[ \t]+[A-Z][\w'’&.-]*){0,5})[ \t]*(?=\n|$)/,// "Hotel Gracery Shinjuku"
+      /(?:Hotel|Resort|Property|Accommodation|Stay\s*at)[ \t]*[:#]?[ \t]*([A-Za-z][A-Za-z \t&'\-,]{2,60})(?:\n|$)/i,
       /your\s+stay\s+at\s+([A-Z][A-Za-z\s&'\-]{2,50})/i,
     ];
     // Chain hotels: the line naming the brand ("Hilton Niseko Village", "Park Hyatt Tokyo")
@@ -6549,7 +6772,8 @@ function parseBookingText(rawTxt){
     if(ciM){const d=parseDate(ciM[1]);if(d)r.date=d;}
     if(coM){const d=parseDate(coM[1]);if(d)r.dateTo=d;}
     if(!r.date||!r.dateTo){
-      const ciL=txt.search(/\bcheck.?in\b(?!\s*voucher)/i),coL=txt.search(/\bcheck.?out\b/i);
+      let ciL=txt.search(/\bcheck.?in\b(?!\s*voucher)/i),coL=txt.search(/\bcheck.?out\b/i);
+      if(ciL<0||coL<0){ciL=txt.search(/\b(?:arrival|arrive|arriving)\b/i);coL=txt.search(/\b(?:departure|depart|departing)\b/i);}
       if(ciL>=0&&coL>=0){
         const after=txt.substring(ciL,ciL+260),ds=_findDates(after);
         const coRel=coL-ciL;
@@ -6568,6 +6792,10 @@ function parseBookingText(rawTxt){
   if(r.type==='hotel'&&!r.dateTo){
     const ds=_findDates(txt);
     for(let i=0;i+1<ds.length;i++){const gap=txt.slice(ds[i].end,ds[i+1].pos);if(/^\s*(?:-|–|—|to|until)\s*$/i.test(gap)&&ds[i+1].date>ds[i].date){if(!r.date||r.date===ds[i].date){r.date=ds[i].date;r.dateTo=ds[i+1].date;}break;}}
+  }
+  // "Check-in: Sat, Aug 21  Check-out: Tue, Aug 24, 2027": a yearless check-in belongs just before check-out
+  if(r.type==='hotel'&&r.date&&r.dateTo&&(new Date(r.dateTo)-new Date(r.date))/864e5>300){
+    const y=+r.dateTo.slice(0,4),c=y+r.date.slice(4);r.date=c<=r.dateTo?c:(y-1)+r.date.slice(4);
   }
   // Hotel with a check-in date and a night count but no check-out date: check-out = check-in + nights
   if(r.type==='hotel'&&r.date&&!r.dateTo){
@@ -6648,7 +6876,7 @@ function parseBookingText(rawTxt){
   }
 
   // ===== 10. Cost — with currency symbol mapping =====
-  _extractCost(txt,r);
+  _extractCost(txt.replace(/\$\$(?=\s?\d)/g,'S$'),r);
 
   if(!r.cost)_totalFallback(txt,r);
   _yenOrYuan(txt,r);
