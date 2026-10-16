@@ -1330,6 +1330,16 @@ details.c-region .country-grid{margin:0 0 14px}
 @media(max-width:700px){.doc{flex-wrap:wrap}.doc-acts{width:100%;justify-content:flex-end}}
 /* Share a trip */
 .sh-on{border-color:var(--primary)!important;color:var(--primary-deep)!important}
+/* "New version available" bar (offline mode keeps a copy of the app; this offers the newer one) */
+.upd-bar{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:310;display:flex;align-items:center;gap:14px;width:max-content;max-width:calc(100vw - 32px);padding:12px 12px 12px 18px;background:var(--card);border:1px solid var(--line-strong);border-radius:16px;box-shadow:0 14px 40px rgba(30,24,80,.18);animation:tIn .3s}
+.upd-bar .upd-dot{width:8px;height:8px;border-radius:50%;background:var(--primary);flex:none;box-shadow:0 0 0 4px color-mix(in srgb,var(--primary) 20%,transparent)}
+.upd-bar .upd-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.upd-bar .upd-t b{font-size:13px;font-weight:600;color:var(--text)}
+.upd-bar .upd-t span{font-size:12px;color:var(--text2);line-height:1.4}
+.upd-bar .upd-later{background:none;border:0;padding:8px 6px;font:500 10.5px var(--font);text-transform:uppercase;letter-spacing:.16em;color:var(--text3);cursor:pointer}
+.upd-bar .upd-later:hover{color:var(--text)}
+.upd-bar .btn{padding:9px 16px;flex:none}
+@media(max-width:700px){.upd-bar{bottom:calc(84px + env(safe-area-inset-bottom));width:calc(100vw - 32px);padding:12px 10px 12px 14px;gap:10px}.upd-bar .upd-t span{display:none}.upd-bar .upd-later{margin-left:auto}}
 /* Trip header actions: one quiet segmented control instead of four separate pills */
 .dtools{display:flex;gap:8px;align-items:center;flex-shrink:0}
 .dtools-grp{display:inline-flex;align-items:stretch;border:1px solid var(--line-strong);border-radius:999px;overflow:hidden;background:var(--card)}
@@ -2384,6 +2394,7 @@ function feedCardHtml(){
 const _stillMe=me=>!!(_acct&&_acct.id===me);
 async function acctPush(){
   if(!_acct||_acctBusy||_appErrorState)return;
+  if(!navigator.onLine){updateSyncStatus('Offline · changes saved on this device');return;}
   const me=_acct.id;
   document.querySelectorAll('.sync-dot').forEach(d=>d.classList.add('syncing'));
   try{
@@ -2407,6 +2418,7 @@ async function acctPush(){
 }
 async function acctPull(quiet){
   if(!_acct||_acctBusy)return false;
+  if(!navigator.onLine)return false;
   const me=_acct.id;
   try{
     const row=await acctFetch();
@@ -2496,7 +2508,7 @@ async function acctOnSignIn(user){
     const unclaimed=!localStorage.getItem(OWNER_KEY)&&hasLocalData();// from before accounts existed, or used signed-out
     const row=await acctFetch(user.id);
     if(!_stillMe(user.id))return;
-    if(owner===user.id){_acctBusy=false;await acctPull(true);return;}
+    if(owner===user.id){_acctBusy=false;await acctPull(true);if(_stillMe(user.id)&&(S.lastModified||0)>(getSyncConfig().lastPush||0))acctPush();return;}
     if(unclaimed){
       // Bring in the newest copy from the old GitHub sync first, so nothing made on another device is missed
       if(getSyncConfig().token&&!getSyncConfig().retired){try{await pullFromGist();}catch(e){}}
@@ -2536,10 +2548,21 @@ function acctAsk(o){
   });
 }
 
+// The account Supabase keeps on this device, if this device's data is that account's (used while offline)
+let _acctOffline=false;
+function savedAcct(){
+  try{
+    const own=localStorage.getItem(OWNER_KEY);if(!own)return null;
+    for(const k of Object.keys(localStorage))if(/^sb-.+-auth-token$/.test(k)){const v=JSON.parse(localStorage.getItem(k)||'null');const u=v&&(v.user||(v.currentSession&&v.currentSession.user));if(u&&u.id===own)return u;}
+  }catch(e){}
+  return null;
+}
 async function acctInit(){
   const sb=sbClient();if(!sb){_acctReady=true;return;}
   sb.auth.onAuthStateChange((ev,session)=>{
     const u=session&&session.user||null,was=_acct&&_acct.id;
+    // Offline with the saved account: only a real sign-out ends it (a sign-in that can't refresh yet doesn't)
+    if(_acctOffline){if(!u&&ev!=='SIGNED_OUT')return;_acctOffline=false;}
     _acct=u;
     // Supabase advises not awaiting its own calls inside this callback
     setTimeout(()=>{
@@ -2549,10 +2572,18 @@ async function acctInit(){
       else render();
     },0);
   });
-  const{data}=await sb.auth.getSession();
+  // Offline: open as the saved account straight away (Supabase can wait a long time retrying the sign-in)
+  const saved=savedAcct();
+  if(saved&&!navigator.onLine){_acct=saved;_acctOffline=true;_acctReady=true;try{render();}catch(e){}}
+  const{data,error}=await sb.auth.getSession();
   // Supabase leaves a bare '#' after the Google sign-in return; tidy the address
   const tidy=()=>{if(location.href.endsWith('#'))try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}};tidy();setTimeout(tidy,600);
-  if(!data.session)_acct=null;
+  if(!data.session){
+    // No connection to refresh an expired sign-in: carry on as the saved account until there is one
+    // (only for a network failure: a revoked sign-in is removed by Supabase, so savedAcct() is then empty)
+    const still=savedAcct(),netFail=!navigator.onLine||!!(error&&/fetch|network|retryable/i.test((error.name||'')+' '+(error.message||'')));
+    if(still&&netFail){_acct=still;_acctOffline=true;}else{_acct=null;_acctOffline=false;}
+  }else _acctOffline=false;
   _acctReady=true;
   try{render();}catch(e){}
 }
@@ -2663,7 +2694,13 @@ function vGuideCard(){
       'Pick your <b>home country</b> when asked. It sets your currency, public holidays, weekend and date style.',
       'If asked <b>Move your existing data into your account?</b>, tap <b>Move my data</b>.',
       'On your phone, open the same address and sign in the same way. To add an app icon: <b>iPhone (Safari)</b> Share → <b>Add to Home Screen</b>; <b>Android (Chrome)</b> ⋮ → <b>Add to Home screen</b>.'
-    ]):''}<p class="guide-note">Changes save automatically and reach your other devices within about 30 seconds.</p>`,firstTime)}
+    ]):''}<p class="guide-note">Changes save automatically and reach your other devices within about 30 seconds.</p>
+      ${sub('Works offline')}${ul([
+        'Once you\'ve opened the app with a connection, it also opens without one (on a plane, or abroad without data). You can view and edit everything; changes stay on this device and sync on their own when you\'re back online.',
+        'Scanning bookings, live exchange rates, calendar links and sharing need a connection.',
+        'On an iPhone, <b>Add to Home Screen</b> keeps the offline copy (Safari may clear it for websites you haven\'t opened in a while).',
+        'When there\'s a newer version, a <b>New version available</b> bar appears: tap <b>Reload</b>, or <b>Later</b> to get it next time you open the app.'
+      ])}`,firstTime)}
     ${sec('Add trips and bookings',`${sub('Create an event')}${ul([
       'Tap <b>+ New Event</b> (Dashboard or Events), give it a name, dates, places and a category (Trip, Work, Training, Social, Personal or Activity).',
       'Inside the event, add bookings under <b>Flights</b>, <b>Hotels</b>, <b>Activities</b> and <b>Transport</b>. <b>Timeline</b> shows the trip day by day; <b>Attachments</b> keeps tickets and vouchers.'
@@ -2721,7 +2758,7 @@ function vGuideCard(){
       '<b>Delete Account</b> (Settings → Your Account) permanently removes everything. Export a backup first.']:[])
     ]))}
     ${sec('Something not working?',ul([
-      '<b>Out of date or not syncing:</b> reload the page (⌘⇧R / Ctrl+Shift+R), or tap <b>↻ Sync Now</b> in Settings → Your Account on each device.',
+      '<b>Out of date or not syncing:</b> check you\'re online (a red bar shows when you\'re not), reload the page, or tap <b>↻ Sync Now</b> in Settings → Your Account on each device.',
       '<b>Smart Upload misread something:</b> edit the field before saving. If a photo misreads, try the PDF or paste the email text.',
       '<b>Paste does nothing on a phone:</b> copy again, tap <b>Paste</b> and allow it if asked, or save the screenshot and choose it.',
       '<b>Subscribed calendar not updating:</b> on a Mac, check the subscription\'s Auto-refresh (right-click → Get Info). iPhone and Google refresh on their own schedule.',
@@ -2941,7 +2978,7 @@ function gateState(){
   if(!SUPA_URL)return 'open';                       // local copies without accounts
   let owner=false;try{owner=!!localStorage.getItem(OWNER_KEY);}catch(e){}
   if(!acctEnabled())return owner?'open':'offline';   // sign-in service didn't load: keep a signed-in device usable offline
-  if(!_acctReady)return _gateTO&&owner?'open':(_gateTO?'landing':'wait');
+  if(!_acctReady)return owner&&(_gateTO||!navigator.onLine)?'open':(_gateTO?'landing':'wait');
   return _acct?'open':'landing';
 }
 const GOOGLE_G='<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.5z"/></svg>';
@@ -7227,7 +7264,39 @@ setInterval(()=>{try{renderSidebar();}catch(e){}},60000);
 
 // Offline detection
 const _ob=document.createElement('div');_ob.className='offline-banner';_ob.textContent='You are offline — changes will sync when reconnected';document.body.appendChild(_ob);
-window.addEventListener('online',()=>{_ob.classList.remove('show');if(cloudMode())cloudPush();});
+window.addEventListener('online',async()=>{
+  _ob.classList.remove('show');
+  if(_acct&&sbClient()){try{await sbClient().auth.getSession();}catch(e){}}
+  if(cloudMode())cloudPush();
+  swCheck();
+});
+
+// Offline mode: sw.js keeps a copy of the app on this device. When a newer version has been downloaded,
+// offer a reload (held back while a form is open, so nothing being typed is lost)
+let _updLater=false;
+function swCheck(){try{const c=navigator.serviceWorker&&navigator.serviceWorker.controller;if(c&&navigator.onLine)c.postMessage({type:'check-update',url:location.href});}catch(e){}}
+function showUpdateBar(){
+  if(_updLater||document.querySelector('.upd-bar'))return;
+  const bg=document.getElementById('mbg');
+  if(bg&&bg.classList.contains('open')){const o=new MutationObserver(()=>{if(!bg.classList.contains('open')){o.disconnect();showUpdateBar();}});o.observe(bg,{attributes:true,attributeFilter:['class']});return;}
+  const b=document.createElement('div');b.className='upd-bar';b.setAttribute('role','status');
+  b.innerHTML='<span class="upd-dot"></span><div class="upd-t"><b>New version available</b><span>Reload to get the latest features and fixes.</span></div><button class="upd-later" type="button">Later</button><button class="btn btn-p" type="button">Reload</button>';
+  b.querySelector('.upd-later').onclick=()=>{_updLater=true;b.remove();toast('The update will load next time you open the app');};
+  b.querySelector('.btn-p').onclick=async e=>{
+    e.target.disabled=true;e.target.textContent='Saving…';
+    try{if(_syncTimer){clearTimeout(_syncTimer);_syncTimer=null;await Promise.race([cloudPush(),new Promise(r=>setTimeout(r,4000))]);}}catch(err){}
+    try{sessionStorage.setItem('htUpdated','1');}catch(err){}
+    location.reload();
+  };
+  document.body.appendChild(b);
+}
+if('serviceWorker' in navigator&&(location.protocol==='https:'||/^(localhost|127\.0\.0\.1)$/.test(location.hostname))){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(e=>console.warn('Offline mode unavailable:',e)));
+  navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.type==='update-ready')showUpdateBar();});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')swCheck();});
+  setInterval(swCheck,30*60*1000);
+}
+try{if(sessionStorage.getItem('htUpdated')){sessionStorage.removeItem('htUpdated');setTimeout(()=>toast('Updated to the latest version'),800);}}catch(e){}
 window.addEventListener('offline',()=>_ob.classList.add('show'));
 if(!navigator.onLine)_ob.classList.add('show');
 </script>
