@@ -2212,6 +2212,48 @@ async function acctFetch(uid){
   if(error)throw error;
   return data;
 }
+// ===== CALENDAR FEED (Supabase) =====
+// The app saves the account's calendar file to Supabase after each save; calendar apps subscribe to
+// https://theplanner.pages.dev/feed/<token>.ics (functions/feed/[token].js). Needs supabase/calendar_feed.sql.
+const FEED_BASE='https://theplanner.pages.dev/feed/';
+let _feed=null;// {me, token, hash} | {me, missing:true}
+const _feedHash=ics=>{const s=ics.replace(/^DTSTAMP:.*$/gm,'');let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return h+':'+s.length;};
+function feedUrl(){return _acct&&_feed&&_feed.me===_acct.id&&_feed.token?FEED_BASE+_feed.token+'.ics':null;}
+const _feedMissing=e=>/PGRST205|PGRST202|42P01|42883|schema cache|calendar_feed/i.test(((e&&e.code)||'')+' '+((e&&e.message)||''));
+async function feedSync(){
+  if(!_acct||_appErrorState)return;
+  const me=_acct.id;
+  if(_feed&&_feed.me===me&&_feed.missing&&Date.now()-(_feed.at||0)<6e5)return;// table not set up yet: check again later
+  const ics=buildICSFeed(),hash=_feedHash(ics);
+  if(_feed&&_feed.me===me&&_feed.token&&_feed.hash===hash)return;
+  const had=feedUrl();
+  try{
+    const{data,error}=await sbClient().from('calendar_feed').upsert({user_id:me,ics},{onConflict:'user_id'}).select('token').single();
+    if(!_stillMe(me))return;
+    if(error){if(_feedMissing(error))_feed={me,missing:true,at:Date.now()};else console.warn('Calendar feed save failed:',error.message);}
+    else _feed={me,token:data.token,hash};
+  }catch(e){console.warn('Calendar feed save failed:',e);}
+  if(!had&&feedUrl()&&S.v==='settings'&&!(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName))&&!document.getElementById('mbg').classList.contains('open'))try{render();}catch(e){}
+}
+async function feedResetLink(){
+  const ok=await acctAsk({title:'Reset your calendar link?',body:'The current link stops working straight away. Anyone who has it, including your own calendar subscriptions, will no longer see your trips. You then subscribe again with the new link.',yes:'Reset link',no:'Cancel'});
+  if(!ok||!_acct)return;
+  const me=_acct.id;
+  const{data,error}=await sbClient().rpc('reset_calendar_link');
+  if(!_stillMe(me))return;
+  if(error||!data){toast('Could not reset the link: '+((error&&error.message)||'try again'));return;}
+  _feed={me,token:data,hash:_feed&&_feed.hash};render();toast('New calendar link ready. Subscribe again with it.');
+}
+function feedCardHtml(){
+  const url=feedUrl(),old=calFeedUrl();
+  if(!url)return `<p style="font-size:11px;color:var(--text3);margin-bottom:12px">Preparing your calendar feed…</p>`;
+  return `<div style="font-size:12px;font-weight:600;margin-bottom:6px">Your calendar feed: The Planner → your calendar</div>
+    <p style="font-size:11px;color:var(--text3);margin-bottom:10px">Subscribe once in Apple Calendar, Google Calendar or Outlook. It updates by itself whenever you change something here, from any device. Keep the link to yourself: anyone who has it can see your trips.</p>
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px"><input class="fc" readonly value="${esc(url)}" id="cal-feed-url" style="flex:1;min-width:0;font-size:11px;font-family:monospace" onclick="this.select()"><button class="btn btn-p" data-action="copy-cal-url" style="white-space:nowrap">Copy URL</button></div>
+    <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><a class="btn btn-s" href="${esc(url.replace(/^https:/,'webcal:'))}" style="font-size:11px">Subscribe on this device</a><a href="#" data-action="feed-howto" style="font-size:11px;color:var(--primary-deep)">How to subscribe</a><a href="#" data-action="feed-reset" style="font-size:11px;color:var(--text3);margin-left:auto">Reset link</a></div>
+    ${old?`<p style="font-size:11px;color:var(--text2);background:var(--primary-dim);padding:10px 12px;margin:0 0 12px;line-height:1.55"><b>Moving from your old feed?</b> Subscribe to the link above, check your trips appear, then delete the old subscription (its address starts with <i>gist.githubusercontent.com</i>) so nothing shows twice. The old feed keeps updating until then.</p>`:''}
+    <div style="border-top:1px solid var(--border);margin:12px 0"></div>`;
+}
 // A sync started for one person must never touch the screen after they've signed out or switched account
 const _stillMe=me=>!!(_acct&&_acct.id===me);
 async function acctPush(){
@@ -2233,7 +2275,7 @@ async function acctPush(){
     if(error)throw error;
     const c=getSyncConfig();c.lastPush=Date.now();setSyncConfig(c);
     updateSyncStatus('Saved to your account just now');
-    gistFeedSync();
+    gistFeedSync();feedSync();
   }catch(e){console.error('Account push failed:',e);updateSyncStatus('Sync error: '+(e.message||e));}
   finally{document.querySelectorAll('.sync-dot').forEach(d=>d.classList.remove('syncing'));}
 }
@@ -2354,7 +2396,7 @@ async function acctOnSignIn(user){
       if(row&&row.data){S=defS();S.events=normEvents(row.data);S.leave=row.data.leave||{};S.rates=row.data.rates||S.rates;S.ratesUpdated=row.data.ratesUpdated||'';S.theme=row.data.theme||S.theme;S.prefs=row.data.prefs||S.prefs;S.calFeed=row.data.calFeed||null;S.visitedCountries=row.data.visitedCountries||[];S.appleCalUrl=row.data.appleCalUrl||'';S.appleCalUrlAt=row.data.appleCalUrlAt||0;S.lastModified=row.modified_ms||1;try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}}
     }
   }catch(e){console.error('Sign-in sync failed:',e);toast('Signed in, but syncing failed: '+(e.message||e));}
-  finally{_acctBusy=false;applyTheme();render();setTimeout(()=>{try{if(!document.getElementById('mbg').classList.contains('open'))maybeAskRegion();}catch(e){}},400);}
+  finally{_acctBusy=false;applyTheme();render();feedSync();setTimeout(()=>{try{if(!document.getElementById('mbg').classList.contains('open'))maybeAskRegion();}catch(e){}},400);}
 }
 // Yes/No dialog that resolves true/false (Cancel or closing = false)
 function acctAsk(o){
@@ -2549,8 +2591,8 @@ function vGuideCard(){
     ${sec('See your trips in Apple Calendar (subscribe)',`<p>Subscribe once and your trips appear in your calendar app, and stay up to date: whenever you change something here, the calendar follows. This is one-way. Change things here, not in the calendar app.</p>
       ${sub('1. Get your calendar link')}${ol([
         `Go to ${APPLE}.`,
-        'Under <b>Your calendar feed</b>, tap <b>Copy URL</b>.',
-        'If that section says the feed is <b>coming soon</b>, it isn\'t switched on for your account yet. Use the one-off file instead (see the end of this section).'
+        'Under <b>Your calendar feed</b>, tap <b>Copy URL</b>. On an iPhone, iPad or Mac you can instead tap <b>Subscribe on this device</b> and confirm, which skips the steps below for that device.',
+        'Every account has its own private link. It updates by itself whenever you change something, from any device.'
       ])}
       ${sub('2. Subscribe on a Mac (shows on all your Apple devices)')}${ol([
         'Open <b>Calendar</b> → <b>File</b> → <b>New Calendar Subscription…</b>',
@@ -2570,7 +2612,8 @@ function vGuideCard(){
         'Reminders 7 days and 1 day before.',
         'Appointments you brought in from Apple Calendar (next section) aren\'t repeated, so nothing shows twice.'
       ])}
-      ${sub('One-off calendar file')}<p>No feed yet, or just want a snapshot? In ${APPLE}, under <b>Calendar Export</b>, tap <b>Export Upcoming Events</b> or <b>Export All Events</b>. Open the downloaded .ics file to add the events to Apple Calendar, Google Calendar or Outlook. It won't update after later changes: export again when you need to.</p>`)}
+      ${sub('Keep the link private')}<p>Anyone who has the link can see your trips, so don't share it. If it has been shared by mistake, tap <b>Reset link</b>: the old link stops working, and you subscribe again with the new one.</p>
+      ${sub('One-off calendar file')}<p>Just want a snapshot? In ${APPLE}, under <b>Calendar Export</b>, tap <b>Export Upcoming Events</b> or <b>Export All Events</b>. Open the downloaded .ics file to add the events to Apple Calendar, Google Calendar or Outlook. It won't update after later changes: export again when you need to.</p>`)}
     ${sec('Bring your Apple Calendar appointments in',`<p>Appointments from one of your Apple calendars can appear here too, so you see everything in one place and can add them to a trip.</p>
       ${sub('1. Share the calendar\'s link')}${ol([
         '<b>On a Mac:</b> in Calendar, right-click the calendar in the list → <b>Sharing Settings…</b> (or <b>Share Calendar…</b>) → tick <b>Public Calendar</b> → copy the link.',
@@ -4145,6 +4188,11 @@ function vSettings(){
     </div></div>`}
     <div class="card" style="margin-bottom:16px"><div class="card-header"><h3>Apple Calendar (iCloud) Sync</h3></div><div class="card-body">
       ${(()=>{const url=calFeedUrl();const sc=getSyncConfig();
+        if(_acct&&!(_feed&&_feed.me===_acct.id&&_feed.missing))return `${feedCardHtml()}
+        <div style="font-size:12px;font-weight:600;margin-bottom:6px">Inbound: Apple Calendar → Tracker</div>
+        <p style="font-size:11px;color:var(--text3);margin-bottom:10px">In Apple Calendar, right-click (or tap ⓘ on) the calendar → turn on <b>Public Calendar</b> → copy the link, then paste it here. New and changed events appear within about 10 minutes.</p>
+        <div style="display:flex;gap:6px;align-items:center"><input class="fc" id="apple-cal-url" placeholder="webcal://p##-caldav.icloud.com/published/2/…" value="${esc(S.appleCalUrl||'')}" style="flex:1;min-width:0;font-size:11px;font-family:monospace"><button class="btn btn-p" data-action="save-apple-cal-url" style="white-space:nowrap">Save</button></div>
+        ${(S.events||[]).some(e=>e.source==='apple')?`<div style="font-size:10px;color:var(--green);margin-top:6px">${(S.events||[]).filter(e=>e.source==='apple').length} event(s) currently imported from Apple Calendar</div>`:''}${appleFeedStatusHtml()}`;
         if(!sc.token&&_acct)return `${url?`<p style="font-size:11px;color:var(--text3);margin-bottom:10px">Your calendar feed (subscribe once in Apple Calendar). It's republished from the device connected to GitHub (your Mac) whenever anything changes.</p>
         <div style="display:flex;gap:6px;align-items:center;margin-bottom:12px"><input class="fc" readonly value="${esc(url)}" id="cal-feed-url" style="flex:1;min-width:0;font-size:11px;font-family:monospace" onclick="this.select()"><button class="btn btn-p" data-action="copy-cal-url" style="white-space:nowrap">Copy URL</button></div>
         <details style="font-size:12px;color:var(--text2);margin:-4px 0 12px"><summary style="cursor:pointer;color:var(--primary)">Publish the feed from this device</summary>
@@ -6529,6 +6577,8 @@ document.addEventListener('click',e=>{
         .catch(e=>{setSyncConfig({});toast('That key could not open your feed: '+(e.message||e));render();});
       break;
     }
+    case 'feed-reset':e.preventDefault();feedResetLink();break;
+    case 'feed-howto':{e.preventDefault();nav('guide');setTimeout(()=>{const d=[...document.querySelectorAll('.guide-sec')].find(x=>/subscribe/i.test(x.querySelector('summary').textContent));if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'});}},50);break;}
     case 'copy-cal-url':{
       const inp=document.getElementById('cal-feed-url');
       if(inp){navigator.clipboard.writeText(inp.value).then(()=>toast('Feed URL copied — paste it into Calendar subscription')).catch(()=>{inp.select();document.execCommand('copy');toast('Feed URL copied');});}
