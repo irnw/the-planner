@@ -4990,6 +4990,7 @@ function dzPasteText(txt,id){const ta=document.querySelector(`[data-dztext="${id
 // Handle pasted text — parse directly without OCR
 function handleTextPaste(txt,dzId){
   const p=document.getElementById('op-'+dzId),r=document.getElementById('or-'+dzId);
+  loadScanRules();
   if(p){p.style.display='flex';p.innerHTML='<div class="spinner"></div> Parsing pasted text…';}
   if(r)r.style.display='none';
   setTimeout(()=>{
@@ -5175,6 +5176,16 @@ function ocrLayoutText(d){
     return segs.map(x=>x.join(' ')).join('\n');
   }).join('\n');
 }
+// PDF text items → lines, from their position on the page (a wide gap inside a line becomes 3 spaces)
+function pdfLines(items){
+  const its=items.filter(it=>it.str&&it.str.trim()).map(it=>({s:it.str,x:it.transform[4],y:it.transform[5],w:it.width||0,h:Math.abs(it.transform[3])||it.height||10}));
+  its.sort((a,b)=>b.y-a.y||a.x-b.x);
+  const lines=[];
+  for(const it of its){const ln=lines[lines.length-1];if(ln&&Math.abs(ln.y-it.y)<=Math.max(2,it.h*0.45))ln.items.push(it);else lines.push({y:it.y,items:[it]});}
+  return lines.map(ln=>{ln.items.sort((a,b)=>a.x-b.x);let out='',end=null;
+    for(const it of ln.items){if(end!==null){const gap=it.x-end;out+=gap>it.h*1.5?'   ':gap>it.h*0.15?' ':'';}out+=it.s;end=it.x+it.w;}
+    return out.trim();}).join('\n');
+}
 // How much of a booking a reading gave (used to keep the better of two readings)
 function parseScore(p){
   if(!p)return 0;let n=0;
@@ -5227,13 +5238,19 @@ async function runOCR(file,id){
       if(typeof pdfjsLib==='undefined'){initPdfJs();await new Promise(r2=>setTimeout(r2,1000));}
       if(typeof pdfjsLib!=='undefined'){
         const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+        let lined='';
         for(let i=1;i<=Math.min(pdf.numPages,10);i++){
           p.innerHTML=`<div class="spinner"></div> Reading page ${i}/${pdf.numPages}…`;
           const pg=await pdf.getPage(i);
           const tc=await pg.getTextContent();
           const pageTxt=tc.items.map(it=>it.str).join(' ');
-          txt+=pageTxt+'\n\n';
+          txt+=pageTxt+'\n\n';lined+=pdfLines(tc.items)+'\n\n';
         }
+        // The page as one run of text suits some layouts; the page's real lines suit others
+        // ("Mar 07" above "Check In", a hotel name on its own line). Keep whichever reads more of the booking.
+        // Both readings must agree on what kind of booking it is, unless only the lines give a complete one
+        try{const a=parseBookingText(txt),b=parseBookingText(lined);
+          if(a.type===b.type?parseScore(b)>parseScore(a):(!parseComplete(a)&&parseComplete(b)))txt=lined;}catch(e){}
         // If text extraction got very little, fall back to OCR
         if(txt.replace(/\s/g,'').length<30){
           txt='';
@@ -5264,20 +5281,41 @@ async function runOCR(file,id){
   }catch(e){p.innerHTML='Error: '+e.message;console.error('OCR error:',e);r.style.display='none';}
 }
 
-function autoFillForm(txt,dzId,pre){
+// Add Flight / Hotel / Activity / Transport scans work like Smart Upload: each document is read the same way
+// (rules, learned layouts, AI for an unfamiliar layout), several documents combine into one booking, and the
+// form is filled from the combined result. Fields the scan filled are refreshed by later scans; fields typed in are kept.
+function autoFillForm(txt,dzId){
   const m=document.querySelector('.modal');if(!m||m.querySelector('#su-result'))return;// Smart Upload has its own review
-  const parsed=pre||parseBookingText(txt);if(!parsed)return;
-  if(!pre&&!parseComplete(parsed)&&_acct&&navigator.onLine){
-    const p=document.getElementById('op-'+dzId);
-    aiRead(txt).then(res=>{
-      if(!res||document.querySelector('.modal')!==m)return;
-      if(res.error){if(p)p.innerHTML=esc(res.error);return;}
-      autoFillForm(txt,dzId,{...mergeAiParsed(parsed,res.parsed),_over:true});
-      if(p)p.innerHTML='✓ Read with AI'+(res.learned?' · layout learned':'')+'. Please check the details.';
-    });
-  }
+  const parsed=parseBookingText(txt);if(!parsed)return;parsed.rawText=txt;
+  const docs=m._scanDocs||(m._scanDocs=[]);const doc={name:'Scan',txt,parsed};docs.push(doc);
+  formScanFill(m,dzId);
+  scanAiForDoc(doc,docs,(html,warn)=>formScanNote(m,dzId,html,warn),()=>{if(document.querySelector('.modal')===m)formScanFill(m,dzId);});
+}
+function formScanNote(m,dzId,html,warn){
+  let el=m.querySelector('.su-ai.form-note');
+  if(!el){const op=document.getElementById('op-'+dzId);if(!op)return;el=document.createElement('div');el.className='su-ai form-note';op.insertAdjacentElement('afterend',el);}
+  el.innerHTML=html;el.style.display=html?'':'none';el.classList.toggle('warn',!!warn);
+}
+const FORM_KIND={flight:'Add Flight',hotel:'Add Hotel',activity:'Add Activity',transport:'Add Transport'};
+function formScanFill(m,dzId){
+  const docs=m._scanDocs||[];const parsed=suMergeDocs(docs);if(!parsed)return;
+  const kind=m.querySelector('[name="airline"]')?'flight':m.querySelector('[name="ci"]')?'hotel':m.querySelector('[name="type"]')?'transport':'activity';
+  // A booking of another kind would fill this form with the wrong things (hotel dates as a 96-hour flight)
+  // (only when the scan found a real booking: an unreadable scan falls back to "transport" without meaning it)
+  const other=parsed.type&&parsed.type!==kind&&parseScore(parsed)>=3&&(parsed.type==='flight'||parsed.type==='hotel'||kind==='flight'||kind==='hotel');
+  if(other){formScanNote(m,dzId,`This looks like a <b>${parsed.type}</b> booking. Use <b>${FORM_KIND[parsed.type]}</b> or <b>Scan</b> (Smart Upload) to add it.`,true);return;}
+  if(docs.length>1&&!m.querySelector('.su-ai.form-note:not([style*="none"])'))formScanNote(m,dzId,`${docs.length} documents combined into one booking.`);
+  fillFormFromParsed(m,parsed);
+}
+function fillFormFromParsed(m,parsed){
+  // One flight: its details live on the leg
+  if(parsed.legs&&parsed.legs.length===1){const l=parsed.legs[0];parsed={...parsed,airline:l.airline||parsed.airline,flightNumber:l.flightNumber||parsed.flightNumber,
+    departureTime:l.departureTime||parsed.departureTime,arrivalTime:l.arrivalTime||parsed.arrivalTime,seat:l.seat||parsed.seat,from:l.from||parsed.from,to:l.to||parsed.to,
+    date:l.date||parsed.date,dateTo:l.arrivalDate||l.date||parsed.dateTo,duration:l.duration||parsed.duration,pnr:l.pnr||parsed.pnr,multiLeg:false};}
   window._lastParsed=parsed;console.log('OCR parsed:',JSON.stringify(parsed,null,2));
-  const s=(n,v)=>{const el=m.querySelector(`[name="${n}"]`);if(el&&(!el.value||parsed._over)&&v)el.value=v;};
+  // Fill empty fields and ones an earlier scan filled; anything typed in by hand stays
+  const s=(n,v)=>{const el=m.querySelector(`[name="${n}"]`);if(!el||!v||(el.value&&el.dataset.scan!=='1'&&el.value!==String(v)))return;
+    el.value=v;el.dataset.scan='1';if(!el._scanWatch){el._scanWatch=1;el.addEventListener('input',()=>{el.dataset.scan='';});}};
   // Detect form type by checking which fields exist
   if(m.querySelector('[name="airline"]')){
     // Flight form
@@ -5319,7 +5357,7 @@ function autoFillForm(txt,dzId,pre){
     if(parsed.roomType||parsed.nights){const notesParts=[];if(parsed.roomType)notesParts.push(parsed.roomType);if(parsed.nights)notesParts.push(parsed.nights+' night'+(parsed.nights>1?'s':''));s('notes',notesParts.join(' · '));}
     if(parsed.currency){const cEl=m.querySelector('[name="currency"]');if(cEl)cEl.value=parsed.currency;}
     // Auto-calc nights after fill
-    setTimeout(()=>{const ci=m.querySelector('[name="ci"]'),co=m.querySelector('[name="co"]'),ni=m.querySelector('[name="nights"]');if(ci&&co&&ni&&ci.value&&co.value&&!ni.value){const n=calcNights(ci.value,co.value);if(n)ni.value=n;}},100);
+    setTimeout(()=>{const ci=m.querySelector('[name="ci"]'),co=m.querySelector('[name="co"]'),ni=m.querySelector('[name="nights"]');if(ci&&co&&ni&&ci.value&&co.value){const n=calcNights(ci.value,co.value);if(n)s('nights',n);}},100);
   }else if(m.querySelector('[name="loc"]')&&!m.querySelector('[name="type"]')){
     // Activity form
     s('name',parsed.title||parsed.name);s('time',suTime24(parsed.departureTime));s('loc',parsed.locations?parsed.locations[0]:'');
@@ -5539,18 +5577,19 @@ function suAddDoc(name,txt){
   suMaybeAi(doc);
 }
 // Rules came up short (and the documents together don't complete the booking either): ask the AI
-async function suMaybeAi(doc){
-  const docs=window._suDocs||[];
+function suMaybeAi(doc){return scanAiForDoc(doc,window._suDocs||[],suAiNote,suRefreshDocs);}
+// Shared by Smart Upload and the Add forms: if the rules (and the other documents) don't complete the booking, the AI reads this one
+async function scanAiForDoc(doc,docs,note,done){
   if(parseComplete(doc.parsed)||parseComplete(suMergeDocs(docs)))return;
   if(!acctEnabled()||!_acct||!navigator.onLine)return;
-  suAiNote('<span class="spinner"></span> Unfamiliar layout: reading it with AI…');
+  note('<span class="spinner"></span> Unfamiliar layout: reading it with AI…');
   const res=await aiRead(doc.txt);
-  if(!(window._suDocs||[]).includes(doc))return;// removed meanwhile
-  if(!res){suAiNote('');return;}
-  if(res.error){suAiNote(esc(res.error),true);return;}
+  if(!docs.includes(doc))return;// removed meanwhile
+  if(!res){note('');return;}
+  if(res.error){note(esc(res.error),true);return;}
   doc.parsed={...mergeAiParsed(doc.parsed,res.parsed),rawText:doc.txt};doc.ai=true;
-  suRefreshDocs();
-  suAiNote('✓ Read with AI'+(res.learned?'. This layout is now learned, so next time it\'s read without AI':'')+(res.remaining!=null?` · ${res.remaining} AI read${res.remaining===1?'':'s'} left today`:'')+'. Please check the details.');
+  done();
+  note('✓ Read with AI'+(res.learned?'. This layout is now learned, so next time it\'s read without AI':'')+(res.remaining!=null?` · ${res.remaining} AI read${res.remaining===1?'':'s'} left today`:'')+'. Please check the details.');
 }
 function suAiNote(html,warn){
   let el=document.getElementById('su-ai');const box=document.getElementById('su-parsed');
@@ -6695,8 +6734,13 @@ function _parseBookingText(rawTxt){
       /your\s+stay\s+at\s+([A-Z][A-Za-z\s&'\-]{2,50})/i,
     ];
     // Chain hotels: the line naming the brand ("Hilton Niseko Village", "Park Hyatt Tokyo")
-    const brandRe=new RegExp('(?:^|\\n)[^A-Za-z\\n]*(?:[a-z]{1,4}[ \\t]+)?((?:[A-Z][\\w\'’&.-]*[ \\t]+){0,3}(?:'+HOTEL_BRANDS+')(?:[ \\t]+(?!Total|Check|Room|Rate|Edit|Confirm|Booking|Stay\\b)(?:[A-Z][\\w\'’&.-]*|by|at|de|la|&)){0,5})','');
-    const bm=txt.match(brandRe);
+    const brandRe=new RegExp('(?:^|\\n)[^A-Za-z\\n]*(?:[a-z]{1,4}[ \\t]+)?((?:[A-Z][\\w\'’&.-]*[ \\t]+){0,3}(?:'+HOTEL_BRANDS+')(?:[ \\t]{1,2}(?!Total|Check|Room|Rate|Edit|Confirm|Booking|Stay\\b|View\\b)(?:[A-Z][\\w\'’&.-]*|by|at|de|la|&)){0,5})','');
+    // Skip email headers, loyalty and account lines ("From Hilton Hotels & Resorts <…>", "Hilton Honors Member #…");
+    // a brand with a place ("Hilton Niseko Village") beats the bare logo word ("Hilton")
+    const brandAll=[...txt.matchAll(new RegExp(brandRe.source,'g'))].filter(m=>{
+      const line=(txt.slice(m.index).match(/^\n?([^\n]*)/)||[])[1]||'';
+      return!/^\s*(?:From|To|Date|Subject|Sent|Cc)\b|<|@|\b(?:Honors|Member|Points|Rewards|Bonvoy|Account|Hotels\s*&\s*Resorts)\b/i.test(line);});
+    const bm=brandAll.find(m=>m[1].trim().split(/\s+/).length>=2)||brandAll[0];
     if(bm){const nm=bm[1].trim().replace(/[ \t]+(?:by|at|de|la|&)$/,'');hotelPats.splice(4,0,new RegExp('('+nm.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')'));}
     // Vouchers print the property name just before its address (label OCR'd as "Adress"/"Addres" too).
     // PDFs give one long line split by wide gaps; screenshots give lines with OCR specks ("__ 1 Name", "- 4 Address:")
@@ -6895,7 +6939,8 @@ function _parseBookingText(rawTxt){
     const roomM=txt.match(/\d+\s*nights?,\s*(.+?)(?:\n|$)/i);if(roomM)r.roomType=roomM[1].trim().slice(0,60);
     if(!r.roomType){const lt=txt.match(/(?:^|\n|\s{2,})Room\s*[Tt]ype\s*[:：]?\s+([A-Z][^\n]{2,60}?)(?:\s{2,}|\n|$)/);if(lt)r.roomType=lt[1].trim();}
     if(!r.roomType){const rt=txt.match(/\b((?:Deluxe|Superior|Standard|Classic|Premier|Executive|Family|Double|Twin|Single|Triple|Quad|King|Queen|Budget|Economy|Garden|Pool|Ocean|Sea)(?:[ \t]+[A-Z][a-z]+){0,3}[ \t]+(?:Room|Suite|Villa|Bungalow|Studio|Cabin|Dorm))\b/);if(rt)r.roomType=rt[1];}
-    if(!r.nights&&r.date&&r.dateTo)r.nights=Math.round((new Date(r.dateTo)-new Date(r.date))/864e5);
+    // Check-in and check-out decide the nights (a stray number near "Nights", like "Mar 11", doesn't)
+    if(r.date&&r.dateTo){const n=Math.round((new Date(r.dateTo)-new Date(r.date))/864e5);if(n>0&&n<90)r.nights=n;}
   }
 
   // ===== 12. Flight duration =====
