@@ -5081,21 +5081,21 @@ const _ruleWords=t=>' '+String(t).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(
 function applyLearnedRules(txt,r){
   const rules=scanRules();if(!rules.length)return r;
   const words=_ruleWords(txt);
-  for(const rule of rules){
-    const sig=rule.signature||[];
-    if(sig.length<2||!sig.every(x=>words.includes(_ruleWords(x))))continue;
-    const got={};
-    for(const p of rule.patterns||[]){try{const{re,fields}=compileScanPattern(p.pattern);const m=txt.match(re);if(m)fields.forEach((f,i)=>{const v=ruleValue(f,m[i+1]);if(v!==''&&v!=null)got[f]=v;});}catch(e){}}
-    let legs=null;
-    if(rule.leg_pattern){try{const{re,fields}=compileScanPattern(rule.leg_pattern,'g');const ms=[...txt.matchAll(re)];
-      if(ms.length)legs=ms.map(m=>{const l={};fields.forEach((f,i)=>{const v=ruleValue(f,m[i+1]);if(v!=='')l[f]=v;});return _completeLeg(l,got);});}catch(e){}}
-    if(!Object.keys(got).length&&!legs)continue;
-    const out={...r,...got,type:rule.kind,learnedLayout:rule.id};
-    if(legs&&legs.length)_setLegs(out,legs);
-    _finishParsed(out);
-    return out;
+  // Every recipe whose wording is all here adds what it reads; the most specific recipe (most wording) goes first and wins
+  const hits=rules.filter(rule=>{const sig=rule.signature||[];return sig.length>=2&&sig.every(x=>words.includes(_ruleWords(x)));})
+    .sort((a,b)=>(b.signature.length-a.signature.length));
+  if(!hits.length)return r;
+  const kind=hits[0].kind,got={};let legs=null;
+  for(const rule of hits.filter(x=>x.kind===kind)){
+    for(const p of rule.patterns||[]){try{const{re,fields}=compileScanPattern(p.pattern);const m=txt.match(re);if(m)fields.forEach((f,i)=>{const v=ruleValue(f,m[i+1]);if(v!==''&&v!=null&&!(f in got))got[f]=v;});}catch(e){}}
+    if(!legs&&rule.leg_pattern){try{const{re,fields}=compileScanPattern(rule.leg_pattern,'g');const ms=[...txt.matchAll(re)];
+      if(ms.length)legs=ms.map(m=>{const l={};fields.forEach((f,i)=>{const v=ruleValue(f,m[i+1]);if(v!=='')l[f]=v;});return l;});}catch(e){}}
   }
-  return r;
+  if(!Object.keys(got).length&&!legs)return r;
+  const out={...r,...got,type:kind,learnedLayout:hits[0].id};
+  if(legs&&legs.length)_setLegs(out,legs.map(l=>_completeLeg(l,got)));
+  _finishParsed(out);
+  return out;
 }
 function _completeLeg(l,top){
   if(l.fromCode&&!l.from)l.from=AIRPORTS[l.fromCode]||l.fromCode;

@@ -58,11 +58,19 @@ returns void language sql security definer set search_path = '' as $$
   update public.ai_usage set cost_usd = p_cost, status = p_status where id = p_id;
 $$;
 
--- Save a recipe. A layout seen before (same identifying wording) gains any new patterns instead of a duplicate.
-create or replace function public.scan_rule_save(p_kind text, p_signature jsonb, p_patterns jsonb, p_leg_pattern text)
+-- Save a recipe. With p_into (a recipe the app already used on this booking but which fell short), that recipe's
+-- patterns are replaced by the merged list the function worked out. Otherwise a layout seen before (same identifying
+-- wording) gains any new patterns instead of a duplicate.
+drop function if exists public.scan_rule_save(text, jsonb, jsonb, text);
+create or replace function public.scan_rule_save(p_kind text, p_signature jsonb, p_patterns jsonb, p_leg_pattern text, p_into bigint default null)
 returns bigint language plpgsql security definer set search_path = '' as $$
 declare sig jsonb; existing public.scan_rules; merged jsonb;
 begin
+  if p_into is not null then
+    update public.scan_rules set patterns = coalesce(p_patterns, patterns), leg_pattern = coalesce(p_leg_pattern, leg_pattern), updated_at = now()
+      where id = p_into and kind = p_kind returning id into existing.id;
+    if existing.id is not null then return existing.id; end if;
+  end if;
   select coalesce(jsonb_agg(x order by x), '[]') into sig from (select lower(trim(v)) x from jsonb_array_elements_text(p_signature) v) s;
   select * into existing from public.scan_rules where kind = p_kind and signature = sig limit 1;
   if existing.id is null then
@@ -81,10 +89,10 @@ end $$;
 
 revoke all on function public.ai_scan_reserve(uuid, numeric, int, numeric) from public, anon, authenticated;
 revoke all on function public.ai_scan_finish(bigint, numeric, text) from public, anon, authenticated;
-revoke all on function public.scan_rule_save(text, jsonb, jsonb, text) from public, anon, authenticated;
+revoke all on function public.scan_rule_save(text, jsonb, jsonb, text, bigint) from public, anon, authenticated;
 grant execute on function public.ai_scan_reserve(uuid, numeric, int, numeric) to service_role;
 grant execute on function public.ai_scan_finish(bigint, numeric, text) to service_role;
-grant execute on function public.scan_rule_save(text, jsonb, jsonb, text) to service_role;
+grant execute on function public.scan_rule_save(text, jsonb, jsonb, text, bigint) to service_role;
 
 -- ───────────────────────────────────────────────────────────────────────────────
 -- Useful checks (select a line and Run):

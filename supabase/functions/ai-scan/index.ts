@@ -129,6 +129,41 @@ export function checkRecipe(text: string, out: any) {
   return { signature, patterns, legPattern };
 }
 
+// What a saved pattern gives on this text: 'agree' with what Claude read, 'wrong', or 'none' (no match)
+function patternResult(text: string, pattern: string, b: any): 'agree' | 'wrong' | 'none' {
+  try {
+    const { re, fields } = compileScanPattern(pattern);
+    const m = text.match(re);
+    if (!m) return 'none';
+    return fields.every((f, i) => f === 'currency' || agrees(f, m[i + 1], b[f])) ? 'agree' : 'wrong';
+  } catch (_) { return 'none'; }
+}
+const sigWords = (s: string) => ' ' + normWords(s) + ' ';
+// A recipe the app already used on this text (all its identifying wording is here), which fell short.
+// The new patterns are added to it, so one layout keeps one recipe that grows instead of several partial ones.
+export function mergeRecipe(text: string, out: any, recipe: { signature: string[]; patterns: { field: string; pattern: string }[]; legPattern: string }, existing: any[]) {
+  const words = sigWords(text);
+  const hit = (existing || [])
+    .filter(r => Array.isArray(r.signature) && r.signature.length >= 2 && r.signature.every((x: string) => words.includes(sigWords(x))))
+    .sort((a, b) => b.signature.length - a.signature.length)[0];
+  if (!hit) return null;
+  const b = out.booking || {};
+  // Keep old patterns unless they read this booking wrongly; add new ones for fields the old ones don't get right here
+  const kept = (Array.isArray(hit.patterns) ? hit.patterns : []).filter((p: any) => patternResult(text, p.pattern, b) !== 'wrong');
+  const good = new Set<string>();
+  kept.forEach((p: any) => { if (patternResult(text, p.pattern, b) === 'agree') String(p.field).split(',').forEach(f => good.add(f)); });
+  const added = recipe.patterns.filter(p => !kept.some((o: any) => o.pattern === p.pattern) && p.field.split(',').some(f => !good.has(f)));
+  const patterns = [...kept, ...added].slice(-30);
+  // A leg pattern that reproduces these legs replaces one that doesn't
+  let legPattern = hit.leg_pattern || '';
+  if (recipe.legPattern && legPattern !== recipe.legPattern) {
+    let oldOk = false;
+    try { const { re } = compileScanPattern(legPattern, 'g'); oldOk = legPattern !== '' && [...text.matchAll(re)].length === (out.legs || []).length; } catch (_) { /* invalid */ }
+    if (!oldOk) legPattern = recipe.legPattern;
+  }
+  return { id: hit.id, patterns, legPattern, changed: added.length > 0 || kept.length !== (hit.patterns || []).length || legPattern !== (hit.leg_pattern || '') };
+}
+
 // ───────── Claude ─────────
 const SYSTEM = `You read travel booking confirmations (flights, hotels, activities, transport) that were turned into text by OCR, so expect misread characters, merged columns and stray specks.
 
@@ -229,7 +264,14 @@ export async function handle(req: Request, env: Record<string, string | undefine
   let learned = null;
   const recipe = checkRecipe(text, out);
   if (recipe) {
-    learned = await db('scan_rule_save', { p_kind: out.type, p_signature: recipe.signature, p_patterns: recipe.patterns, p_leg_pattern: recipe.legPattern || null }).catch(() => null);
+    const existing = await fetch(URL_ + '/rest/v1/scan_rules?select=id,signature,patterns,leg_pattern&kind=eq.' + encodeURIComponent(out.type), {
+      headers: { apikey: SERVICE, authorization: 'Bearer ' + SERVICE },
+    }).then(r => r.ok ? r.json() : []).catch(() => []);
+    const into = mergeRecipe(text, out, recipe, existing);
+    if (into) learned = into.changed
+      ? await db('scan_rule_save', { p_kind: out.type, p_signature: recipe.signature, p_patterns: into.patterns, p_leg_pattern: into.legPattern || null, p_into: into.id }).catch(() => null)
+      : into.id;
+    else learned = await db('scan_rule_save', { p_kind: out.type, p_signature: recipe.signature, p_patterns: recipe.patterns, p_leg_pattern: recipe.legPattern || null, p_into: null }).catch(() => null);
   }
   return json({ type: out.type, booking: out.booking || {}, legs: out.legs || [], learned: !!learned, ruleId: learned, remaining: slot.remaining });
 }
