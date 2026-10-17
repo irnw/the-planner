@@ -1347,6 +1347,53 @@ details.c-region .country-grid{margin:0 0 14px}
 @media(max-width:700px){.upd-bar{bottom:calc(84px + env(safe-area-inset-bottom));width:calc(100vw - 32px);padding:12px 10px 12px 14px;gap:10px}.upd-bar .upd-t span{display:none}.upd-bar .upd-later{margin-left:auto}}
 /* Trip header actions: one quiet segmented control instead of four separate pills */
 .dtools{display:flex;gap:8px;align-items:center;flex-shrink:0}
+/* Trip checklist */
+.ck{max-width:760px}
+.ck-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;gap:8px}
+.ck-prog-txt{font-size:12px;color:var(--text2)}
+.ck-bar{height:4px;background:var(--line);border-radius:999px;overflow:hidden;margin-bottom:16px}
+.ck-bar span{display:block;height:100%;background:var(--green);border-radius:999px;transition:width .3s}
+.ck-new{display:flex;gap:8px;margin-bottom:12px}
+.ck-new input{flex:1;min-width:0;padding:11px 14px;border:1px solid var(--line-strong);border-radius:999px;background:var(--input-bg);color:var(--text);font:14px var(--font)}
+.ck-new input:focus{outline:none;border-color:var(--primary)}
+.ck-new .btn{border-radius:999px;padding:0 20px}
+.ck-sug{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:16px}
+.ck-sug-lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--text3);margin-right:2px}
+.ck-chip{border:1px dashed var(--line-strong);background:none;color:var(--text2);border-radius:999px;padding:6px 12px;font:12px var(--font);cursor:pointer;transition:all .15s}
+.ck-chip:hover{border-style:solid;border-color:var(--primary);color:var(--primary-deep);background:var(--primary-dim)}
+.ck-sug-hide{background:none;border:0;color:var(--text3);font:12px var(--font);cursor:pointer;padding:6px;text-decoration:underline}
+.ck-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.ck-item{display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line);min-height:48px}
+.ck-box{flex:none;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line-strong);background:none;color:transparent;display:grid;place-items:center;cursor:pointer;padding:0;transition:all .15s;position:relative}
+.ck-box::before{content:'';position:absolute;inset:-10px}
+.ck-box:hover{border-color:var(--green);color:var(--green)}
+.ck-item.done .ck-box{background:var(--green);border-color:var(--green);color:#fff}
+.ck-main{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
+.ck-txt{flex:1;min-width:0;border:0;background:none;color:var(--text);font:14px var(--font);padding:8px 6px;border-radius:6px}
+.ck-txt:hover{background:var(--input-bg)}
+.ck-txt:focus{outline:none;background:var(--input-bg);box-shadow:0 0 0 1px var(--primary)}
+.ck-item.done .ck-txt{color:var(--text3);text-decoration:line-through}
+.ck-due{flex:none;position:relative;display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text2);border:1px solid var(--line);border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.ck-due.soon{color:var(--orange);border-color:var(--orange);background:var(--orange-dim)}
+.ck-due.late{color:var(--accent);border-color:var(--accent);background:var(--accent-dim)}
+.ck-due-add{border-color:transparent;color:var(--text3);padding:6px;opacity:.7}
+.ck-item:hover .ck-due-add{opacity:1}
+.ck-date{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:0;padding:0}
+.ck-date::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:100%;height:100%;cursor:pointer}
+.ck-del{flex:none;background:none;border:0;color:var(--text3);cursor:pointer;padding:8px;border-radius:50%;opacity:.5;display:grid;place-items:center}
+.ck-del:hover{opacity:1;color:var(--accent);background:var(--accent-dim)}
+@media(hover:hover){.ck-item .ck-del{opacity:0}.ck-item:hover .ck-del,.ck-del:focus{opacity:.7}}
+.ck-done{margin-top:18px}
+.ck-done summary{cursor:pointer;font-size:12px;color:var(--text2);padding:8px 0;display:flex;align-items:center;gap:10px;list-style:none}
+.ck-done summary::before{content:'▸';font-size:14px;transition:transform .15s}
+.ck-done[open] summary::before{transform:rotate(90deg)}
+.ck-clear{margin-left:auto;background:none;border:0;color:var(--text3);font:12px var(--font);cursor:pointer;text-decoration:underline}
+.ck-alldone{font-size:13px;color:var(--green);padding:14px 0;border-top:1px solid var(--line)}
+.ck-empty{padding:28px 10px}
+@media(max-width:700px){.ck-txt{font-size:16px;padding:6px 4px}.ck-new input{font-size:16px}
+  .ck-main{flex-direction:column;align-items:flex-start;gap:2px}.ck-main .ck-due:not(.ck-due-add){margin:0 0 6px 4px}.ck-main .ck-due-add{position:absolute;right:44px}
+  .ck-item{position:relative}.ck-main .ck-txt{width:100%;padding-right:34px}
+  .ck-sug{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-left:-16px;margin-right:-16px;padding:0 16px}.ck-sug::-webkit-scrollbar{display:none}.ck-chip,.ck-sug-hide,.ck-sug-lbl{flex:none}}
 .dtools-grp{display:inline-flex;align-items:stretch;border:1px solid var(--line-strong);border-radius:999px;overflow:hidden;background:var(--card)}
 .dt-b{display:inline-flex;align-items:center;gap:7px;background:none;border:0;border-left:1px solid var(--line-strong);padding:9px 15px;font:500 10.5px var(--font);text-transform:uppercase;letter-spacing:.16em;color:var(--text2);cursor:pointer;transition:color .15s,background .15s}
 .dt-b:first-child{border-left:0;padding-left:17px}
@@ -2693,82 +2740,89 @@ function vGuideCard(){
   const firstTime=acctEnabled()&&!_acct,acc=acctEnabled();
   const APPLE='<b>Settings → Apple Calendar (iCloud) Sync</b>';
   return `<div class="card" id="guide-card" style="margin-bottom:16px"><div class="card-header"><h3>📖 User Guide</h3></div><div class="card-body guide">
-    <p class="guide-intro">${APP_NAME} keeps every trip in one place: bookings, payments, leave, holidays and the countries you've visited. Tap a heading to open it.</p>
+    <p class="guide-intro">${APP_NAME} keeps every trip in one place: bookings, to-dos, payments, leave, holidays and the countries you've visited. Tap a heading to open it.</p>
     ${sec('Getting started',`${acc?ol([
-      'On the welcome page, tap <b>Continue with Google</b> and choose your account. New accounts are created with Google; older email accounts use <b>Sign in with email</b>.',
-      'Pick your <b>home country</b> when asked. It sets your currency, public holidays, weekend and date style.',
-      'If asked <b>Move your existing data into your account?</b>, tap <b>Move my data</b>.',
-      'On your phone, open the same address and sign in the same way. To add an app icon: <b>iPhone (Safari)</b> Share → <b>Add to Home Screen</b>; <b>Android (Chrome)</b> ⋮ → <b>Add to Home screen</b>.'
-    ]):''}<p class="guide-note">Changes save automatically and reach your other devices within about 30 seconds.</p>
-      ${sub('Works offline')}${ul([
-        'Once you\'ve opened the app with a connection, it also opens without one (on a plane, or abroad without data). You can view and edit everything; changes stay on this device and sync on their own when you\'re back online.',
-        'Scanning bookings, live exchange rates, calendar links and sharing need a connection.',
-        'On an iPhone, <b>Add to Home Screen</b> keeps the offline copy (Safari may clear it for websites you haven\'t opened in a while).',
-        'When there\'s a newer version, a <b>New version available</b> bar appears: tap <b>Reload</b>, or <b>Later</b> to get it next time you open the app.'
-      ])}`,firstTime)}
-    ${sec('Add trips and bookings',`${sub('Create an event')}${ul([
-      'Tap <b>+ New Event</b> (Dashboard or Events), give it a name, dates, places and a category (Trip, Work, Training, Social, Personal or Activity).',
-      'Inside the event, add bookings under <b>Flights</b>, <b>Hotels</b>, <b>Activities</b> and <b>Transport</b>. <b>Timeline</b> shows the trip day by day; <b>Attachments</b> keeps tickets and vouchers.'
-    ])}${sub('Let the app read a booking (Smart Upload)')}${ol([
-      'Tap <b>Scan</b> (bottom right).',
-      'Choose a PDF, photo or screenshot, drag a file in, or copy one and tap <b>Paste</b>. You can also paste the email text under <b>Paste text</b>. A PDF and a screenshot of the same booking give the same result.',
-      'Booked through Trip.com or Agoda? Add the e-ticket and the receipt together and they become one booking.',
-      'Check and edit what it found, choose the event (it suggests one), then tap <b>Save</b>.'
-    ])}<p class="guide-note">Layouts the app doesn't recognise yet are read by AI (when you're signed in and online): only the text goes to Anthropic, never the image. The app then learns that layout, so the next booking like it is read straight away, without AI and even offline. Everyone has 20 AI reads a day. Don't upload documents showing full passport or card numbers.</p>${sub('Duplicates and clashes')}<p>If a booking was added twice, the event offers <b>Review &amp; merge</b>: pick the values to keep and the two become one (payments and attachments are kept). <b>⚠ Clash</b> means two things at the same time; <b>⚠ Overlap</b> means events share dates. Tap the label to see which.</p>`)}
-    ${sec('Dashboard, calendar and countries',ul([
-      '<b>Dashboard</b> shows what\'s happening now or next, anything that needs attention (payments due, leave short, clashes, documents expiring), your coming trips and, in a short list, the next 7 days of Apple Calendar appointments.',
-      '<b>Search</b> at the top finds trips, places, flight numbers, hotels and booking references. Press <b>/</b> on a computer.',
-      '<b>Calendar</b> shows everything by month with your public holidays. Tap the month or year to jump, tap a day for its details, or switch to the list view. On a phone the month shows colours only: tap a day to see what\'s on. Open a trip from the Calendar and its back link returns to the same month.',
-      '<b>Countries</b> is your travel map: tap a country on the map or in a region list to mark it visited. <b>Travel stats</b> shows your trips, flights, time in the air, hotel nights, most-visited countries and airlines, by year.',
-      'On a phone, Budget, Countries, Settings, this guide and Sign out are under <b>More</b>. On a computer, the round arrow on the menu\'s edge makes it narrower.',
-      'Shortcuts on a computer: <b>1–6</b> switch pages, <b>N</b> new event, <b>U</b> Smart Upload, <b>Esc</b> close.'
+      'Tap <b>Continue with Google</b> on the welcome page. (Older email accounts use <b>Sign in with email</b>.)',
+      'Choose your <b>home country</b>. It sets your currency, public holidays, weekend and date style.',
+      'On your phone, open the same address and sign in the same way. For an app icon: <b>iPhone (Safari)</b> Share → <b>Add to Home Screen</b>; <b>Android (Chrome)</b> ⋮ → <b>Add to Home screen</b>.'
+    ]):''}${ul([
+      'Everything saves by itself and reaches your other devices within about 30 seconds.',
+      '<b>No signal?</b> The app still opens and you can keep editing (on a plane, or abroad without data). Changes sync when you\'re back online. Scanning, sharing and live exchange rates need a connection.',
+      'When a <b>New version available</b> bar appears, tap <b>Reload</b> (or <b>Later</b>).'
+    ])}`,firstTime)}
+    ${sec('Trips and bookings',ul([
+      'Tap <b>+ New Event</b> and give it a name, dates, places and a category (Trip, Work, Training, Social, Personal or Activity). You can also start one from a day on the <b>Calendar</b> or from a <b>Long weekend</b> idea.',
+      'Inside an event, the tabs hold everything: <b>Timeline</b> (day by day), <b>Flights</b>, <b>Hotels</b>, <b>Activities</b>, <b>Transport</b>, <b>Checklist</b> and <b>Attachments</b> (tickets, vouchers, links).',
+      'Add a booking with the <b>+ Add</b> button on its tab: type it in, or drop in the confirmation and let the app fill it in (see <b>Scan a booking</b>).',
+      'Use <b>⋯ → Duplicate</b> on a flight to start the return flight. Flight times show in the local time, and in your home time zone too.',
+      'Booked something twice? The event offers <b>Review &amp; merge</b>. <b>⚠ Clash</b> means two things at the same time; <b>⚠ Overlap</b> means two events share dates. Tap the label to see which.'
+    ]))}
+    ${sec('Scan a booking',`${ol([
+      'Tap <b>Scan</b> (bottom right), or use the upload box inside <b>Add Flight</b>, <b>Add Hotel</b>, <b>Add Activity</b> or <b>Add Transport</b>.',
+      'Add a PDF, photo or screenshot (choose, drag in, or copy and tap <b>Paste</b>), or paste the email text.',
+      'Check what it found, fix anything that\'s off, then <b>Save</b>.'
+    ])}${ul([
+      'Several files for one booking (e.g. an e-ticket and a receipt) combine into one.',
+      'If you scan a hotel in Add Flight, the app tells you which tab to use.',
+      'New layouts are read by AI when you\'re signed in and online (20 a day). Only the text is sent, never the image. After that the app knows the layout, so the next one is read instantly, on any tab, even offline.'
+    ])}<p class="guide-note">Avoid uploading documents that show full passport or card numbers.</p>`)}
+    ${sec('Checklist',ul([
+      'Open an event → <b>Checklist</b>. Type a to-do and press <b>Enter</b> (or <b>Add</b>); keep typing to add the next one.',
+      'Tap an <b>idea</b> (passport, visa, insurance, online check-in…) to add it with a sensible due date before you leave. <b>Hide</b> them if you don\'t need them.',
+      'Tap the <b>circle</b> to tick a to-do off, the <b>text</b> to change it, and the <b>calendar</b> to set or change a due date.',
+      'To-dos with a date go to the top. Due within 3 days turns <b>amber</b>, overdue turns <b>red</b>.',
+      'Ticked to-dos move to <b>Done</b>. <b>Clear done</b> removes them; deleting can be undone for a few seconds.',
+      'The tab and the event in your Events list show your progress, e.g. <b>✓ 3/8</b>.'
+    ]))}
+    ${sec('Dashboard, events, calendar and countries',ul([
+      '<b>Dashboard</b>: what\'s now or next, anything that needs attention (payments due, leave short, clashes, documents expiring), coming trips and the next 7 days of Apple Calendar appointments.',
+      '<b>Events</b>: switch between cards and list, filter by year or category, group by category and sort. Past events are folded away.',
+      '<b>Search</b> (top) finds trips, places, flight numbers, hotels and booking references.',
+      '<b>Calendar</b>: everything by month with public holidays. Tap a day for details, the month or year to jump, or switch to the list view.',
+      '<b>Countries</b>: tap a country to mark it visited. <b>Travel stats</b> shows your trips, flights, hours in the air, hotel nights and top countries and airlines by year.',
+      'On a phone, Budget, Countries, Settings, this guide and Sign out are under <b>More</b>. The sun/moon button switches light and dark.',
+      'On a computer: <b>/</b> search, <b>1–6</b> pages, <b>N</b> new event, <b>U</b> scan, <b>Esc</b> close.'
     ]))}
     ${sec('Leave, holidays and your region',ul([
-      '<b>Settings → Region &amp; Preferences</b>: change your home country, currency, weekend days, first day of the week, date style and home time zone (flight times also show in it).',
-      'Add other countries\' public holidays to see them on the Calendar.',
-      'Choose which holidays are <b>days off at work</b>, including state or regional ones. Those days aren\'t counted as leave.',
-      '<b>Leave</b> counts the work days each trip uses. Add your yearly allowance to see what\'s left. Missing holidays? Add them in <b>Leave → My holidays</b> or import an .ics file.',
-      '<b>Long weekends</b> (on the Leave page) suggests the best days to take off around public holidays. Choose how many leave days you\'d use, then tap <b>Plan a trip</b> to create an event for those dates. Trips you\'ve already planned are left out.'
+      '<b>Settings → Region &amp; Preferences</b>: home country, currency, weekend, first day of the week, date style and home time zone.',
+      '<b>Leave</b> counts the work days each trip uses. Add your yearly allowance (and a second job if you changed employers mid-year) to see what\'s left, and record leave you\'ve applied for.',
+      'Choose which public holidays are days off at work (including state ones), add other countries\' holidays to the Calendar, or add missing ones in <b>Leave → My holidays</b>.',
+      '<b>Long weekends</b> suggests the best days to take off around public holidays. Tap <b>Plan a trip</b> to create the event.'
     ]))}
     ${sec('Payments and budget',ul([
-      'In a booking, enter the <b>Deposit</b> and <b>Full Payment</b> amounts and a due date. The card shows the balance and the Dashboard reminds you.',
-      `Enter each cost in the currency you paid. Totals are shown in <b>your own currency</b>, which comes from your home country and can be changed in <b>Settings → Region &amp; Preferences</b> (yours is currently ${esc(baseCur())}).`,
-      'Converted totals are <b>estimates</b> based on daily exchange rates, which you can adjust in <b>Settings → Exchange Rates</b>. Your bank or card applies its own rate and fees, so for an exact figure enter the amount from your statement, in your own currency.',
+      'In a booking, add the <b>Deposit</b> and <b>Full Payment</b> with due dates. The card shows the balance and the Dashboard reminds you.',
+      `Enter each cost in the currency you paid. Totals appear in your own currency (${esc(baseCur())}) using daily exchange rates, so they're estimates. Adjust rates in <b>Settings → Exchange Rates</b>.`,
       '<b>Budget</b> totals your spending by year, event and category.'
     ]))}
-    ${sec('Apple Calendar, Google Calendar and Outlook',`${sub('See your trips in your calendar')}${ol([
-      `Go to ${APPLE} and, under <b>Your calendar feed</b>, tap <b>Subscribe on this device</b> (Mac, iPhone, iPad) or <b>Copy URL</b>.`,
-      `If you copied it, paste it into:${ul([
-        '<b>Mac:</b> Calendar → File → New Calendar Subscription. Set Location to <b>iCloud</b> (so it shows on all your Apple devices) and Auto-refresh to <b>Every hour</b>.',
+    ${sec('Apple Calendar, Google Calendar and Outlook',`${sub('Show your trips in your calendar')}${ol([
+      `Go to ${APPLE} → <b>Your calendar feed</b> → <b>Subscribe on this device</b>, or <b>Copy URL</b> and add it in your calendar app:${ul([
+        '<b>Mac:</b> Calendar → File → New Calendar Subscription (Location <b>iCloud</b>, refresh <b>Every hour</b>).',
         '<b>iPhone:</b> Settings → Apps → Calendar → Calendar Accounts → Add Account → Other → Add Subscribed Calendar.',
-        '<b>Google Calendar:</b> Other calendars <b>+</b> → From URL.',
-        '<b>Outlook:</b> Add calendar → Subscribe from web.'])}`,
-      'Your events, flights, hotel check-ins and activities appear with reminders 7 days and 1 day before, and update by themselves after every change. Make changes here, not in the calendar app.'
-    ])}<p class="guide-note">Anyone with the link can see your trips. If it was shared by mistake, tap <b>Reset link</b> and subscribe again. Google Calendar can take up to a day to refresh.</p>
+        '<b>Google:</b> Other calendars <b>+</b> → From URL. <b>Outlook:</b> Add calendar → Subscribe from web.'])}`,
+      'Trips, flights, check-ins and activities appear with reminders 7 days and 1 day before, and update after every change. Edit them here, not in the calendar app.'
+    ])}<p class="guide-note">Anyone with the link can see your trips. If it's shared by mistake, tap <b>Reset link</b>. Google can take up to a day to refresh.</p>
       ${sub('Bring Apple Calendar appointments in')}${ol([
-        'In Apple Calendar, make the calendar public: <b>Mac</b> right-click it → Sharing Settings → tick <b>Public Calendar</b>; <b>iPhone</b> Calendars → ⓘ → <b>Public Calendar</b> → Share Link. Copy the link.',
-        `Paste it in ${APPLE} under <b>Inbound</b> and tap <b>Save</b>. Appointments arrive within about 10 minutes, marked <b>Apple Calendar</b> (Personal, no leave).`,
-        'To add one to a trip, tap <b>+</b> on its card, choose Flight, Hotel, Activity or Transport and the event. On a computer you can drag it onto the event instead. It stays in sync with Apple Calendar.',
-        'Delete Apple appointments in Apple Calendar; deleting them here doesn\'t stick.'
-      ])}<p class="guide-note">A public calendar can be opened by anyone with its link, so use one you're comfortable with. Just need a one-off copy? <b>Calendar Export</b> in the same card downloads an .ics file that doesn't update.</p>`)}
-    ${sec('Sharing, backups and your account',ul([
-      '<b>Share a trip:</b> open it → <b>Share</b> → <b>Create link</b>, then send the link. Your travel companions get a read-only page that updates when you change the trip, without needing an account. Booking references, costs and notes are left out unless you tick them. <b>Stop sharing</b> turns the link off.',
-      '<b>Print or send a file:</b> open the event → <b>Export</b> → PDF or Excel. Untick Costs or Booking details before sending it to others.',
-      '<b>Travel documents</b> (Settings): add passports, visas and IDs with their expiry dates to get reminders, including when a passport has under 6 months left after a trip. Don\'t enter full document numbers; the last 4 characters are enough.',
-      '<b>Back up:</b> <b>Settings → Data → Export JSON</b> saves everything; <b>Import JSON</b> brings it back. <b>Export CSV</b> gives a one-row-per-event summary.',
+        'In Apple Calendar, make the calendar <b>Public</b> and copy its link (Mac: right-click → Sharing Settings; iPhone: Calendars → ⓘ).',
+        `Paste it in ${APPLE} under <b>Inbound</b> and tap <b>Save</b>. Appointments arrive within about 10 minutes.`,
+        'Tap <b>+</b> on an appointment (or drag it on a computer) to add it to a trip as a flight, hotel, activity or transport. Delete appointments in Apple Calendar, not here.'
+      ])}<p class="guide-note">Need a one-off file instead? <b>Calendar Export</b> downloads an .ics that doesn't update.</p>`)}
+    ${sec('Sharing, documents, backups and account',ul([
+      '<b>Share a trip:</b> event → <b>Share</b> → <b>Create link</b>. Companions get a read-only page that stays up to date, no account needed. References, costs and notes are hidden unless you tick them; your checklist is never shared. <b>Stop sharing</b> turns the link off.',
+      '<b>Export:</b> event → <b>Export</b> → PDF or Excel. Untick costs or booking details before sending.',
+      '<b>Travel documents</b> (Settings): add passports, visas and IDs with expiry dates for reminders, including passports under 6 months after a trip. The last 4 characters of the number are enough.',
+      '<b>Back up:</b> <b>Settings → Data → Export JSON</b>; <b>Import JSON</b> restores it. <b>Export CSV</b> gives a summary.',
       ...(acc?[
-      '<b>Sign out</b> is at the bottom of the menu (phone: <b>More</b>). It removes your data from that device only, so always sign out on shared devices.',
-      '<b>Forgot your password?</b> (email accounts) On the welcome page: <b>Sign in with email</b> → <b>Forgot password?</b>. The admin will send a temporary password, or message <a href="https://www.instagram.com/irn.w" target="_blank" rel="noopener noreferrer">@irn.w</a> on Instagram. Change it in <b>Settings → Your Account</b>.',
-      '<b>Privacy:</b> only you can see your data, enforced by the database. Nobody, including the app\'s owner, can see your password, and you\'ll never be asked for it by message. Keep calendar links to yourself, and only upload documents you\'re comfortable storing.',
-      '<b>Delete Account</b> (Settings → Your Account) permanently removes everything. Export a backup first.']:[])
+      '<b>Sign out</b> (menu, or <b>More</b> on a phone) removes your data from that device only. Always sign out on shared devices.',
+      '<b>Forgot your password?</b> (email accounts) <b>Sign in with email</b> → <b>Forgot password?</b>, or message <a href="https://www.instagram.com/irn.w" target="_blank" rel="noopener noreferrer">@irn.w</a> on Instagram.',
+      '<b>Privacy:</b> only you can see your data. Nobody can see your password and you\'ll never be asked for it.',
+      '<b>Delete Account</b> (Settings → Your Account) removes everything for good. Export a backup first.']:[])
     ]))}
     ${sec('Something not working?',ul([
-      '<b>Out of date or not syncing:</b> check you\'re online (a red bar shows when you\'re not), reload the page, or tap <b>↻ Sync Now</b> in Settings → Your Account on each device.',
-      '<b>Smart Upload misread something:</b> edit the field before saving. If a photo misreads, try the PDF or paste the email text.',
-      '<b>Paste does nothing on a phone:</b> copy again, tap <b>Paste</b> and allow it if asked, or save the screenshot and choose it.',
-      '<b>Subscribed calendar not updating:</b> on a Mac, check the subscription\'s Auto-refresh (right-click → Get Info). iPhone and Google refresh on their own schedule.',
-      '<b>Apple appointments not arriving:</b> check Public Calendar is still on and the link in Settings is current, then tap <b>Save</b> again.',
-      '<b>“Wrong email or password”:</b> check for typos and Caps Lock, or use <b>Forgot password?</b>.'
+      '<b>Not syncing:</b> check you\'re online, reload, or tap <b>↻ Sync Now</b> in Settings → Your Account.',
+      '<b>A scan got something wrong:</b> fix the field before saving. If a photo misreads, try the PDF or paste the email text.',
+      '<b>Paste does nothing on a phone:</b> copy again, tap <b>Paste</b> and allow it, or save the screenshot and choose it.',
+      '<b>Calendar not updating:</b> on a Mac, check the subscription\'s refresh setting (right-click → Get Info). iPhone and Google refresh on their own schedule.',
+      '<b>Apple appointments not arriving:</b> check the calendar is still Public and the link in Settings is current, then tap <b>Save</b>.'
     ]))}
   </div></div>`;
 }
@@ -3120,10 +3174,12 @@ function evRowHtml(t,opts){
   opts=opts||{};
   const isApple=t.source==='apple',st=eventStatus(t),n=days(t.startDate,t.endDate);
   const fl=(t.flights||[]).length,ho=(t.hotels||[]).length,ac=(t.activities||[]).length,cost=eCost(t),ps=eventPaymentStatus(t);
+  const ckl=t.checklist||[],ckDone=ckl.filter(x=>x.done).length;
   const timeClash=findClashes(t,t.id).filter(c=>c.severity==='time');
   const places=(t.locations||[]).filter(l=>l&&l.length<=40).slice(0,2).join(', ');// long street addresses stay on the event page
   const meta=[rangeText(t),n>1?n+' days':'',places].filter(Boolean).join(' · ');
   const facts=[fl?`<span title="${fl} flight${fl>1?'s':''}"><i class="ic ic-fl"></i>${fl}</span>`:'',ho?`<span title="${ho} hotel${ho>1?'s':''}"><i class="ic ic-ho"></i>${ho}</span>`:'',ac&&!isApple?`<span title="${ac} activit${ac>1?'ies':'y'}"><i class="ic ic-ac"></i>${ac}</span>`:'',
+    ckl.length&&st!=='completed'?`<span title="Checklist: ${ckDone} of ${ckl.length} done"${ckDone===ckl.length?' style="color:var(--green)"':''}>✓ ${ckDone}/${ckl.length}</span>`:'',
     cost?`<span class="evr-cost">${fmtM(cost,baseCur())}</span>`:'',ps&&ps.status!=='paid'?`<span style="color:${ps.color}" title="${esc(ps.label)}">● ${esc(ps.label)}</span>`:''].filter(Boolean).join('');
   const when=opts.noWhen?'':whenText(t);
   return `<div class="evr${isApple?' apple':''}${st==='completed'?' past':''}" data-action="view" data-id="${t.id}" ${isApple?`draggable="true" data-apple-drag="${t.id}" title="${esc(t.name)} · from Apple Calendar · drag onto a trip to add it there"`:`data-drop-ev="${t.id}" title="${esc(t.name)}"`}>
@@ -3279,9 +3335,9 @@ function vDetail(){
     ${t.sharedLink?`<div class="shared-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg><a href="${esc(t.sharedLink)}" target="_blank">${esc(t.sharedLink)}</a></div>`:''}
     ${t.notes?`<div style="margin:8px 0 16px;padding:10px 14px;background:var(--bg2);border-radius:8px;font-size:12px;color:var(--text2)">${esc(t.notes)}</div>`:''}
     <div class="tabs">
-      ${['timeline','flights','hotels','activities','transport','attachments'].map(k=>`<div class="tab${tab===k?' active':''}" data-action="tab" data-t="${k}">${k==='timeline'?'Timeline':k.charAt(0).toUpperCase()+k.slice(1)} ${k!=='timeline'?'('+((k==='attachments'?(t.attachments||[]):(t[k]||[])).length)+')':''}</div>`).join('')}
+      ${['timeline','flights','hotels','activities','transport','checklist','attachments'].map(k=>`<div class="tab${tab===k?' active':''}" data-action="tab" data-t="${k}">${k==='timeline'?'Timeline':k.charAt(0).toUpperCase()+k.slice(1)} ${k==='checklist'?ckCount(t):k!=='timeline'?'('+((k==='attachments'?(t.attachments||[]):(t[k]||[])).length)+')':''}</div>`).join('')}
     </div>
-    ${tab==='timeline'?rTimeline(t):tab==='flights'?rFlights(t):tab==='hotels'?rHotels(t):tab==='activities'?rActs(t):tab==='attachments'?rAttach(t):rTrans(t)}
+    ${tab==='timeline'?rTimeline(t):tab==='flights'?rFlights(t):tab==='hotels'?rHotels(t):tab==='activities'?rActs(t):tab==='attachments'?rAttach(t):tab==='checklist'?rChecklist(t):rTrans(t)}
   </div>`;
 }
 
@@ -3368,6 +3424,81 @@ function rTrans(t){
 }
 
 // ===== ATTACHMENTS =====
+// ===== CHECKLIST (to-dos for a trip) =====
+const ckToday=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+const ckShift=(iso,n)=>{const d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+function ckCount(t){const l=t.checklist||[];return l.length?'('+l.filter(x=>x.done).length+'/'+l.length+')':'';}
+// Ideas for the trip, each with a sensible due date counted back from departure
+function ckSuggestions(t){
+  const has=new Set((t.checklist||[]).map(x=>x.text.trim().toLowerCase()));
+  const home=typeof COUNTRY_ISO2!=='undefined'&&Object.keys(COUNTRY_DATA).find(id=>(COUNTRY_ISO2[id]||'').toUpperCase()===(P().country||''));
+  const cs=(t.countries||[]).filter(Boolean),abroad=!cs.length||cs.some(c=>c!==home);
+  const list=[
+    abroad&&['Check passport is valid 6+ months',-60],
+    abroad&&['Check visa / entry requirements',-45],
+    ['Buy travel insurance',-30],
+    abroad&&['Tell my bank I\'m travelling',-7],
+    abroad&&['Get an eSIM or roaming plan',-5],
+    (t.flights||[]).length&&['Online check-in',-1],
+    ['Book airport transfer',-7],
+    abroad&&['Exchange some cash',-3],
+    ['Pack chargers & travel adapter',-1],
+    ['Download offline maps',-1],
+  ].filter(Boolean);
+  return list.filter(([x])=>!has.has(x.toLowerCase())).slice(0,6);
+}
+function ckDueHtml(it){
+  if(!it.due)return`<span class="ck-due ck-due-add" title="Add a due date"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg><input type="date" class="ck-date" data-ck-due="${it.id}" aria-label="Due date"></span>`;
+  const today=ckToday(),cls=it.done?'':it.due<today?' late':it.due<=ckShift(today,3)?' soon':'';
+  const lbl=new Date(it.due+'T00:00:00').toLocaleDateString(dloc(),{day:'numeric',month:'short'});
+  return`<span class="ck-due${cls}" title="Change due date">${cls===' late'?'Overdue · ':''}${lbl}<input type="date" class="ck-date" data-ck-due="${it.id}" value="${it.due}" aria-label="Due date"></span>`;
+}
+function ckItemHtml(it){
+  return`<li class="ck-item${it.done?' done':''}" data-ck="${it.id}">
+    <button class="ck-box" role="checkbox" aria-checked="${!!it.done}" aria-label="${it.done?'Mark as not done':'Mark as done'}" data-action="ck-toggle" data-id="${it.id}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></button>
+    <div class="ck-main"><input class="ck-txt" value="${esc(it.text)}" data-ck-txt="${it.id}" aria-label="To-do" maxlength="200">${it.done&&!it.due?'':ckDueHtml(it)}</div>
+    <button class="ck-del" data-action="ck-del" data-id="${it.id}" title="Delete" aria-label="Delete to-do"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </li>`;
+}
+function rChecklist(t){
+  const l=t.checklist||[],open=l.filter(x=>!x.done),done=l.filter(x=>x.done);
+  // Dated to-dos first (soonest at the top), then the rest in the order they were added
+  open.sort((a,b)=>(a.due?0:1)-(b.due?0:1)||(a.due&&b.due?a.due.localeCompare(b.due):0)||(a.at||0)-(b.at||0));
+  const pct=l.length?Math.round(done.length/l.length*100):0,sug=t.ckHideSug?[]:ckSuggestions(t);
+  return`<div class="ck">
+    <div class="ck-head"><h3 style="font-size:14px">Checklist</h3>${l.length?`<span class="ck-prog-txt">${done.length===l.length?'All done ✓':done.length+' of '+l.length+' done'}</span>`:''}</div>
+    ${l.length?`<div class="ck-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div>`:''}
+    <form class="ck-new" data-ck-form="1" autocomplete="off"><input id="ck-new" placeholder="Add a to-do…" maxlength="200" aria-label="New to-do"><button class="btn btn-p" type="submit">Add</button></form>
+    ${sug.length?`<div class="ck-sug"><span class="ck-sug-lbl">Ideas</span>${sug.map(([x,d])=>`<button class="ck-chip" data-action="ck-sug" data-text="${esc(x)}" data-off="${d}">+ ${esc(x)}</button>`).join('')}<button class="ck-sug-hide" data-action="ck-hide-sug" title="Hide ideas for this trip">Hide</button></div>`:''}
+    ${l.length?'':`<div class="empty ck-empty"><p>Nothing to do yet</p><p style="font-size:11px;color:var(--text3)">Type a to-do above and press Enter, or tap an idea. Tap the calendar to give it a due date.</p></div>`}
+    ${open.length?`<ul class="ck-list">${open.map(ckItemHtml).join('')}</ul>`:l.length?`<p class="ck-alldone">Everything's ticked off. Enjoy the trip!</p>`:''}
+    ${done.length?`<details class="ck-done"${S._ckDoneOpen?' open':''}><summary>Done (${done.length})<button class="ck-clear" data-action="ck-clear">Clear done</button></summary><ul class="ck-list">${done.map(ckItemHtml).join('')}</ul></details>`:''}
+  </div>`;
+}
+function ckFind(id){const t=S.events.find(x=>x.id===S.tid);return t&&{t,it:(t.checklist||[]).find(x=>x.id===id)};}
+function ckAdd(t,text,due){
+  text=String(text||'').trim();if(!text)return;
+  t.checklist=t.checklist||[];t.checklist.push({id:uid(),text,done:false,at:Date.now(),...(due?{due}:{})});
+  saveS();render();
+  const i=document.getElementById('ck-new');if(i)i.focus();
+}
+document.addEventListener('submit',e=>{
+  if(!e.target.matches||!e.target.matches('[data-ck-form]'))return;
+  e.preventDefault();const t=S.events.find(x=>x.id===S.tid),i=document.getElementById('ck-new');
+  if(t&&i)ckAdd(t,i.value);
+});
+document.addEventListener('change',e=>{
+  const el=e.target;
+  if(el.dataset&&el.dataset.ckTxt){const f=ckFind(el.dataset.ckTxt);if(!f||!f.it)return;const v=el.value.trim();
+    if(!v){el.value=f.it.text;return;}if(v!==f.it.text){f.it.text=v;saveS();}}
+  if(el.dataset&&el.dataset.ckDue){const f=ckFind(el.dataset.ckDue);if(!f||!f.it)return;if(el.value)f.it.due=el.value;else delete f.it.due;saveS();render();}
+});
+document.addEventListener('keydown',e=>{
+  const el=e.target;if(!el.dataset||!el.dataset.ckTxt)return;
+  if(e.key==='Enter'){e.preventDefault();el.blur();}
+  if(e.key==='Escape'){const f=ckFind(el.dataset.ckTxt);if(f&&f.it)el.value=f.it.text;el.blur();}
+});
+document.addEventListener('toggle',e=>{if(e.target.classList&&e.target.classList.contains('ck-done'))S._ckDoneOpen=e.target.open;},true);
 function rAttach(t){
   const atts=t.attachments||[];
   return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3 style="font-size:14px">Attachments</h3><div style="display:flex;gap:8px"><button class="btn btn-s" data-action="add-attach-link">+ Add Link</button><button class="btn btn-p" data-action="add-attach-img">+ Upload Image</button></div></div>
@@ -7323,6 +7454,11 @@ document.addEventListener('click',e=>{
     case 'edit-event':{const t=S.events.find(x=>x.id===el.dataset.id);if(t)fEvent(t);break;}
     case 'del-event':{const delId=el.dataset.id;const delEv=S.events.find(t=>t.id===delId);if(delEv){const bc=(delEv.flights||[]).length+(delEv.hotels||[]).length+(delEv.activities||[]).length+(delEv.transport||[]).length;modal('Delete Event',`<div class="confirm-modal-body"><div class="cm-icon">⚠️</div><div class="cm-title">Delete "${esc(delEv.name)}"?</div><div class="cm-sub">${bc?'This will remove <strong>'+bc+' booking'+(bc>1?'s':'')+'</strong> (flights, hotels, activities, transport).':'This trip has no bookings.'}<br>This action cannot be undone.</div></div>`,()=>{const idx=S.events.indexOf(delEv);S.events.splice(idx,1);saveS();nav('events');toast('Event deleted');},{saveLabel:'Delete',danger:true});}}break;
     case 'tab':S.tab=el.dataset.t;saveS();render();break;
+    case 'ck-toggle':{const f=ckFind(el.dataset.id);if(f&&f.it){f.it.done=!f.it.done;f.it.doneAt=f.it.done?Date.now():undefined;saveS();render();}break;}
+    case 'ck-del':{const f=ckFind(el.dataset.id);if(f&&f.it){const idx=f.t.checklist.indexOf(f.it);f.t.checklist.splice(idx,1);saveS();render();toastUndo('To-do deleted',()=>{f.t.checklist.splice(idx,0,f.it);saveS();render();});}break;}
+    case 'ck-sug':if(ev){const off=parseInt(el.dataset.off,10),due=ev.startDate&&!isNaN(off)?ckShift(ev.startDate,off):'';ckAdd(ev,el.dataset.text,due&&due>=ckToday()?due:'');}break;
+    case 'ck-hide-sug':if(ev){ev.ckHideSug=true;saveS();render();}break;
+    case 'ck-clear':{e.preventDefault();if(ev){const before=ev.checklist.slice();ev.checklist=ev.checklist.filter(x=>!x.done);saveS();render();toastUndo('Cleared '+(before.length-ev.checklist.length)+' done',()=>{ev.checklist=before;saveS();render();});}break;}
     case 'fy':S.tfY=el.dataset.y?parseInt(el.dataset.y):null;S._catFilter='all';saveUI();render();break;
     case 'cat-filter':S._catFilter=el.dataset.cat||'all';S.tfY=null;saveUI();render();break;
     case 'cat-group':S._catGroup=!S._catGroup;saveUI();render();break;
