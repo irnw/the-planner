@@ -284,6 +284,11 @@ textarea.fc{resize:vertical;min-height:50px}
 .attach-name{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .attach-meta{font-size:10px;color:var(--text3);margin-top:2px}
 .attach-actions{display:flex;gap:4px;padding:0 10px 8px;justify-content:flex-end}
+.att-pdf{position:relative;border:0;padding:0;cursor:pointer;font:inherit;align-items:flex-start}
+.att-pdf img{object-position:top}
+.att-badge{position:absolute;left:6px;bottom:6px;background:var(--primary);color:#fff;font-size:9px;font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:4px}
+@media(max-width:600px){.attach-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.attach-thumb{height:100px}}
+.att-pick-note{font-size:11px;color:var(--text3);margin-top:4px}.att-pick-note.warn{color:var(--accent)}
 
 /* ========== QUICK UPLOAD FAB ========== */
 .fab{position:fixed;bottom:24px;right:28px;height:46px;padding:0 18px 0 14px;background:var(--primary);border:none;border-radius:23px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 4px 20px rgba(138,127,232,.3);transition:all .25s;z-index:90;font-size:13px;font-weight:500;letter-spacing:.3px}
@@ -2422,7 +2427,7 @@ function cloudPull(){return cloudMode()==='account'?acctPull():cloudMode()==='gi
 function cloudFullSync(){return cloudMode()==='account'?acctPull(true).then(()=>acctPush()):cloudMode()==='gist'?fullSync():null;}
 
 // Everything personal this app keeps in the browser — removed on sign-out
-function wipeLocalData(){['htV5','htV4','htV5_backup','htV5_backup_ts','htSync',OWNER_KEY].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});}
+function wipeLocalData(){attWipeLocal();['htV5','htV4','htV5_backup','htV5_backup_ts','htSync',OWNER_KEY].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});}
 function acctPayload(){const d=syncData();delete d.trips;return d;}
 function normEvents(r){return(r.events||r.trips||[]).map(t=>t.category?t:{...t,category:'trip',requiresLeave:true});}
 function hasLocalData(){return(S.events||[]).length>0;}
@@ -2722,6 +2727,7 @@ async function acctDelete(){
   modal('Delete account',`<p style="font-size:13px;line-height:1.6;color:var(--text2)">This permanently deletes your account and <b>all</b> your trips, payments and documents. It can't be undone. Download a copy first (Settings → Data → Export JSON) if you might want it.</p><div class="fi" style="margin-top:10px"><label>Type DELETE to confirm</label><input class="fc" id="acct-del-confirm" autocomplete="off"></div>`,()=>{
     if(document.getElementById('acct-del-confirm').value.trim()!=='DELETE'){toast('Type DELETE to confirm');return false;}
     (async()=>{
+      await attRemoveAll();
       const{error}=await sbClient().rpc('delete_my_account');
       if(error){toast('Could not delete account: '+error.message);return;}
       await sbClient().auth.signOut().catch(()=>{});
@@ -2785,7 +2791,7 @@ function vGuideCard(){
     ])}`,firstTime)}
     ${sec('Trips and bookings',ul([
       'Tap <b>+ New Event</b> and give it a name, dates, places and a category (Trip, Work, Training, Social, Personal or Activity). You can also start one from a day on the <b>Calendar</b> or from a <b>Long weekend</b> idea.',
-      'Inside an event, the tabs hold everything: <b>Timeline</b> (day by day), <b>Flights</b>, <b>Hotels</b>, <b>Activities</b>, <b>Transport</b>, <b>Checklist</b> and <b>Attachments</b> (tickets, vouchers, links).',
+      'Inside an event, the tabs hold everything: <b>Timeline</b> (day by day), <b>Flights</b>, <b>Hotels</b>, <b>Activities</b>, <b>Transport</b>, <b>Checklist</b> and <b>Attachments</b> (PDFs, images and links: tickets, vouchers, confirmations). PDFs up to 10 MB open on all your devices when you’re signed in.',
       'Add a booking with the <b>+ Add</b> button on its tab: type it in, or drop in the confirmation and let the app fill it in (see <b>Scan a booking</b>).',
       'Use <b>⋯ → Duplicate</b> on a flight to start the return flight. Flight times show in the local time, and in your home time zone too.',
       'Booked something twice? The event offers <b>Review &amp; merge</b>. <b>⚠ Clash</b> means two things at the same time; <b>⚠ Overlap</b> means two events share dates. Tap the label to see which.'
@@ -3536,21 +3542,90 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){const f=ckFind(el.dataset.ckTxt);if(f&&f.it)el.value=f.it.text;el.blur();}
 });
 document.addEventListener('toggle',e=>{if(e.target.classList&&e.target.classList.contains('ck-done'))S._ckDoneOpen=e.target.open;},true);
+// PDF attachments: the file is kept on this device (IndexedDB) and, when signed in, in the private 'attachments' bucket
+const ATT_MAX=10*1024*1024,ATT_BUCKET='attachments';
+let _attDB=null;
+function attDB(){return _attDB||(_attDB=new Promise((res,rej)=>{const r=indexedDB.open('htFiles',1);r.onupgradeneeded=()=>r.result.createObjectStore('f');r.onsuccess=()=>res(r.result);r.onerror=()=>{_attDB=null;rej(r.error);};}));}
+async function attIdb(mode,fn){const db=await attDB();return new Promise((res,rej)=>{const tx=db.transaction('f',mode),q=fn(tx.objectStore('f'));tx.oncomplete=()=>res(q&&q.result);tx.onerror=()=>rej(tx.error);});}
+const attPut=(id,blob)=>attIdb('readwrite',st=>st.put(blob,id)).catch(()=>{});
+const attGet=id=>attIdb('readonly',st=>st.get(id)).catch(()=>null);
+const attDelLocal=id=>attIdb('readwrite',st=>st.delete(id)).catch(()=>{});
+function attWipeLocal(){try{if(_attDB)_attDB.then(db=>db.close()).catch(()=>{});_attDB=null;indexedDB.deleteDatabase('htFiles');}catch(e){}}
+function attPath(a){return _acct.id+'/'+a.id+'.pdf';}
+function attFind(id){for(const ev of S.events||[]){const a=(ev.attachments||[]).find(x=>x.id===id);if(a)return a;}return null;}
+async function attUpload(a,blob){
+  const sb=sbClient();if(!sb||!_acct||_acctOffline)return false;
+  try{const{error}=await sb.storage.from(ATT_BUCKET).upload(attPath(a),blob,{contentType:'application/pdf',upsert:true});if(error)return false;}catch(e){return false;}
+  const cur=attFind(a.id);if(cur){cur.cloud=true;saveS();}return true;
+}
+// Files added while signed out or offline go up the next time the tab is opened signed in
+let _attUpBusy=false;const _attTried={};
+async function attSyncUp(t){
+  if(_attUpBusy||!_acct||_acctOffline||!sbClient())return;_attUpBusy=true;
+  let up=0;try{for(const a of (t.attachments||[]).filter(x=>x.type==='pdf'&&!x.cloud&&!(_attTried[x.id]>Date.now()-60000))){_attTried[a.id]=Date.now();const b=await attGet(a.id);if(b&&await attUpload(a,b))up++;}}finally{_attUpBusy=false;}
+  if(up&&S.v==='detail')render();
+}
+async function attBlob(a){
+  let b=await attGet(a.id);if(b)return b;
+  const sb=sbClient();if(!a.cloud||!sb||!_acct)return null;
+  try{const{data,error}=await sb.storage.from(ATT_BUCKET).download(attPath(a));if(error||!data)return null;b=new Blob([data],{type:'application/pdf'});attPut(a.id,b);return b;}catch(e){return null;}
+}
+async function attOpen(id){
+  const a=attFind(id);if(!a)return;
+  // Open the tab now (still inside the tap) so phones don't block it, then fill it in
+  const w=window.open('','_blank');
+  if(w)try{w.document.title=a.name||'PDF';w.document.body.style.cssText='font:14px system-ui;color:#666;padding:24px';w.document.body.textContent='Opening '+(a.name||'PDF')+'…';}catch(e){}
+  const b=await attBlob(a);
+  if(!b){if(w)w.close();toast(a.cloud?(_acct?'Could not load this PDF. Check your connection and try again':'Sign in to open this PDF'):'This PDF is only on the device it was added on');return;}
+  const url=URL.createObjectURL(b);setTimeout(()=>URL.revokeObjectURL(url),60000);
+  if(w&&!w.closed)w.location.href=url;
+  else{const l=document.createElement('a');l.href=url;l.download=(a.name||'attachment').replace(/[\\/:*?"<>|]+/g,' ')+'.pdf';document.body.appendChild(l);l.click();l.remove();}
+}
+// The file itself goes once the Undo has passed and no trip still lists it
+function attPurgeLater(a){
+  if(a.type!=='pdf')return;
+  setTimeout(()=>{if(attFind(a.id))return;attDelLocal(a.id);const sb=sbClient();if(a.cloud&&sb&&_acct)sb.storage.from(ATT_BUCKET).remove([attPath(a)]).catch(()=>{});},6000);
+}
+async function attRemoveAll(){
+  const sb=sbClient();if(!sb||!_acct)return;
+  try{const{data}=await sb.storage.from(ATT_BUCKET).list(_acct.id,{limit:1000});if(data&&data.length)await sb.storage.from(ATT_BUCKET).remove(data.map(f=>_acct.id+'/'+f.name));}catch(e){}
+}
+async function pdfThumb(blob){
+  if(typeof pdfjsLib==='undefined'){initPdfJs();await new Promise(r=>setTimeout(r,1000));}
+  if(typeof pdfjsLib==='undefined')return{thumb:'',pages:0};
+  initPdfJs();
+  const pdf=await pdfjsLib.getDocument({data:await blob.arrayBuffer()}).promise,pg=await pdf.getPage(1);
+  const v0=pg.getViewport({scale:1}),vp=pg.getViewport({scale:Math.min(2,360/v0.width)});
+  const c=document.createElement('canvas');c.width=Math.round(vp.width);c.height=Math.round(vp.height);
+  const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);
+  await pg.render({canvasContext:ctx,viewport:vp}).promise;
+  // Keep the top of the page: that's where a booking's name and reference are
+  const h=Math.min(c.height,Math.round(c.width*0.75)),o=document.createElement('canvas');o.width=c.width;o.height=h;o.getContext('2d').drawImage(c,0,0);
+  return{thumb:o.toDataURL('image/jpeg',0.6),pages:pdf.numPages};
+}
+function fmtBytes(n){return n>=1048576?(n/1048576).toFixed(1).replace(/\.0$/,'')+' MB':Math.max(1,Math.round(n/1024))+' KB';}
 function rAttach(t){
   const atts=t.attachments||[];
-  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3 style="font-size:14px">Attachments</h3><div style="display:flex;gap:8px"><button class="btn btn-s" data-action="add-attach-link">+ Add Link</button><button class="btn btn-p" data-action="add-attach-img">+ Upload Image</button></div></div>
-  ${atts.length?`<div class="attach-grid">${atts.map(a=>`
+  if(atts.some(a=>a.type==='pdf'&&!a.cloud))setTimeout(()=>attSyncUp(t),300);
+  const linkIc=`<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--text3)" stroke-width="1.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>`;
+  const pdfIc=`<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--text3)" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap"><h3 style="font-size:14px">Attachments</h3><div style="display:flex;gap:8px"><button class="btn btn-s" data-action="add-attach-link">+ Add Link</button><button class="btn btn-p" data-action="add-attach-img">+ Upload file</button></div></div>
+  ${atts.length?`<div class="attach-grid">${atts.map(a=>{const pdf=a.type==='pdf';
+    const meta=[pdf?'PDF':'',pdf&&a.pages>1?a.pages+' pages':'',pdf&&a.size?fmtBytes(a.size):'',a.addedAt?new Date(a.addedAt).toLocaleDateString(dloc(),{day:'numeric',month:'short',year:'numeric'}):''].filter(Boolean).join(' · ');
+    const thumb=a.thumbData?`<img src="${a.thumbData}" alt="${esc(a.name||'')}" loading="lazy">`:pdf?pdfIc:linkIc;
+    return `
     <div class="attach-card">
-      ${a.thumbData?`<div class="attach-thumb"><img src="${a.thumbData}" alt="${esc(a.name||'')}" loading="lazy"></div>`:`<div class="attach-thumb attach-link-thumb"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--text3)" stroke-width="1.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></div>`}
+      ${pdf?`<button type="button" class="attach-thumb att-pdf" data-action="att-open" data-aid="${a.id}" title="Open PDF">${thumb}<span class="att-badge">PDF</span></button>`:`<div class="attach-thumb${a.thumbData?'':' attach-link-thumb'}">${thumb}</div>`}
       <div class="attach-info">
         <div class="attach-name">${esc(a.name||'Attachment')}</div>
-        <div class="attach-meta">${a.addedAt?new Date(a.addedAt).toLocaleDateString(dloc(),{day:'numeric',month:'short',year:'numeric'}):''}</div>
+        <div class="attach-meta">${meta}${pdf&&!a.cloud&&_acct?' · <span title="Uploads when you\'re online">not uploaded yet</span>':''}</div>
       </div>
       <div class="attach-actions">
-        ${a.url?`<a href="${esc(a.url)}" target="_blank" class="btn btn-ghost" style="font-size:10px">Open</a>`:''}
+        ${pdf?`<button class="btn btn-ghost" style="font-size:10px" data-action="att-open" data-aid="${a.id}">Open</button>`:''}
+        ${a.url?`<a href="${esc(a.url)}" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:10px">${pdf?'Link':'Open'}</a>`:''}
         <button class="btn btn-ghost" style="color:var(--accent);font-size:10px" data-action="del-attach" data-aid="${a.id}">Del</button>
       </div>
-    </div>`).join('')}</div>`:'<div class="empty"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg><p>No attachments yet</p><p style="font-size:11px;color:var(--text3)">Add links or upload images related to this event</p></div>'}`;
+    </div>`;}).join('')}</div>`:'<div class="empty"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--text3)" stroke-width="1.2" style="margin-bottom:8px;opacity:.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg><p>No attachments yet</p><p style="font-size:11px;color:var(--text3)">Add links, PDFs or images for this trip</p></div>'}`;
 }
 
 // ===== TIMELINE =====
@@ -7845,26 +7920,44 @@ document.addEventListener('click',e=>{
       });}break;}
     case 'add-attach-img':{if(ev){
       const fid='att-'+uid();
-      modal('Upload Image',`<div class="fg">
-        <div class="fi full"><label>Name</label><input class="fc" name="att-name" placeholder="e.g. Booking screenshot"></div>
-        <div class="fi full"><label>Image</label><input type="file" accept="image/*" id="${fid}" class="fc"></div>
+      modal('Upload file',`<div class="fg">
+        <div class="fi full"><label>File</label><input type="file" accept="application/pdf,.pdf,image/*" id="${fid}" class="fc"><div class="att-pick-note" id="${fid}-n">PDF (up to 10 MB) or image</div></div>
+        <div class="fi full"><label>Name</label><input class="fc" name="att-name" placeholder="e.g. Hotel confirmation"></div>
         <div class="fi full"><label>Link (optional)</label><input class="fc" name="att-url" placeholder="https://..."></div>
       </div>`,()=>{
         const m=document.querySelector('.modal');
-        const name=m.querySelector('[name="att-name"]').value;
-        const url=m.querySelector('[name="att-url"]').value;
+        const name=m.querySelector('[name="att-name"]').value.trim();
+        const url=m.querySelector('[name="att-url"]').value.trim();
         const fi=document.getElementById(fid);
-        const pendingFile=fi?fi._pendingThumb:null;
-        if(!pendingFile&&!url){toast('Image or URL required');return false;}
+        if(fi&&fi._busy){toast('Still reading the file…');return false;}
+        const pend=fi?fi._pending:null;
+        if(!pend&&!url){toast('Choose a file or add a link');return false;}
         if(!ev.attachments)ev.attachments=[];
-        ev.attachments.push({id:uid(),name:name||'Image',thumbData:pendingFile||'',url:url||'',type:pendingFile?'image':'link',addedAt:new Date().toISOString()});
+        const at={id:uid(),addedAt:new Date().toISOString(),url:url||''};
+        if(pend&&pend.pdf){Object.assign(at,{type:'pdf',name:name||pend.name||'PDF',thumbData:pend.thumb||'',pages:pend.pages||0,size:pend.blob.size});
+          ev.attachments.push(at);saveS();render();
+          attPut(at.id,pend.blob).then(()=>attUpload(at,pend.blob)).then(ok=>{if(ok&&S.v==='detail')render();});
+          toast('PDF added');return;}
+        ev.attachments.push({...at,name:name||(pend&&pend.name)||'Image',thumbData:pend?pend.thumb:'',type:pend?'image':'link'});
         saveS();render();toast('Attachment added');
       });
       setTimeout(()=>{
-        const fi=document.getElementById(fid);
-        if(fi)fi.addEventListener('change',e2=>{
-          const file=e2.target.files[0];
+        const fi=document.getElementById(fid),note=document.getElementById(fid+'-n');
+        if(fi)fi.addEventListener('change',async e2=>{
+          const file=e2.target.files[0];fi._pending=null;
           if(!file)return;
+          const nm=document.querySelector('.modal [name="att-name"]'),base=file.name.replace(/\.[^.]+$/,'');
+          const isPdf=file.type==='application/pdf'||/\.pdf$/i.test(file.name);
+          if(isPdf){
+            if(file.size>ATT_MAX){fi.value='';note.textContent='That PDF is '+fmtBytes(file.size)+'. The limit is 10 MB.';note.classList.add('warn');return;}
+            fi._busy=true;note.classList.remove('warn');note.textContent='Reading PDF…';
+            const blob=new Blob([await file.arrayBuffer()],{type:'application/pdf'});
+            let th={thumb:'',pages:0};try{th=await pdfThumb(blob);}catch(err){}
+            fi._pending={pdf:true,blob,name:base,thumb:th.thumb,pages:th.pages};fi._busy=false;
+            note.textContent='PDF · '+(th.pages?th.pages+' page'+(th.pages>1?'s':'')+' · ':'')+fmtBytes(file.size);
+            if(nm&&!nm.value)nm.value=base;return;
+          }
+          fi._busy=true;note.classList.remove('warn');note.textContent='Reading image…';
           const reader=new FileReader();
           reader.onload=()=>{
             const img=new Image();
@@ -7877,20 +7970,22 @@ document.addEventListener('click',e=>{
               canvas.width=w;canvas.height=h;
               const ctx=canvas.getContext('2d');
               ctx.drawImage(img,0,0,w,h);
-              fi._pendingThumb=canvas.toDataURL('image/jpeg',0.6);
-              toast('Image ready');
+              fi._pending={thumb:canvas.toDataURL('image/jpeg',0.6),name:base};fi._busy=false;
+              note.textContent='Image ready';if(nm&&!nm.value)nm.value=base;
             };
+            img.onerror=()=>{fi._busy=false;note.textContent='Could not read that file. Choose a PDF or image.';note.classList.add('warn');};
             img.src=reader.result;
           };
           reader.readAsDataURL(file);
         });
       },100);
       }break;}
+    case 'att-open':attOpen(el.dataset.aid);break;
     case 'del-attach':{if(ev){
       const aid=el.dataset.aid;
       const idx=(ev.attachments||[]).findIndex(a=>a.id===aid);
       if(idx>=0){const entry=ev.attachments[idx];ev.attachments.splice(idx,1);saveS();render();
-        toastUndo('Attachment deleted',()=>{ev.attachments.splice(idx,0,entry);saveS();render();});}
+        toastUndo('Attachment deleted',()=>{ev.attachments.splice(idx,0,entry);saveS();render();});attPurgeLater(entry);}
       }break;}
   }
 });
