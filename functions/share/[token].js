@@ -20,6 +20,14 @@ const attHtml=a=>{
   const inner=`<div class="at">${okThumb(a.thumb)?`<img src="${a.thumb}" alt="" loading="lazy">`:pdf?'📄':a.type==='image'?'🖼':'🔗'}${pdf?'<span class="bd">PDF</span>':''}</div><div class="ai"><div class="n">${esc(a.name||'Attachment')}</div><div class="ref">${esc(meta)}</div></div>`;
   return href?`<a class="ac" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${inner}</a>`:`<div class="ac">${inner}</div>`;
 };
+const num=v=>Math.max(0,Math.min(9999,parseInt(v)||0));
+const statsHtml=s=>{const t=s.stats;if(!t||typeof t!=='object')return '';
+  const bk=[['flights','flight'],['hotels','hotel'],['activities','activity'],['transport','transport']].map(([k,w])=>num(t[k])?num(t[k])+' '+(num(t[k])>1?(w==='activity'?'activities':w==='transport'?'transport':w+'s'):w):'').filter(Boolean);
+  const cells=[num(t.days)&&[num(t.days),num(t.days)>1?'Days':'Day',num(t.nights)?num(t.nights)+' night'+(num(t.nights)>1?'s':''):''],
+    num(t.people)>1&&[num(t.people),'People',''],
+    bk.length&&[bk.reduce((a,x)=>a+parseInt(x),0),'Bookings',bk.join(' · ')],
+    (s.opts||{}).costs&&t.perPerson>0&&/^[A-Z]{3}$/.test(t.cur||'')&&[money(t.perPerson,t.cur),'Cost per person','estimate']].filter(Boolean);
+  return cells.length?`<div class="stats">${cells.map(([v,l,sub])=>`<div class="st"><span>${esc(l)}</span><b>${typeof v==='number'?v:v}</b>${sub?`<small>${esc(sub)}</small>`:''}</div>`).join('')}</div>`:'';};
 const page=(title,body)=>`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>${esc(title)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <style>:root{--bg:#f7f6f3;--card:#fbfaf8;--text:#1d1d22;--text2:#55555e;--text3:#7c7c86;--line:#e6e3dc;--p:#5f52d6}
@@ -33,7 +41,9 @@ h1{font:700 34px/1.1 'Playfair Display',serif;margin:8px 0 6px}h2{font:700 19px/
 .att{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}.ac{display:block;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card);color:inherit;text-decoration:none}
 a.ac:hover{border-color:var(--p)}.at{height:110px;background:var(--bg);display:flex;align-items:center;justify-content:center;position:relative;color:var(--text3);font-size:26px}.at img{width:100%;height:100%;object-fit:cover;object-position:top}
 .bd{position:absolute;left:6px;bottom:6px;background:var(--p);color:#fff;font-size:9px;font-weight:500;letter-spacing:.06em;padding:2px 6px;border-radius:4px}.ai{padding:8px 10px}.ai .n{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ai .ref{margin-top:1px}
-@media(max-width:560px){.att{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.at{height:96px}.it{flex-direction:column;gap:2px}.d{width:auto}h1{font-size:28px}}</style></head><body><main>${body}</main></body></html>`;
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));border:1px solid var(--line);border-radius:12px;margin-top:20px;overflow:hidden;background:var(--card)}
+.st{padding:12px 14px;border-left:1px solid var(--line)}.st:first-child{border-left:0}.st b{display:block;font:700 22px/1.2 'Playfair Display',serif}.st span{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3)}.st small{display:block;font-size:11px;color:var(--text3)}
+@media(max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}.st:nth-child(odd){border-left:0}.st:nth-child(n+3){border-top:1px solid var(--line)}.att{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.at{height:96px}.it{flex-direction:column;gap:2px}.d{width:auto}h1{font-size:28px}}</style></head><body><main>${body}</main></body></html>`;
 const notFound=()=>new Response(page('Trip not found',`<div class="k">The Planner</div><h1>This link isn't available</h1><p class="sub">The trip may no longer be shared, or the link is incomplete. Ask the person who sent it for a new one.</p>`),{status:404,headers:{'Content-Type':'text/html; charset=utf-8','X-Robots-Tag':'noindex'}});
 
 export async function onRequestGet({params}){
@@ -50,6 +60,7 @@ export async function onRequestGet({params}){
   rows.sort((a,b)=>String(a.k).localeCompare(String(b.k)));
   const body=`<div class="k">${s.sharedBy?esc(s.sharedBy)+' shared a trip':'Shared trip'}</div><h1>${esc(s.name)}</h1>
     <div class="sub">${esc(dt(s.startDate))}${s.endDate&&s.endDate!==s.startDate?' – '+esc(dt(s.endDate)):''}${(s.locations||[]).length?' · '+esc(s.locations.join(', ')):''}</div>
+    ${statsHtml(s)}
     ${o.notes&&s.notes?`<p class="m" style="margin-top:14px;white-space:pre-wrap">${esc(s.notes)}</p>`:''}
     <h2>Itinerary</h2>${rows.length?rows.map(r=>`<div class="it"><div class="d">${esc(r.d)}</div><div>${r.h}</div></div>`).join(''):'<p class="sub">No bookings added yet.</p>'}
     ${o.files&&(s.attachments||[]).length?`<h2>Attachments</h2><div class="att">${s.attachments.slice(0,60).map(attHtml).join('')}</div>`:''}
