@@ -288,6 +288,7 @@ textarea.fc{resize:vertical;min-height:50px}
 .att-pdf img{object-position:top}
 .att-badge{position:absolute;left:6px;bottom:6px;background:var(--primary);color:#fff;font-size:9px;font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:4px}
 @media(max-width:600px){.attach-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.attach-thumb{height:100px}}
+.split-hint{font-size:11px;color:var(--primary);margin-top:4px;line-height:1.4}.split-hint:empty{display:none}.split-hint.quiet{color:var(--text3)}.split-n{font-size:10px;color:var(--text3);margin-left:4px}
 .att-pick-note{font-size:11px;color:var(--text3);margin-top:4px}.att-pick-note.warn{color:var(--accent)}
 
 /* ========== QUICK UPLOAD FAB ========== */
@@ -2835,6 +2836,7 @@ function vGuideCard(){
     ${sec('Payments and budget',ul([
       'In a booking, add the <b>Deposit</b> and <b>Full Payment</b> with due dates. The card shows the balance and the Dashboard reminds you.',
       `Enter each cost in the currency you paid. Totals appear in your own currency (${esc(baseCur())}) using daily exchange rates, so they're estimates. Adjust rates in <b>Settings → Exchange Rates</b>.`,
+      '<b>Split shared bookings:</b> set <b>People on this trip</b> in Edit trip, then pick <b>Split cost</b> on a booking (everyone on the trip, or a number of people). Totals and Budget count only your share; the card shows both.',
       '<b>Budget</b> totals your spending by year, event and category.'
     ]))}
     ${sec('Apple Calendar, Google Calendar and Outlook',`${sub('Show your trips in your calendar')}${ol([
@@ -2870,7 +2872,34 @@ function vGuideCard(){
   </div></div>`;
 }
 function defS(){return{v:'dashboard',tid:null,tab:'flights',ly:2026,calY:2026,calM:new Date().getMonth(),tfY:null,theme:null,_themeSet:false,rates:{...DRATES},events:importEvents(),leave:importLeave(),lastModified:1}}
-function eCost(t){let s=0;['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>s+=toBase(e.cost,e.currency,e.rateToSGD)));return s;}
+// Cost splitting: a booking shared with friends ('party' = everyone on the trip, or a number of people) counts only your share in every total
+function splitN(e,t){const v=e&&e.split;return Math.max(1,v==='party'?parseInt(t&&t.pax)||1:parseInt(v)||1);}
+function shareAmt(e,t){return (parseFloat(e.cost)||0)/splitN(e,t);}
+const fmtAmt=v=>(Math.round(v*100)/100).toLocaleString('en',{maximumFractionDigits:2});
+function eCost(t){let s=0;['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>s+=toBase(e.cost,e.currency,e.rateToSGD)/splitN(e,t)));return s;}
+function eCostFull(t){let s=0;['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>s+=toBase(e.cost,e.currency,e.rateToSGD)));return s;}
+// "Your share" line on a booking card
+function splitEg(e,t){const n=splitN(e,t);if(n<2||!parseFloat(e.cost))return'';return`<div class="eg"><span class="ek">Your share</span><span class="ev">${esc(e.currency||baseCur())} ${fmtAmt(shareAmt(e,t))} <span class="split-n">split ${n} ways</span></span></div>`;}
+// The Split picker on booking forms: just me, everyone on the trip, or a number of people
+function splitHtml(ev,e,isNew){
+  const pax=parseInt(ev&&ev.pax)||1,v=e&&e.split!=null&&e.split!==''?String(e.split):(isNew&&pax>1?'party':'');
+  const nums=[];for(let i=2;i<=20;i++)nums.push(i);
+  return`<div class="fi full"><label>Split cost</label><select class="fc" name="split" data-pax="${pax}">
+    <option value=""${v===''?' selected':''}>Just me (I pay all of it)</option>
+    ${pax>1?`<option value="party"${v==='party'?' selected':''}>Everyone on this trip (${pax} people)</option>`:''}
+    ${nums.map(i=>`<option value="${i}"${v===String(i)&&!(pax>1&&v==='party')?' selected':''}>Split between ${i} people</option>`).join('')}
+  </select><div class="split-hint"></div>${pax>1?'':'<div class="split-hint quiet">Tip: set how many people are going in Edit trip, then pick “Everyone on this trip”.</div>'}</div>`;
+}
+function tlCost(e,t){if(!e.cost)return'';const n=splitN(e,t);return n>1?`${e.currency||''} ${fmtAmt(shareAmt(e,t))} (your share)`:`${e.currency||''} ${parseFloat(e.cost).toLocaleString()}`;}
+function splitVal(m){const el=m.querySelector('[name="split"]');return el?el.value:'';}
+function splitHintUpd(m){
+  const sel=m&&m.querySelector('[name="split"]');if(!sel)return;
+  const h=sel.parentElement.querySelector('.split-hint'),c=parseFloat((m.querySelector('[name="cost"]')||{}).value),cur=(m.querySelector('[name="currency"]')||{}).value||'';
+  const n=sel.value==='party'?parseInt(sel.dataset.pax)||1:parseInt(sel.value)||1;
+  h.textContent=n>1&&c?`Your share: ${cur} ${fmtAmt(c/n)} of ${cur} ${fmtAmt(c)}. Only your share counts in totals and the budget.`:'';
+}
+document.addEventListener('input',e=>{const m=e.target.closest&&e.target.closest('.modal');if(m&&/^(cost|split|currency|fullPaymentAmount)$/.test(e.target.name||''))splitHintUpd(m);});
+document.addEventListener('change',e=>{const m=e.target.closest&&e.target.closest('.modal');if(m&&/^(cost|split|currency)$/.test(e.target.name||''))splitHintUpd(m);});
 function allCost(){return S.events.reduce((s,t)=>s+eCost(t),0);}
 function upcoming(){const td=ymd(new Date());return S.events.filter(t=>t.endDate>=td).sort((a,b)=>a.startDate.localeCompare(b.startDate));}
 function past(){const td=ymd(new Date());return S.events.filter(t=>t.endDate<td).sort((a,b)=>b.startDate.localeCompare(a.startDate));}
@@ -3369,7 +3398,7 @@ function vDetail(){
   <div class="page-content">
     <div class="stats">
       <div class="stat blue"><div class="s-label">Duration</div><div class="s-val">${days(t.startDate,t.endDate)}<span style="font-size:14px;color:var(--text2)"> days</span></div><div class="s-sub">${nights(t.startDate,t.endDate)} nights</div></div>
-      <div class="stat green"><div class="s-label">Total Cost</div><div class="s-val">${fmtM(eCost(t),'')}</div><div class="s-sub">${baseCur()}</div></div>
+      <div class="stat green"><div class="s-label">${eCostFull(t)-eCost(t)>0.005?'Your Cost':'Total Cost'}</div><div class="s-val">${fmtM(eCost(t),'')}</div><div class="s-sub">${baseCur()}${eCostFull(t)-eCost(t)>0.005?` · of ${fmtM(eCostFull(t),'')} total`:''}</div></div>
       <div class="stat purple"><div class="s-label">Locations</div><div class="s-val">${t.locations.length}</div><div class="s-sub">${t.locations.join(' · ')}</div></div>
       <div class="stat orange"><div class="s-label">Bookings</div><div class="s-val">${(t.flights||[]).length+(t.hotels||[]).length+(t.activities||[]).length+(t.transport||[]).length}</div></div>
       ${(()=>{const ps=eventPaymentStatus(t);if(!ps)return'';const icon=ps.status==='paid'?'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>':'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';return`<div class="stat" style="border-color:${ps.color}"><div class="s-label">Payment</div><div class="s-val" style="font-size:14px;color:${ps.color};display:flex;align-items:center;gap:6px">${icon} ${ps.label}</div></div>`;})()}
@@ -3398,7 +3427,7 @@ function rFlights(t){
         ${f.departureTime?`<div class="eg"><span class="ek">Depart</span><span class="ev">${fmtFlightDT(f.departureTime,f.from,flightTzs(f).dep)}</span></div>`:''}
         ${f.arrivalTime?`<div class="eg"><span class="ek">Arrive</span><span class="ev">${fmtFlightDT(f.arrivalTime,f.to,flightTzs(f).arr)}</span></div>`:''}
         ${f.duration?`<div class="eg"><span class="ek">Duration</span><span class="ev">${esc(f.duration)}</span></div>`:''}
-        ${f.cost?`<div class="eg"><span class="ek">Cost</span><span class="ev">${esc(f.currency)} ${parseFloat(f.cost).toLocaleString()}</span></div>`:''}
+        ${f.cost?`<div class="eg"><span class="ek">Cost</span><span class="ev">${esc(f.currency)} ${parseFloat(f.cost).toLocaleString()}</span></div>`:''}${splitEg(f,t)}
       </div>
       ${f.notes?`<div style="margin-top:6px;font-size:11px;color:var(--text2)">${esc(f.notes)}</div>`:''}
       ${f.attachUrl?`<a href="${esc(f.attachUrl)}" target="_blank" class="attach-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>Attachment</a>`:''}
@@ -3417,7 +3446,7 @@ function rHotels(t){
         ${h.checkIn?`<div class="eg"><span class="ek">Check-in</span><span class="ev">${fmt(h.checkIn)}</span></div>`:''}
         ${h.checkOut?`<div class="eg"><span class="ek">Check-out</span><span class="ev">${fmt(h.checkOut)}</span></div>`:''}
         ${h.checkIn&&h.checkOut?`<div class="eg"><span class="ek">Nights</span><span class="ev">${nights(h.checkIn,h.checkOut)}</span></div>`:''}
-        ${h.cost&&!h.fullPaymentAmount?`<div class="eg"><span class="ek">Cost</span><span class="ev">${esc(h.currency)} ${parseFloat(h.cost).toLocaleString()}</span></div>`:''}
+        ${h.cost&&!h.fullPaymentAmount?`<div class="eg"><span class="ek">Cost</span><span class="ev">${esc(h.currency)} ${parseFloat(h.cost).toLocaleString()}</span></div>`:''}${splitEg(h,t)}
         ${paymentRowsHtml(h)}
         ${h.website?`<div class="eg"><span class="ek">Website</span><span class="ev"><a href="${esc(h.website)}" target="_blank">${esc(h.website).slice(0,35)}…</a></span></div>`:''}
       </div>
@@ -3437,7 +3466,7 @@ function rActs(t){
         ${a.date&&a.endDate?`<div class="eg"><span class="ek">Dates</span><span class="ev">${fmt(a.date)} — ${fmt(a.endDate)} (${calcNights(a.date,a.endDate)||'?'}d)</span></div>`:a.date?`<div class="eg"><span class="ek">Date</span><span class="ev">${fmt(a.date)}</span></div>`:''}
         ${a.time?`<div class="eg"><span class="ek">Time</span><span class="ev">${esc(a.time)}</span></div>`:''}
         ${a.duration?`<div class="eg"><span class="ek">Duration</span><span class="ev">${esc(a.duration)}</span></div>`:''}
-        ${a.cost&&!a.fullPaymentAmount?`<div class="eg"><span class="ek">Cost</span><span class="ev">${esc(a.currency)} ${parseFloat(a.cost).toLocaleString()}</span></div>`:''}
+        ${a.cost&&!a.fullPaymentAmount?`<div class="eg"><span class="ek">Cost</span><span class="ev">${esc(a.currency)} ${parseFloat(a.cost).toLocaleString()}</span></div>`:''}${splitEg(a,t)}
         ${a.bookingDetails?`<div class="eg"><span class="ek">Booking</span><span class="ev">${esc(a.bookingDetails)}</span></div>`:''}
         ${paymentRowsHtml(a)}
       </div>
@@ -3457,7 +3486,7 @@ function rTrans(t){
         ${x.date?`<div class="eg"><span class="ek">Date</span><span class="ev">${fmt(x.date)}</span></div>`:''}
         ${x.time?`<div class="eg"><span class="ek">Time</span><span class="ev">${esc(x.time)}</span></div>`:''}
         ${x.duration?`<div class="eg"><span class="ek">Duration</span><span class="ev">${esc(x.duration)}</span></div>`:''}
-        ${x.cost&&!x.fullPaymentAmount?`<div class="eg"><span class="ek">Cost</span><span class="ev">${esc(x.currency)} ${parseFloat(x.cost).toLocaleString()}</span></div>`:''}
+        ${x.cost&&!x.fullPaymentAmount?`<div class="eg"><span class="ek">Cost</span><span class="ev">${esc(x.currency)} ${parseFloat(x.cost).toLocaleString()}</span></div>`:''}${splitEg(x,t)}
         ${x.bookingDetails?`<div class="eg"><span class="ek">Booking</span><span class="ev">${esc(x.bookingDetails)}</span></div>`:''}
         ${paymentRowsHtml(x)}
       </div>
@@ -3636,10 +3665,10 @@ function rAttach(t){
 function rTimeline(t){
   // Collect all entries with dates
   const items=[];
-  (t.flights||[]).forEach(f=>{const d=f.departureTime?(f.departureTime.includes('T')?f.departureTime.split('T')[0]:f.departureTime.split(' ')[0]):'';const fz=flightTzs(f),homeNote=(()=>{const ms=fz.dep&&f.departureTime&&!/T00:00$/.test(f.departureTime)?zonedToUtc(f.departureTime,fz.dep):NaN;return !isNaN(ms)&&tzOffsetMin(ms,fz.dep)!==tzOffsetMin(ms,homeTz())?' · departs '+new Date(ms).toLocaleTimeString(dloc(),{timeZone:homeTz(),hour:'numeric',minute:'2-digit',hour12:true})+' '+homeTzLabel()+' time':'';})();items.push({type:'flight',date:d||t.startDate,time:f.departureTime,label:`${f.airline||''} ${f.flightNumber||''}`.trim()||'Flight',sub:`${f.from||'?'} → ${f.to||'?'}${homeNote}`,cost:f.cost?`${f.currency} ${parseFloat(f.cost).toLocaleString()}`:''});});
-  (t.hotels||[]).forEach(h=>{items.push({type:'hotel',date:h.checkIn||t.startDate,time:'',label:h.name||'Hotel',sub:`${fmt(h.checkIn)} — ${fmt(h.checkOut)} (${nights(h.checkIn,h.checkOut)}n)`,cost:h.cost?`${h.currency} ${parseFloat(h.cost).toLocaleString()}`:''});});
-  (t.activities||[]).forEach(a=>{items.push({type:'activity',date:a.date||t.startDate,time:a.time||'',label:a.name||'Activity',sub:a.location||'',cost:a.cost?`${a.currency} ${parseFloat(a.cost).toLocaleString()}`:''});});
-  (t.transport||[]).forEach(x=>{items.push({type:'transport',date:x.date||t.startDate,time:x.time||'',label:`${x.type||''} ${x.name||''}`.trim()||'Transport',sub:x.location||'',cost:x.cost?`${x.currency} ${parseFloat(x.cost).toLocaleString()}`:''});});
+  (t.flights||[]).forEach(f=>{const d=f.departureTime?(f.departureTime.includes('T')?f.departureTime.split('T')[0]:f.departureTime.split(' ')[0]):'';const fz=flightTzs(f),homeNote=(()=>{const ms=fz.dep&&f.departureTime&&!/T00:00$/.test(f.departureTime)?zonedToUtc(f.departureTime,fz.dep):NaN;return !isNaN(ms)&&tzOffsetMin(ms,fz.dep)!==tzOffsetMin(ms,homeTz())?' · departs '+new Date(ms).toLocaleTimeString(dloc(),{timeZone:homeTz(),hour:'numeric',minute:'2-digit',hour12:true})+' '+homeTzLabel()+' time':'';})();items.push({type:'flight',date:d||t.startDate,time:f.departureTime,label:`${f.airline||''} ${f.flightNumber||''}`.trim()||'Flight',sub:`${f.from||'?'} → ${f.to||'?'}${homeNote}`,cost:tlCost(f,t)});});
+  (t.hotels||[]).forEach(h=>{items.push({type:'hotel',date:h.checkIn||t.startDate,time:'',label:h.name||'Hotel',sub:`${fmt(h.checkIn)} — ${fmt(h.checkOut)} (${nights(h.checkIn,h.checkOut)}n)`,cost:tlCost(h,t)});});
+  (t.activities||[]).forEach(a=>{items.push({type:'activity',date:a.date||t.startDate,time:a.time||'',label:a.name||'Activity',sub:a.location||'',cost:tlCost(a,t)});});
+  (t.transport||[]).forEach(x=>{items.push({type:'transport',date:x.date||t.startDate,time:x.time||'',label:`${x.type||''} ${x.name||''}`.trim()||'Transport',sub:x.location||'',cost:tlCost(x,t)});});
   items.sort((a,b)=>(a.date+' '+(a.time||'99')).localeCompare(b.date+' '+(b.time||'99')));
   if(!items.length)return '<div class="empty"><p>No entries yet — add flights, hotels, or activities to see your itinerary</p></div>';
   let lastDate='';
@@ -4063,14 +4092,14 @@ function shareAttachments(t,files){
 }
 function shareSnapshot(t,o,files){
   const pick=(e,keys)=>Object.fromEntries(keys.filter(k=>e[k]!=null&&e[k]!=='').map(k=>[k,e[k]]));
-  const ref=o.refs?['pnr','bookingNumber','bookingDetails']:[],cost=o.costs?['cost','currency']:[];
+  const ref=o.refs?['pnr','bookingNumber','bookingDetails']:[],cost=o.costs?['cost','currency']:[],ways=e=>o.costs&&e.cost&&splitN(e,t)>1?{ways:splitN(e,t)}:{};
   return{name:t.name,startDate:t.startDate,endDate:t.endDate,locations:t.locations||[],sharedBy:acctFirstName()||'',opts:{costs:!!o.costs,refs:!!o.refs,notes:!!o.notes,files:!!o.files},
     ...(o.notes&&t.notes?{notes:t.notes}:{}),
     ...(o.files?{attachments:shareAttachments(t,files||{})}:{}),
-    flights:(t.flights||[]).map(f=>pick(f,['airline','flightNumber','from','to','departureTime','arrivalTime','duration',...ref,...cost])),
-    hotels:(t.hotels||[]).map(h=>pick(h,['name','checkIn','checkOut',...ref,...cost])),
-    activities:(t.activities||[]).map(a=>pick(a,['name','date','endDate','time','location','duration',...ref,...cost])),
-    transport:(t.transport||[]).map(x=>pick(x,['type','name','date','time','location','duration',...ref,...cost]))};
+    flights:(t.flights||[]).map(f=>({...pick(f,['airline','flightNumber','from','to','departureTime','arrivalTime','duration',...ref,...cost]),...ways(f)})),
+    hotels:(t.hotels||[]).map(h=>({...pick(h,['name','checkIn','checkOut',...ref,...cost]),...ways(h)})),
+    activities:(t.activities||[]).map(a=>({...pick(a,['name','date','endDate','time','location','duration',...ref,...cost]),...ways(a)})),
+    transport:(t.transport||[]).map(x=>({...pick(x,['type','name','date','time','location','duration',...ref,...cost]),...ways(x)}))};
 }
 async function sharesLoad(){
   if(!_acct)return null;const me=_acct.id;
@@ -4331,7 +4360,7 @@ function vBudget(){
   const ft=tpFilter(S.events);
   const byCur={};
   const byCat={flights:0,hotels:0,activities:0,transport:0};
-  ft.forEach(t=>['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>{if(e.cost&&parseFloat(e.cost)){const c=e.currency||baseCur();byCur[c]=(byCur[c]||0)+parseFloat(e.cost);byCat[k]+=toBase(e.cost,c,e.rateToSGD);}})));
+  ft.forEach(t=>['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>{if(e.cost&&parseFloat(e.cost)){const c=e.currency||baseCur();byCur[c]=(byCur[c]||0)+shareAmt(e,t);byCat[k]+=toBase(e.cost,c,e.rateToSGD)/splitN(e,t);}})));
   const wc=ft.filter(t=>eCost(t)>0).sort((a,b)=>eCost(b)-eCost(a));
   const total=ft.reduce((s,t)=>s+eCost(t),0);
   const catColors={flights:'#8a7fe8',hotels:'#7fae8c',activities:'#c99a5b',transport:'#6fa3c8'};
@@ -5105,7 +5134,7 @@ function buildItineraryItems(t,opts){
   const items=[];
   const fmtD2=d=>d?new Date(d+'T00:00:00').toLocaleDateString(dloc(),{day:'numeric',month:'short',year:'numeric'}):'';
   const fmtT2=dt=>{if(!dt)return '';try{const d2=new Date(dt.includes('T')?dt:dt.replace(' ','T'));if(isNaN(d2))return dt;return d2.toLocaleTimeString(dloc(),{hour:'numeric',minute:'2-digit',hour12:true});}catch(e){return dt;}};
-  const payDet=(e)=>{const r=[];if(!incPayments)return r;if(e.fullPaymentAmount)r.push(['Full Payment',`${e.fullPaymentCurrency||e.currency||baseCur()} ${e.fullPaymentAmount}`]);if(e.depositAmount)r.push(['Deposit',`${e.depositCurrency||e.currency||baseCur()} ${e.depositAmount}${e.depositPaid==='yes'?' (Paid)':' (Unpaid)'}`]);if(e.depositDate)r.push(['Deposit Date',fmtD2(e.depositDate)]);if(e.paymentDueDate)r.push(['Payment Due',fmtD2(e.paymentDueDate)]);if(e.fullyPaid==='yes')r.push(['Status','Fully Paid']);return r;};
+  const payDet=(e)=>{const r=[];if(flds.includes('costs')&&splitN(e,t)>1&&parseFloat(e.cost))r.push(['Your share',`${e.currency||baseCur()} ${fmtAmt(shareAmt(e,t))} (split ${splitN(e,t)} ways)`]);if(!incPayments)return r;if(e.fullPaymentAmount)r.push(['Full Payment',`${e.fullPaymentCurrency||e.currency||baseCur()} ${e.fullPaymentAmount}`]);if(e.depositAmount)r.push(['Deposit',`${e.depositCurrency||e.currency||baseCur()} ${e.depositAmount}${e.depositPaid==='yes'?' (Paid)':' (Unpaid)'}`]);if(e.depositDate)r.push(['Deposit Date',fmtD2(e.depositDate)]);if(e.paymentDueDate)r.push(['Payment Due',fmtD2(e.paymentDueDate)]);if(e.fullyPaid==='yes')r.push(['Status','Fully Paid']);return r;};
   if(secs.includes('flights'))(t.flights||[]).forEach(f=>{
     const d=f.departureTime?(f.departureTime.includes('T')?f.departureTime.split('T')[0]:f.departureTime.split(' ')[0]):'';
     if(!inRange(d||t.startDate))return;
@@ -5361,6 +5390,7 @@ function modal(title,body,onSave,opts){
   o.onclick=e=>{if(e.target===o)xm();};
   o.querySelectorAll('.dz').forEach(setupDZ);
   setupDZTabs(o);
+  splitHintUpd(o.querySelector('.modal'));
 }
 function xm(){document.getElementById('mbg').classList.remove('open');}
 
@@ -6122,10 +6152,10 @@ function showSmartUpload(){
           if(!duration&&l.time&&l.atime&&dep&&arr)duration=flightDuration(dep,arr,tzForPlace(l.from),tzForPlace(l.to));
           const code=(l.fn.match(/^[A-Z0-9]{2}/i)||[''])[0].toUpperCase();
           ev.flights.push({id:uid(),airline:AIRLINE_MAP[code]||l.airline||parsed.airline||'',flightNumber:l.fn.replace(/\s+/g,'').toUpperCase(),pnr:l.pnr||parsed.pnr||'',seat:l.seat,from:l.from,to:l.to,departureTime:dep,arrivalTime:arr,duration,
-            cost:lc,currency:lcur,rateToSGD:snapRate(lcur),notes:!perLegCost&&i===0&&cost&&legs.length>1?`Booking total for ${legs.length} flights`:'',ocrText:i===0?(parsed.rawText||''):''});
+            cost:lc,currency:lcur,rateToSGD:snapRate(lcur),...((parseInt(ev.pax)||1)>1?{split:'party'}:{}),notes:!perLegCost&&i===0&&cost&&legs.length>1?`Booking total for ${legs.length} flights`:'',ocrText:i===0?(parsed.rawText||''):''});
         });
       }else{
-        const entry={id:uid(),cost:parsed.cost||'',currency:parsed.currency||baseCur(),rateToSGD:snapRate(parsed.currency||baseCur()),notes:parsed.rawText?'[Auto-extracted]':'',ocrText:parsed.rawText||''};
+        const entry={id:uid(),...((parseInt(ev.pax)||1)>1?{split:'party'}:{}),cost:parsed.cost||'',currency:parsed.currency||baseCur(),rateToSGD:snapRate(parsed.currency||baseCur()),notes:parsed.rawText?'[Auto-extracted]':'',ocrText:parsed.rawText||''};
         if(type==='hotel'){Object.assign(entry,{name:parsed.hotelName||parsed.name||'',bookingNumber:parsed.bookingNumber||parsed.pnr||'',website:'',checkIn:parsed.date||'',checkOut:parsed.dateTo||'',notes:[parsed.roomType,parsed.nights?parsed.nights+' night'+(parsed.nights>1?'s':''):''].filter(Boolean).join(' · ')||entry.notes});ev.hotels.push(entry);}
         else if(type==='activity'){Object.assign(entry,{name:parsed.title||parsed.name||'',location:parsed.locations?parsed.locations[0]:'',date:parsed.date||'',time:suTime24(parsed.departureTime),duration:'',bookingDetails:parsed.pnr||''});ev.activities.push(entry);}
         else{Object.assign(entry,{type:parsed.transportType||'Other',name:parsed.provider||parsed.name||'',location:parsed.locations?parsed.locations[0]:'',date:parsed.date||'',time:suTime24(parsed.departureTime),duration:'',bookingDetails:parsed.pnr||'',notes:parsed.title&&parsed.title!==parsed.provider?parsed.title:entry.notes});ev.transport.push(entry);}
@@ -7477,6 +7507,7 @@ function fEvent(t){
     <div class="fi"><label>Start Time</label><input class="fc" type="time" name="st" value="${t.startTime||''}"></div>
     <div class="fi"><label>End Date <span class="dow-hint" data-for="ed">${t.endDate?dayN(t.endDate):''}</span></label><input class="fc" type="date" name="ed" value="${t.endDate}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString(dloc(),{weekday:'long'}):''"></div>
     <div class="fi"><label>End Time</label><input class="fc" type="time" name="et" value="${t.endTime||''}"></div>
+    <div class="fi"><label>People on this trip</label><input class="fc" type="number" min="1" max="50" step="1" name="pax" value="${parseInt(t.pax)||1}"><div class="split-hint quiet">Including you. Used to split shared bookings.</div></div>
     <div class="fi full"><label>Locations (comma-separated)</label><input class="fc" name="locs" value="${esc(t.locations.join(', '))}"></div>
     <div class="fi full"><label>Countries</label>
       <div class="country-chips" id="ev-country-chips">${(t.countries||[]).map(cid=>`<span class="country-chip" data-cid="${cid}">${esc(COUNTRY_DATA[cid]||cid)} <span class="chip-x" data-action="rm-country-chip" data-cid="${cid}">×</span></span>`).join('')}</div>
@@ -7488,7 +7519,7 @@ function fEvent(t){
   </div><div id="clash-zone"></div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
     const countries=g('countries').split(',').filter(Boolean);
-    const d={name:g('name'),category:g('category')||'trip',requiresLeave:g('requiresLeave')!=='false',startDate:g('sd'),startTime:g('st'),endDate:g('ed'),endTime:g('et'),locations:g('locs').split(',').map(s=>s.trim()).filter(Boolean),sharedLink:g('link'),notes:g('notes'),year:parseInt(g('sd'))||new Date().getFullYear(),countries};
+    const d={name:g('name'),category:g('category')||'trip',requiresLeave:g('requiresLeave')!=='false',startDate:g('sd'),startTime:g('st'),endDate:g('ed'),endTime:g('et'),locations:g('locs').split(',').map(s=>s.trim()).filter(Boolean),sharedLink:g('link'),notes:g('notes'),pax:Math.max(1,Math.min(50,parseInt(g('pax'))||1)),year:parseInt(g('sd'))||new Date().getFullYear(),countries};
     // Check for clashes before saving
     const clashes=findClashes(d,e?t.id:null);
     const cz=m.querySelector('#clash-zone');
@@ -7552,7 +7583,7 @@ function fHotel(ev,h){
   const e=!!h;h=h||{name:'',bookingNumber:'',website:'',checkIn:'',checkOut:'',cost:'',currency:eventCur(ev),notes:'',ocrText:''};
   const initNights=calcNights(h.checkIn,h.checkOut);
   const dz='h-'+uid();
-  const hasDetails=!!(h.bookingNumber||h.website||h.cost||h.notes);
+  const hasDetails=!!(h.bookingNumber||h.website||h.cost||h.notes||h.split||(!e&&(parseInt(ev.pax)||1)>1));
   modal(e?'Edit Hotel':'Add Hotel',`<div class="fg">
     <div class="fi full"><label>Hotel Name</label><input class="fc" name="name" value="${esc(h.name)}"></div>
     <div class="fi"><label>Check-in <span class="dow-hint">${h.checkIn?dayN(h.checkIn):''}</span></label><input class="fc" type="date" name="ci" value="${h.checkIn||''}" onchange="this.parentElement.querySelector('.dow-hint').textContent=this.value?new Date(this.value+'T00:00:00').toLocaleDateString(dloc(),{weekday:'long'}):''"></div>
@@ -7564,6 +7595,7 @@ function fHotel(ev,h){
       <div class="fi"><label>Website</label><input class="fc" name="web" value="${esc(h.website||'')}"></div>
       <div class="fi"><label>Cost</label><input class="fc" type="number" step="0.01" name="cost" value="${h.cost||''}"></div>
       <div class="fi"><label>Currency</label>${curSel(h.currency)}</div>
+      ${splitHtml(ev,h,!e)}
       <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(h.notes||'')}</textarea></div>
     </div></div>
     ${paymentHtml(h,{fullPayment:true})}
@@ -7571,7 +7603,7 @@ function fHotel(ev,h){
   </div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
     const oE=document.getElementById('or-'+dz);
-    const d={name:g('name'),bookingNumber:g('bn'),website:g('web'),checkIn:g('ci'),checkOut:g('co'),cost:g('cost'),currency:g('currency'),rateToSGD:snapRate(g('currency')),notes:g('notes'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:h.ocrText)||'',...gatherPayment(g)};
+    const d={name:g('name'),bookingNumber:g('bn'),website:g('web'),checkIn:g('ci'),checkOut:g('co'),cost:g('cost'),currency:g('currency'),rateToSGD:snapRate(g('currency')),split:splitVal(m),notes:g('notes'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:h.ocrText)||'',...gatherPayment(g)};
     applyFullPayment(d);
     if(e)Object.assign(h,d);else ev.hotels.push({id:uid(),...d});
     saveS();render();toast(e?'Hotel updated':'Hotel added');
@@ -7593,7 +7625,7 @@ function fFlight(ev,f){
   const dtl=v=>{v=(v||'').trim().replace(' ','T');return /^\d{4}-\d{2}-\d{2}$/.test(v)?v+'T00:00':v;};
   const e=!!f;f=f||{airline:'',flightNumber:'',pnr:'',seat:'',departureTime:'',arrivalTime:'',duration:'',from:'',to:'',cost:'',currency:eventCur(ev),notes:'',ocrText:''};
   const dz='f-'+uid();
-  const hasDetails=!!(f.pnr||f.seat||f.duration||f.cost||f.notes||f.attachUrl);
+  const hasDetails=!!(f.pnr||f.seat||f.duration||f.cost||f.notes||f.attachUrl||f.split||(!e&&(parseInt(ev.pax)||1)>1));
   modal(e?'Edit Flight':'Add Flight',`<div class="fg">
     <div class="fi"><label>Airline</label><input class="fc" name="airline" list="airline-list" value="${esc(f.airline||'')}" autocomplete="off"></div>
     <div class="fi"><label>Flight #</label><input class="fc" name="fn" value="${esc(f.flightNumber||'')}"></div>
@@ -7608,6 +7640,7 @@ function fFlight(ev,f){
       <div class="fi"><label>Duration</label><input class="fc" name="duration" value="${esc(f.duration||'')}" placeholder="Auto-calculated"></div>
       <div class="fi"><label>Cost</label><input class="fc" type="number" step="0.01" name="cost" value="${f.cost||''}"></div>
       <div class="fi"><label>Currency</label>${curSel(f.currency)}</div>
+      ${splitHtml(ev,f,!e)}
       <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(f.notes||'')}</textarea></div>
       <div class="fi full"><label>Attachment URL</label><input class="fc" name="attach" value="${esc(f.attachUrl||'')}" placeholder="Link to doc, PDF, or image"></div>
     </div></div>
@@ -7616,13 +7649,13 @@ function fFlight(ev,f){
   </div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
     const oE=document.getElementById('or-'+dz);
-    const d={airline:g('airline'),flightNumber:g('fn'),pnr:g('pnr'),seat:g('seat'),from:g('from'),to:g('to'),departureTime:g('dep'),arrivalTime:g('arr'),duration:g('duration'),cost:g('cost'),currency:g('currency'),rateToSGD:snapRate(g('currency')),notes:g('notes'),attachUrl:g('attach'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:f.ocrText)||'',...gatherPayment(g)};
+    const d={airline:g('airline'),flightNumber:g('fn'),pnr:g('pnr'),seat:g('seat'),from:g('from'),to:g('to'),departureTime:g('dep'),arrivalTime:g('arr'),duration:g('duration'),cost:g('cost'),currency:g('currency'),rateToSGD:snapRate(g('currency')),split:splitVal(m),notes:g('notes'),attachUrl:g('attach'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:f.ocrText)||'',...gatherPayment(g)};
     if(e)Object.assign(f,d);else ev.flights.push({id:uid(),...d});
     // Add any pending multi-leg flights from OCR
     if(window._pendingFlightLegs&&window._pendingFlightLegs.length){
       const extra=window._pendingFlightLegs;
       window._pendingFlightLegs=null;
-      extra.forEach(leg=>ev.flights.push({id:uid(),...leg,rateToSGD:snapRate(leg.currency)}));
+      extra.forEach(leg=>ev.flights.push({id:uid(),...leg,split:d.split,rateToSGD:snapRate(leg.currency)}));
       saveS();render();toast((1+extra.length)+' flights added from scan');
     }else{saveS();render();toast(e?'Flight updated':'Flight added');}
   });
@@ -7643,7 +7676,7 @@ function fAct(ev,a){
   const e=!!a;a=a||{name:'',location:'',date:'',endDate:'',time:'',duration:'',notes:'',bookingDetails:'',cost:'',currency:eventCur(ev),ocrText:''};
   const dz='a-'+uid();
   const initDays=(a.date&&a.endDate)?calcNights(a.date,a.endDate):'';
-  const hasDetails=!!(a.time||a.duration||a.cost||a.bookingDetails||a.notes);
+  const hasDetails=!!(a.time||a.duration||a.cost||a.bookingDetails||a.notes||a.split||(!e&&(parseInt(ev.pax)||1)>1));
   modal(e?'Edit Activity':'Add Activity',`<div class="fg">
     <div class="fi full"><label>Name</label><input class="fc" name="name" value="${esc(a.name||'')}"></div>
     <div class="fi"><label>Location</label><input class="fc" name="loc" list="location-list" value="${esc(a.location||'')}" autocomplete="off"></div>
@@ -7656,6 +7689,7 @@ function fAct(ev,a){
       <div class="fi"><label>Duration</label><input class="fc" name="dur" value="${esc(a.duration||'')}"></div>
       <div class="fi"><label>Cost</label><input class="fc" type="number" step="0.01" name="cost" value="${a.cost||''}"></div>
       <div class="fi"><label>Currency</label>${curSel(a.currency)}</div>
+      ${splitHtml(ev,a,!e)}
       <div class="fi full"><label>Booking Details</label><input class="fc" name="bd" value="${esc(a.bookingDetails||'')}"></div>
       <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(a.notes||'')}</textarea></div>
     </div></div>
@@ -7664,7 +7698,7 @@ function fAct(ev,a){
   </div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
     const oE=document.getElementById('or-'+dz);
-    const d={name:g('name'),location:g('loc'),date:g('date'),endDate:g('endDate'),time:g('time'),duration:g('dur'),cost:g('cost'),currency:g('currency'),rateToSGD:snapRate(g('currency')),bookingDetails:g('bd'),notes:g('notes'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:a.ocrText)||'',...gatherPayment(g)};
+    const d={name:g('name'),location:g('loc'),date:g('date'),endDate:g('endDate'),time:g('time'),duration:g('dur'),cost:g('cost'),currency:g('currency'),rateToSGD:snapRate(g('currency')),split:splitVal(m),bookingDetails:g('bd'),notes:g('notes'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:a.ocrText)||'',...gatherPayment(g)};
     applyFullPayment(d);
     if(e)Object.assign(a,d);else ev.activities.push({id:uid(),...d});
     saveS();render();toast(e?'Activity updated':'Activity added');
@@ -7685,7 +7719,7 @@ function fTrans(ev,x){
   const e=!!x;x=x||{type:'',name:'',location:'',date:'',time:'',duration:'',notes:'',bookingDetails:'',cost:'',currency:eventCur(ev),ocrText:''};
   const dz='t-'+uid();
   const types=['Train','Bus','Ferry','Car Rental','Taxi/Grab','Boat','Other'];
-  const hasDetails=!!(x.duration||x.cost||x.bookingDetails||x.notes);
+  const hasDetails=!!(x.duration||x.cost||x.bookingDetails||x.notes||x.split||(!e&&(parseInt(ev.pax)||1)>1));
   modal(e?'Edit Transport':'Add Transport',`<div class="fg">
     <div class="fi"><label>Type</label><select class="fc" name="type">${types.map(tp=>`<option${tp===x.type?' selected':''}>${tp}</option>`).join('')}</select></div>
     <div class="fi"><label>Name / Provider</label><input class="fc" name="name" value="${esc(x.name||'')}"></div>
@@ -7697,6 +7731,7 @@ function fTrans(ev,x){
       <div class="fi"><label>Duration</label><input class="fc" name="dur" value="${esc(x.duration||'')}"></div>
       <div class="fi"><label>Cost</label><input class="fc" type="number" step="0.01" name="cost" value="${x.cost||''}"></div>
       <div class="fi"><label>Currency</label>${curSel(x.currency)}</div>
+      ${splitHtml(ev,x,!e)}
       <div class="fi full"><label>Booking Details</label><input class="fc" name="bd" value="${esc(x.bookingDetails||'')}"></div>
       <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(x.notes||'')}</textarea></div>
     </div></div>
@@ -7705,7 +7740,7 @@ function fTrans(ev,x){
   </div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
     const oE=document.getElementById('or-'+dz);
-    const d={type:g('type'),name:g('name'),location:g('loc'),date:g('date'),time:g('time'),duration:g('dur'),cost:g('cost'),currency:g('currency'),rateToSGD:snapRate(g('currency')),bookingDetails:g('bd'),notes:g('notes'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:x.ocrText)||'',...gatherPayment(g)};
+    const d={type:g('type'),name:g('name'),location:g('loc'),date:g('date'),time:g('time'),duration:g('dur'),cost:g('cost'),currency:g('currency'),rateToSGD:snapRate(g('currency')),split:splitVal(m),bookingDetails:g('bd'),notes:g('notes'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:x.ocrText)||'',...gatherPayment(g)};
     applyFullPayment(d);
     if(e)Object.assign(x,d);else ev.transport.push({id:uid(),...d});
     saveS();render();toast(e?'Transport updated':'Transport added');
