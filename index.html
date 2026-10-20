@@ -473,6 +473,21 @@ td.mg-l{color:var(--text3);white-space:nowrap;padding-top:9px}
 .la-st.up{color:var(--green);border-color:var(--green)}
 .la-half{font-size:10.5px;color:var(--text3)}
 .lieu-sug{border-bottom:1px solid var(--line)}
+button.lb-go{font:inherit;cursor:pointer;width:100%;transition:background .15s}
+button.lb-go:hover{background:var(--card-hover)!important}
+button.lb-go .ls u{text-decoration:none;color:var(--primary-deep)}
+button.lb-go:hover .ls u{text-decoration:underline}
+.lvd-intro{font-size:13px;color:var(--text2);margin:0 0 12px}
+.lvd-list{border-top:1px solid var(--line)}
+.lvd-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.lvd-main{flex:1;min-width:0}
+.lvd-head{font-size:13px;color:var(--text);margin-bottom:4px}
+.lvd-sub{font-size:12px;color:var(--text2);margin-top:3px}
+.lvd-muted{color:var(--text3)}
+.lvd-trip{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;padding:5px 0;font:600 13.5px var(--font);color:var(--text);cursor:pointer;text-align:left}
+.lvd-trip:hover{color:var(--primary-deep)}
+.lvd-dot{width:8px;height:8px;border-radius:50%;flex:none}
+.lvd-go{margin-left:auto;color:var(--text3);font-weight:400}
 .lieu-sug-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;font-size:12px;color:var(--text2);border-top:1px solid var(--line);flex-wrap:wrap}
 .lieu-sug-row:first-child{border-top:0}
 .lieu-sug-acts{display:flex;gap:6px;flex:none}
@@ -2807,7 +2822,7 @@ function vGuideCard(){
       'Tick <b>I still work here</b> instead of an end date. Changed jobs? <b>+ Add Job</b> and each job\'s leave counts for its own months.',
       '<b>Carry forward:</b> what\'s left at year end moves to the next year (tap <b>+ Year</b>), up to the limit you set. If carried days expire (e.g. 31 Mar), they\'re used first and any left after that date are lost.',
       '<b>Days in lieu:</b> add days earned for working on a public holiday or rest day, or overtime. The app also points out holidays that fall on your rest day. <b>Volunteer leave</b> (often 1 day in Singapore) is set per job. Neither carries over.',
-      'Add leave you take or book with its type (annual, in lieu, volunteer, or sick/other, which isn\'t deducted). Past dates count as <b>Taken</b>, future ones as <b>Booked</b>, and trips without leave booked show under <b>Trips not booked</b>.',
+      'Add leave you take or book with its type (annual, in lieu, volunteer, or sick/other, which isn\'t deducted). Past dates count as <b>Taken</b>, future ones as <b>Booked</b>, and trips without leave booked show under <b>Trips not booked</b>. Tap <b>Taken</b>, <b>Booked</b> or <b>Trips not booked</b> to see the trips, open one, or book its leave in one tap.',
       'Choose which public holidays are days off at work (including state ones), add other countries\' holidays to the Calendar, or add missing ones in <b>Leave → My holidays</b>.',
       '<b>Long weekends</b> suggests the best days to take off around public holidays. Tap <b>Plan a trip</b> to create the event.'
     ]))}
@@ -3859,6 +3874,47 @@ function lieuSuggestions(y){
   });
   return res;
 }
+// Trips this year with work days not covered by leave you've added (each day counted once in the total)
+function leaveTripsUnbooked(y){
+  const ys=String(y),seen=new Set(),list=[];
+  (S.events||[]).forEach(t=>{
+    if(t.requiresLeave===false||!t.startDate||!t.endDate)return;
+    const s=t.startDate>`${ys}-01-01`?t.startDate:`${ys}-01-01`,e=t.endDate<`${ys}-12-31`?t.endDate:`${ys}-12-31`;
+    if(s>e)return;
+    const need=[];
+    for(let c=new Date(s+'T00:00:00');ymd(c)<=e;c.setDate(c.getDate()+1)){const d=ymd(c);if(isWorkday(d)&&!getAppliedForDate(d,y))need.push(d);}
+    if(!need.length)return;
+    need.forEach(d=>seen.add(d));
+    list.push({t,days:need.length,from:s,to:e,first:need[0],last:need[need.length-1]});
+  });
+  list.sort((a,b)=>a.from.localeCompare(b.from));
+  return{list,total:seen.size};
+}
+// Trips that overlap a leave entry
+const leaveTripsFor=a=>(S.events||[]).filter(t=>t.source!=='apple'&&t.startDate&&t.endDate&&t.startDate<=(a.to||a.from)&&t.endDate>=a.from);
+function showLeaveDetail(kind){
+  const y=parseInt(S.ly||new Date().getFullYear()),l=leaveData(y),today=ymd(new Date());if(!l)return;
+  const range=(a,b)=>fmtS(a)+(b&&b!==a?' – '+fmtS(b):'');
+  const trip=t=>`<button class="lvd-trip" data-action="lv-open" data-id="${t.id}"><span class="lvd-dot" style="background:${eColor(t)}"></span>${esc(t.name)}<span class="lvd-go">›</span></button>`;
+  let body='';
+  if(kind==='unbooked'){
+    const u=leaveTripsUnbooked(y);
+    body=u.list.length?`<p class="lvd-intro">These trips fall on work days you haven't added leave for yet. <b>Book leave</b> adds annual leave for the trip's work days.</p>
+      <div class="lvd-list">${u.list.map(x=>`<div class="lvd-row"><div class="lvd-main">${trip(x.t)}<div class="lvd-sub">${range(x.t.startDate,x.t.endDate)} · <b>${x.days} work day${x.days!==1?'s':''}</b> without leave</div></div><button class="btn btn-s" data-action="lv-book" data-id="${x.t.id}" data-from="${x.first}" data-to="${x.last}" style="font-size:11px">Book leave</button></div>`).join('')}</div>`
+      :`<p class="lvd-intro">Every trip in ${y} has leave added for its work days. 🎉</p>`;
+  }else{
+    const past=kind==='taken';
+    const rows=l.applied.filter(a=>a.from&&(((a.to||a.from)<=today)===past)).sort((a,b)=>a.from.localeCompare(b.from));
+    const days=a=>{let d=0;const to=a.to||a.from;for(let c=new Date(a.from+'T00:00:00');ymd(c)<=to;c.setDate(c.getDate()+1))if(isWorkday(ymd(c)))d+=a.half&&a.from===to?0.5:1;return d;};
+    const typeLbl=t=>(LEAVE_TYPES.find(x=>x[0]===(t||'annual'))||LEAVE_TYPES[0])[1];
+    const opening=past?l.jobs.filter(j=>parseFloat(j.taken)>0):[];
+    body=rows.length||opening.length?`<div class="lvd-list">${rows.map(a=>{const ts=leaveTripsFor(a);return`<div class="lvd-row"><div class="lvd-main"><div class="lvd-head"><b>${range(a.from,a.to)}</b> · ${days(a)} day${days(a)!==1?'s':''} · ${esc(typeLbl(a.type))}</div>${a.note&&!ts.some(t=>t.name===a.note)?`<div class="lvd-sub">${esc(a.note)}</div>`:''}${ts.length?ts.map(trip).join(''):'<div class="lvd-sub lvd-muted">No trip on these dates</div>'}</div></div>`;}).join('')}
+      ${opening.map(j=>`<div class="lvd-row"><div class="lvd-main"><div class="lvd-head"><b>${n1(j.taken)} day${parseFloat(j.taken)!==1?'s':''}</b> taken before tracking here${l.jobs.length>1?' · '+esc(j.employer||'Job'):''}</div></div></div>`).join('')}</div>`
+      :`<p class="lvd-intro">No leave ${past?'taken':'booked'} in ${y} yet.</p>`;
+  }
+  modal(kind==='unbooked'?`Trips not booked · ${y}`:kind==='taken'?`Leave taken · ${y}`:`Leave booked · ${y}`,body,null,{noSave:true});
+}
+const n1=v=>+(+v||0).toFixed(1);
 function leaveJobTotals(){const r=leaveYear(new Date().getFullYear());return{tot:r.tot,bal:r.bal};}
 // ===== LONG-WEEKEND FINDER (Leave page) =====
 // The best stretches off for a few days of leave: bridges between your weekend and the holidays that are days off at work.
@@ -4050,12 +4106,11 @@ function vLeave(){
   const y=parseInt(S.ly||yrs[0]||new Date().getFullYear());
   if(!S.leave[y])S.leave[y]={jobs:[newLeaveJob(y)],holidays:[],applied:[],lieu:[]};
   const l=leaveData(y),jobs=l.jobs,r=leaveYear(y),today=ymd(new Date());
-  const eventWorkdays=calcLeaveDaysForYear(y,false);
-  const appliedDays=calcAppliedDays(y);
-  const leaveRequired=Math.max(0,eventWorkdays-appliedDays);
+  const leaveRequired=leaveTripsUnbooked(y).total;
   const activeEmployers=jobs.filter(j=>j.employer).map(j=>j.employer).join(' → ')||'—';
   const n=v=>+(+v).toFixed(1);
-  const box=(cls,v,lbl,sub)=>`<div class="lb ${cls}"><div class="lv">${n(v)}</div><div class="ll">${lbl}</div>${sub?`<div class="ls">${sub}</div>`:''}</div>`;
+  const box=(cls,v,lbl,sub,k)=>k?`<button class="lb lb-go ${cls}" data-action="lv-detail" data-k="${k}" title="Show the trips"><div class="lv">${n(v)}</div><div class="ll">${lbl}</div><div class="ls">${sub?sub+' · ':''}<u>View</u> ›</div></button>`
+    :`<div class="lb ${cls}"><div class="lv">${n(v)}</div><div class="ll">${lbl}</div>${sub?`<div class="ls">${sub}</div>`:''}</div>`;
   const prorated=r.full&&r.ent!==r.full;
   const sug=lieuSuggestions(y);
   const typeLbl=t=>(LEAVE_TYPES.find(x=>x[0]===(t||'annual'))||LEAVE_TYPES[0])[1];
@@ -4070,9 +4125,9 @@ function vLeave(){
       ${box('t-ot',r.carry-r.forfeit,'Carried forward',r.forfeit?n(r.forfeit)+' expired':r.expiring?n(r.expiring)+' expire '+fmtS(r.expiry):'')}
       ${box('t-ot',r.lieu,'In lieu',r.lieu?n(r.lieuLeft)+' left':'')}
       ${box('t-al',r.vol,'Volunteer',r.vol?n(r.volLeft)+' left':'')}
-      ${box('t-taken',r.taken,'Taken','')}
-      ${box('t-applied',r.booked,'Booked','coming up')}
-      ${box('t-req',leaveRequired,'Trips not booked',leaveRequired?'need leave':'')}
+      ${box('t-taken',r.taken,'Taken','','taken')}
+      ${box('t-applied',r.booked,'Booked','','booked')}
+      ${box('t-req',leaveRequired,'Trips not booked',leaveRequired?'need leave':'','unbooked')}
     </div>
     ${r.expiring?`<div class="lv-note warn">⏳ <b>${n(r.expiring)} carried-forward day${r.expiring!==1?'s':''}</b> expire on ${fmt(r.expiry)}. Carried days are used first, so book them before then.</div>`:''}
     ${y>=new Date().getFullYear()&&r.tot&&leaveRequired?(()=>{const left=n(r.bal-leaveRequired);return`<div class="lv-note${left<0?' bad':''}">${left>=0?'✅':'⚠️'} After the trips you haven't booked leave for yet (${leaveRequired} day${leaveRequired!==1?'s':''}), you'd have <b>${left>=0?left+' day'+(left!==1?'s':'')+' left':Math.abs(left)+' day'+(left!==-1?'s':'')+' short'}</b>.</div>`;})():''}
@@ -7618,6 +7673,16 @@ document.addEventListener('click',e=>{
         S.leave[y]={jobs:keep.length?keep.map(j=>newLeaveJob(y,j)):[newLeaveJob(y)],holidays:[],applied:[],lieu:[]};}
       if(y){S.ly=y;saveS();render();}break;}
     case 'add-job':{const y=S.ly||new Date().getFullYear();if(!S.leave[y])S.leave[y]={jobs:[],holidays:[],applied:[],lieu:[]};leaveData(y);S.leave[y].jobs.push(newLeaveJob(y));saveS();render();break;}
+    case 'lv-detail':showLeaveDetail(el.dataset.k);break;
+    case 'lv-open':xm();nav('detail',{tid:el.dataset.id,tab:'timeline'});break;
+    case 'lv-book':{const y=parseInt(S.ly||new Date().getFullYear()),l=leaveData(y),t=S.events.find(x=>x.id===el.dataset.id);if(!l||!t)break;
+      // Only the trip's days that aren't covered yet, so existing leave isn't counted twice
+      const add=[];let cur=null;
+      for(let c=new Date(el.dataset.from+'T00:00:00');ymd(c)<=el.dataset.to;c.setDate(c.getDate()+1)){const d=ymd(c);
+        if(getAppliedForDate(d,y)){cur=null;continue;}
+        if(!isWorkday(d))continue;
+        if(cur)cur.to=d;else{cur={from:d,to:d,type:'annual',note:t.name};add.push(cur);}}
+      l.applied.push(...add);saveS();render();showLeaveDetail('unbooked');toastUndo('Leave booked for '+t.name,()=>{l.applied=l.applied.filter(a=>!add.includes(a));saveS();render();showLeaveDetail('unbooked');});break;}
     case 'add-lieu':{const y=S.ly||new Date().getFullYear(),l=leaveData(y);if(!l)break;
       modal('Add day in lieu',`<div class="fg">
         <div class="fi"><label>Date earned</label><input class="fc" type="date" name="li-date"></div>
