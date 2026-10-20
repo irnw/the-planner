@@ -2850,7 +2850,7 @@ function vGuideCard(){
         'Tap <b>+</b> on an appointment (or drag it on a computer) to add it to a trip as a flight, hotel, activity or transport. Delete appointments in Apple Calendar, not here.'
       ])}<p class="guide-note">Need a one-off file instead? <b>Calendar Export</b> downloads an .ics that doesn't update.</p>`)}
     ${sec('Sharing, documents, backups and account',ul([
-      '<b>Share a trip:</b> event → <b>Share</b> → <b>Create link</b>. Companions get a read-only page that stays up to date, no account needed. References, costs and notes are hidden unless you tick them; your checklist is never shared. <b>Stop sharing</b> turns the link off.',
+      '<b>Share a trip:</b> event → <b>Share</b> → <b>Create link</b>. Companions get a read-only page that stays up to date, no account needed. Attachments are included (untick to leave them out); references, costs and notes are hidden unless you tick them; your checklist is never shared. <b>Stop sharing</b> turns the link off.',
       '<b>Export:</b> event → <b>Export</b> → PDF or Excel. Untick costs or booking details before sending.',
       '<b>Travel documents</b> (Settings): add passports, visas and IDs with expiry dates for reminders, including passports under 6 months after a trip. The last 4 characters of the number are enough.',
       '<b>Back up:</b> <b>Settings → Data → Export JSON</b>; <b>Import JSON</b> restores it. <b>Export CSV</b> gives a summary.',
@@ -3586,10 +3586,14 @@ function attPurgeLater(a){
   if(a.type!=='pdf')return;
   setTimeout(()=>{if(attFind(a.id))return;attDelLocal(a.id);const sb=sbClient();if(a.cloud&&sb&&_acct)sb.storage.from(ATT_BUCKET).remove([attPath(a)]).catch(()=>{});},6000);
 }
-async function attRemoveAll(){
+// Remove every file under a folder of the bucket, including folders inside it (storage lists folders with no id)
+async function attRemoveDir(dir){
   const sb=sbClient();if(!sb||!_acct)return;
-  try{const{data}=await sb.storage.from(ATT_BUCKET).list(_acct.id,{limit:1000});if(data&&data.length)await sb.storage.from(ATT_BUCKET).remove(data.map(f=>_acct.id+'/'+f.name));}catch(e){}
+  try{const{data}=await sb.storage.from(ATT_BUCKET).list(dir,{limit:1000});if(!data)return;
+    for(const f of data.filter(x=>!x.id))await attRemoveDir(dir+'/'+f.name);
+    const files=data.filter(x=>x.id).map(f=>dir+'/'+f.name);if(files.length)await sb.storage.from(ATT_BUCKET).remove(files);}catch(e){}
 }
+async function attRemoveAll(){if(_acct)await attRemoveDir(_acct.id);}
 async function pdfThumb(blob){
   if(typeof pdfjsLib==='undefined'){initPdfJs();await new Promise(r=>setTimeout(r,1000));}
   if(typeof pdfjsLib==='undefined')return{thumb:'',pages:0};
@@ -4026,11 +4030,43 @@ function longWeekends(y,maxLeave){
 const SHARE_BASE='https://theplanner.pages.dev/share/';
 let _shares=null;// Map event id → {token, opts, hash}; null until loaded for this account
 let _sharesMe=null,_sharesMissing=false;
-function shareSnapshot(t,o){
+// A shared PDF is a copy in <account>/shared/<token>/ opened by a signed link; Stop sharing deletes the copies
+const SHARE_FILE_SECS=365*86400,SHARE_FILE_RENEW=300*864e5;
+const shareDir=sh=>_acct.id+'/shared/'+sh.token;
+async function shareFiles(t,sh){
+  const sb=sbClient(),cur=sh.files||{},out={};if(!sb||!_acct)return cur;
+  const want=sh.opts.files?(t.attachments||[]).filter(a=>a.type==='pdf'):[];
+  for(const a of want){
+    const c=cur[a.id],path=shareDir(sh)+'/'+a.id+'.pdf';
+    if(c&&c.at>Date.now()-SHARE_FILE_RENEW){out[a.id]=c;continue;}
+    try{
+      if(!c){let ok=false;
+        if(a.cloud){const{error}=await sb.storage.from(ATT_BUCKET).copy(attPath(a),path);ok=!error||/exist/i.test(error.message||'');}
+        if(!ok){const b=await attGet(a.id);if(b){const{error}=await sb.storage.from(ATT_BUCKET).upload(path,b,{contentType:'application/pdf',upsert:true});ok=!error;}}
+        if(!ok)continue;}
+      const{data,error}=await sb.storage.from(ATT_BUCKET).createSignedUrl(path,SHARE_FILE_SECS);
+      if(!error&&data&&data.signedUrl)out[a.id]={url:data.signedUrl,at:Date.now()};else if(c)out[a.id]=c;
+    }catch(e){if(c)out[a.id]=c;}
+  }
+  const gone=Object.keys(cur).filter(id=>!out[id]&&!want.some(a=>a.id===id));
+  if(gone.length)try{await sb.storage.from(ATT_BUCKET).remove(gone.map(id=>shareDir(sh)+'/'+id+'.pdf'));}catch(e){}
+  sh.files=out;return out;
+}
+function shareAttachments(t,files){
+  let room=600*1024;// keep the shared copy well under its 1 MB limit: previews go while they fit
+  return(t.attachments||[]).map(a=>{
+    const thumb=a.thumbData&&/^data:image\/(?:jpeg|png);base64,/.test(a.thumbData)&&a.thumbData.length<room?a.thumbData:'';room-=thumb.length;
+    if(a.type==='pdf'){const f=files[a.id];return f?{id:a.id,type:'pdf',name:a.name||'PDF',pages:a.pages||0,size:a.size||0,file:f.url,at:f.at,...(thumb?{thumb}:{})}:null;}
+    const url=/^https?:\/\//i.test(a.url||'')?a.url:'';
+    return url||thumb?{type:a.type==='image'?'image':'link',name:a.name||'Attachment',...(url?{url}:{}),...(thumb?{thumb}:{})}:null;
+  }).filter(Boolean);
+}
+function shareSnapshot(t,o,files){
   const pick=(e,keys)=>Object.fromEntries(keys.filter(k=>e[k]!=null&&e[k]!=='').map(k=>[k,e[k]]));
   const ref=o.refs?['pnr','bookingNumber','bookingDetails']:[],cost=o.costs?['cost','currency']:[];
-  return{name:t.name,startDate:t.startDate,endDate:t.endDate,locations:t.locations||[],sharedBy:acctFirstName()||'',opts:{costs:!!o.costs,refs:!!o.refs,notes:!!o.notes},
+  return{name:t.name,startDate:t.startDate,endDate:t.endDate,locations:t.locations||[],sharedBy:acctFirstName()||'',opts:{costs:!!o.costs,refs:!!o.refs,notes:!!o.notes,files:!!o.files},
     ...(o.notes&&t.notes?{notes:t.notes}:{}),
+    ...(o.files?{attachments:shareAttachments(t,files||{})}:{}),
     flights:(t.flights||[]).map(f=>pick(f,['airline','flightNumber','from','to','departureTime','arrivalTime','duration',...ref,...cost])),
     hotels:(t.hotels||[]).map(h=>pick(h,['name','checkIn','checkOut',...ref,...cost])),
     activities:(t.activities||[]).map(a=>pick(a,['name','date','endDate','time','location','duration',...ref,...cost])),
@@ -4042,7 +4078,8 @@ async function sharesLoad(){
   const{data,error}=await sbClient().from('shared_trip').select('token,event_id,snapshot');
   if(!_stillMe(me))return null;
   if(error){_sharesMissing=/PGRST205|42P01|schema cache|shared_trip/i.test((error.code||'')+' '+(error.message||''));return null;}
-  _sharesMissing=false;_sharesMe=me;_shares=new Map((data||[]).map(r=>[r.event_id,{token:r.token,opts:(r.snapshot&&r.snapshot.opts)||{},hash:JSON.stringify(r.snapshot)}]));
+  _sharesMissing=false;_sharesMe=me;_shares=new Map((data||[]).map(r=>[r.event_id,{token:r.token,opts:(r.snapshot&&r.snapshot.opts)||{},hash:JSON.stringify(r.snapshot),
+    files:Object.fromEntries(((r.snapshot&&r.snapshot.attachments)||[]).filter(a=>a.id&&a.file).map(a=>[a.id,{url:a.file,at:a.at||0}]))}]));
   return _shares;
 }
 // After each save: refresh the shared copy of any trip that changed; remove copies of deleted trips
@@ -4051,8 +4088,9 @@ async function sharesSync(){
   const m=await sharesLoad();if(!m||!m.size)return;
   for(const[eid,sh]of [...m]){
     const t=(S.events||[]).find(e=>e.id===eid);
-    if(!t){await sbClient().from('shared_trip').delete().eq('event_id',eid);m.delete(eid);continue;}
-    const snap=shareSnapshot(t,sh.opts),h=JSON.stringify(snap);if(h===sh.hash)continue;
+    if(!t){await sbClient().from('shared_trip').delete().eq('event_id',eid);m.delete(eid);attRemoveDir(shareDir(sh));continue;}
+    if(sh.opts.files||Object.keys(sh.files||{}).length)await shareFiles(t,sh);
+    const snap=shareSnapshot(t,sh.opts,sh.files),h=JSON.stringify(snap);if(h===sh.hash)continue;
     const{error}=await sbClient().from('shared_trip').update({snapshot:snap}).eq('event_id',eid);
     if(!error)sh.hash=h;
   }
@@ -4066,14 +4104,15 @@ async function showShareTrip(tid){
   renderShareModal(t);
 }
 function renderShareModal(t){
-  const sh=_shares.get(t.id),o=sh?sh.opts:{costs:false,refs:false,notes:false},url=sh?SHARE_BASE+sh.token:'';
+  const sh=_shares.get(t.id),o=sh?sh.opts:{costs:false,refs:false,notes:false,files:true},url=sh?SHARE_BASE+sh.token:'';
   const opt=(k,label,hint)=>`<label class="sh-opt"><input type="checkbox" data-shopt="${k}"${o[k]?' checked':''}><span><b>${label}</b><small>${hint}</small></span></label>`;
-  const body=`<p class="sh-intro">Send a <b>read-only</b> page of <b>${esc(t.name)}</b> to the people you're travelling with. They don't need an account. They see the dates, flights, hotels, activities and transport, and the page updates when you change the trip. They can't edit anything or see your other trips.</p>
+  const body=`<p class="sh-intro">Send a <b>read-only</b> page of <b>${esc(t.name)}</b> to the people you're travelling with. They don't need an account. They see the dates, flights, hotels, activities, transport and any attachments you include, and the page updates when you change the trip. They can't edit anything or see your other trips.</p>
     ${url?`<div class="sh-link"><input class="fc" readonly value="${esc(url)}" id="sh-url" onclick="this.select()"><button class="btn btn-p" data-action="sh-copy">Copy</button></div>${navigator.share?'<button class="btn btn-s sh-native" data-action="sh-native">Send…</button>':''}`:''}
     <div class="sh-opts"><div class="sh-h">Also include</div>
       ${opt('refs','Booking references','Flight PNRs and confirmation numbers. Anyone with these and your surname may be able to manage a booking, so only include them if needed.')}
       ${opt('costs','Costs','What each booking cost.')}
-      ${opt('notes','Trip notes','The notes on this trip.')}</div>
+      ${opt('notes','Trip notes','The notes on this trip.')}
+      ${opt('files','Attachments','Links, images and PDFs from the Attachments tab. Tickets and confirmations can show booking references.')}</div>
     <p class="sh-fine">Anyone with the link can open it, so share it only with people you trust.</p>
     <div class="sh-acts">${url?`<button class="btn btn-d" data-action="sh-stop">Stop sharing</button><button class="btn btn-p" data-action="sh-save">Update link</button>`:`<button class="btn btn-p" data-action="sh-create" style="width:100%">Create link</button>`}</div>
     <p id="sh-msg" style="font-size:12px;color:var(--text3);margin:8px 0 0"></p>`;
@@ -4082,13 +4121,19 @@ function renderShareModal(t){
 }
 const _shOpts=()=>{const o={};document.querySelectorAll('[data-shopt]').forEach(i=>o[i.dataset.shopt]=i.checked);return o;};
 async function shareSave(tid,create){
-  const t=S.events.find(x=>x.id===tid);if(!t||!_acct)return;const me=_acct.id,o=_shOpts(),snap=shareSnapshot(t,o);
+  const t=S.events.find(x=>x.id===tid);if(!t||!_acct)return;const me=_acct.id,o=_shOpts(),old=_shares.get(t.id);
   const msg=document.getElementById('sh-msg');if(msg)msg.textContent=create?'Creating link…':'Updating…';
-  const q=create?sbClient().from('shared_trip').upsert({user_id:me,event_id:t.id,snapshot:snap},{onConflict:'user_id,event_id'}).select('token').single()
-    :sbClient().from('shared_trip').update({snapshot:snap}).eq('event_id',t.id).select('token').single();
-  const{data,error}=await q;if(!_stillMe(me))return;
-  if(error||!data){if(msg){msg.style.color='var(--accent)';msg.textContent='Couldn\'t save: '+((error&&error.message)||'try again');}return;}
-  _shares.set(t.id,{token:data.token,opts:o,hash:JSON.stringify(snap)});renderShareModal(t);
+  const fail=error=>{if(msg){msg.style.color='var(--accent)';msg.textContent='Couldn\'t save: '+((error&&error.message)||'try again');}};
+  let token=old&&old.token;
+  // A new link needs its token before its PDFs can be copied next to it
+  if(create||!token){const{data,error}=await sbClient().from('shared_trip').upsert({user_id:me,event_id:t.id,snapshot:shareSnapshot(t,{...o,files:false})},{onConflict:'user_id,event_id'}).select('token').single();
+    if(!_stillMe(me))return;if(error||!data)return fail(error);token=data.token;}
+  const sh={token,opts:o,files:old?old.files:{}};
+  if(o.files||Object.keys(sh.files||{}).length){if(msg&&o.files&&(t.attachments||[]).some(a=>a.type==='pdf'))msg.textContent='Adding PDFs…';await shareFiles(t,sh);}
+  const snap=shareSnapshot(t,o,sh.files);
+  const{error}=await sbClient().from('shared_trip').update({snapshot:snap}).eq('event_id',t.id);if(!_stillMe(me))return;
+  if(error)return fail(error);
+  sh.hash=JSON.stringify(snap);_shares.set(t.id,sh);renderShareModal(t);
   toast(create?'Link ready. Copy it and send it to your travel companions.':'Shared page updated');render();
 }
 async function shareStop(tid){
@@ -4097,6 +4142,7 @@ async function shareStop(tid){
   if(!ok)return;
   const{error}=await sbClient().from('shared_trip').delete().eq('event_id',tid);
   if(error){toast('Couldn\'t stop sharing: '+error.message);return;}
+  const sh=_shares.get(tid);if(sh)attRemoveDir(shareDir(sh));
   _shares.delete(tid);toast('Sharing stopped');render();
 }
 // ===== TRAVEL DOCUMENTS (Settings): expiry reminders only =====
