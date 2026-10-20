@@ -7167,8 +7167,11 @@ function _parseBookingText(rawTxt){
     const ai=txt.search(/(?:^|[\s\W])(?:Hotel\s+)?(?:Ad{1,2}re?s{1,2}|Addr\.?|Alamat)\s*[:：.]/i);
     if(ai>0){
       const segs=txt.slice(Math.max(0,ai-240),ai+1).split(/\n|[ \t]{2,}/).map(x=>x.replace(/^[\W_\d\s]+/,'').replace(/[\s\W_]+$/,'').trim()).filter(x=>/[A-Za-z]{3}/.test(x));
-      const cand=segs[segs.length-1];
-      if(cand&&cand.length<=70&&!/\b(?:booking|confirmation|voucher|pin|phone|nights?|rooms?|guests?|adults?|check|disclose)\b/i.test(cand))hotelPats.unshift(new RegExp('('+cand.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')'));
+      let cand=segs[segs.length-1];
+      // A gap inside the name ("SONO Moon   Nagoya") leaves just the city; it's in the address too, so take the piece before it
+      const prv=segs[segs.length-2],stopW=/\b(?:booking|confirmation|voucher|pin|phone|nights?|rooms?|guests?|adults?|check|disclose|no)\b|[:\d]/i;
+      if(cand&&prv&&!/\s/.test(cand)&&new RegExp('\\b'+cand.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b').test(txt.slice(ai+1,ai+240))&&/^[A-Z]/.test(prv)&&prv.length<=40&&!stopW.test(prv))cand=prv+' '+cand;
+      if(cand&&cand.length<=70&&!/\b(?:booking|confirmation|voucher|pin|phone|nights?|rooms?|guests?|adults?|check|disclose)\b/i.test(cand))hotelPats.unshift(new RegExp('('+cand.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/ +/g,'\\s+')+')'));
     }
     for(const pat of hotelPats){const m=txt.match(pat);if(m){r.hotelName=m[1].trim().replace(/\s+/g,' ').slice(0,60);break;}}
   }
