@@ -6,7 +6,8 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const dt=d=>{const m=String(d||'').match(/^(\d{4})-(\d{2})-(\d{2})/);if(!m)return '';const x=new Date(Date.UTC(+m[1],m[2]-1,+m[3]));return `${DOW[x.getUTCDay()]} ${+m[3]} ${MON[m[2]-1]} ${m[1]}`;};
 const tm=d=>{const m=String(d||'').match(/T(\d{2}):(\d{2})/)||String(d||'').match(/^(\d{2}):(\d{2})$/);return m?`${m[1]}:${m[2]}`:'';};
-const money=(v,c)=>v&&!isNaN(parseFloat(v))?`${esc(c||'')} ${parseFloat(v).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})}`:'';
+const NOC0=new Set(['JPY','KRW','IDR','VND','CLP','ISK','HUF','TWD','UGX','PYG']);
+const money=(v,c)=>v&&!isNaN(parseFloat(v))?`${esc(c||'')} ${parseFloat(v).toLocaleString('en',NOC0.has(c)?{maximumFractionDigits:0}:{minimumFractionDigits:2,maximumFractionDigits:2})}`:'';
 // A booking split across the group shows the total and each person's part
 const cost=e=>{const m=money(e.cost,e.currency),n=parseInt(e.ways)||1;return m&&n>1&&n<=50?`${m} · ${money(parseFloat(e.cost)/n,e.currency)} each (split ${n} ways)`:m;};
 const kb=n=>n>=1048576?(n/1048576).toFixed(1).replace(/\.0$/,'')+' MB':Math.max(1,Math.round(n/1024))+' KB';
@@ -28,6 +29,17 @@ const statsHtml=s=>{const t=s.stats;if(!t||typeof t!=='object')return '';
     bk.length&&[bk.reduce((a,x)=>a+parseInt(x),0),'Bookings',bk.join(' · ')],
     (s.opts||{}).costs&&t.perPerson>0&&/^[A-Z]{3}$/.test(t.cur||'')&&[money(t.perPerson,t.cur),'Cost per person','estimate']].filter(Boolean);
   return cells.length?`<div class="stats">${cells.map(([v,l,sub])=>`<div class="st"><span>${esc(l)}</span><b>${typeof v==='number'?v:v}</b>${sub?`<small>${esc(sub)}</small>`:''}</div>`).join('')}</div>`:'';};
+// Who owes whom (only when the owner ticked it): balances and the payments to settle up, in the owner's home currency
+const NOC=new Set(['JPY','KRW','IDR','VND','CLP','ISK','HUF','TWD','UGX','PYG']);
+const amt=(v,c)=>/^[A-Z]{3}$/.test(c||'')&&isFinite(v)?`${c} ${Math.abs(+v).toLocaleString('en',NOC.has(c)?{maximumFractionDigits:0}:{minimumFractionDigits:2,maximumFractionDigits:2})}`:'';
+const oweHtml=s=>{const w=s.owe;if(!w||typeof w!=='object'||!/^[A-Z]{3}$/.test(w.cur||''))return '';
+  const ppl=(Array.isArray(w.people)?w.people:[]).slice(0,30),pay=(Array.isArray(w.pay)?w.pay:[]).slice(0,60);
+  const net=p=>{const v=+p.net||0;return v>0.009?`<b class="pos">gets back ${esc(amt(v,w.cur))}</b>`:v<-0.009?`<b class="neg">owes ${esc(amt(v,w.cur))}</b>`:'<b>settled</b>';};
+  return `<h2>Who owes whom</h2>
+    <div class="ow-tot"><span>Still to settle</span><b>${+w.total>0?esc(amt(w.total,w.cur)):'All settled ✓'}</b></div>
+    ${pay.length?`<div class="ow-pay">${pay.map(x=>`<div class="ow-r"><span>${esc(x.from)} pays ${esc(x.to)}</span><b>${esc(amt(x.amt,w.cur))}</b></div>`).join('')}</div>`:''}
+    <div class="ow-ppl">${ppl.map(p=>`<div class="ow-p"><div class="ow-top"><span>${esc(p.name)}</span>${net(p)}</div>${(Array.isArray(p.by)?p.by:[]).length?`<div class="ref">${p.by.slice(0,8).map(([c,v])=>(v>0?'+':'−')+esc(amt(v,c))).join(' · ')}${Math.abs(+p.paid||0)>0.009?' · paid '+(p.paid>0?'+':'−')+esc(amt(p.paid,w.cur)):''}</div>`:''}</div>`).join('')}</div>
+    ${w.multi?`<p class="ref">In ${esc(w.cur)}. Other currencies are converted at each booking's saved rate, so amounts are estimates.</p>`:''}`;};
 const page=(title,body)=>`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>${esc(title)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <style>:root{--bg:#f7f6f3;--card:#fbfaf8;--text:#1d1d22;--text2:#55555e;--text3:#7c7c86;--line:#e6e3dc;--p:#5f52d6}
@@ -41,6 +53,9 @@ h1{font:700 34px/1.1 'Playfair Display',serif;margin:8px 0 6px}h2{font:700 19px/
 .att{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}.ac{display:block;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card);color:inherit;text-decoration:none}
 a.ac:hover{border-color:var(--p)}.at{height:110px;background:var(--bg);display:flex;align-items:center;justify-content:center;position:relative;color:var(--text3);font-size:26px}.at img{width:100%;height:100%;object-fit:cover;object-position:top}
 .bd{position:absolute;left:6px;bottom:6px;background:var(--p);color:#fff;font-size:9px;font-weight:500;letter-spacing:.06em;padding:2px 6px;border-radius:4px}.ai{padding:8px 10px}.ai .n{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ai .ref{margin-top:1px}
+.ow-tot{display:flex;justify-content:space-between;align-items:baseline;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--card);margin-bottom:6px}.ow-tot span{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3)}.ow-tot b{font:700 20px/1.2 'Playfair Display',serif}
+.ow-r{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);font-weight:500}.ow-r b{font-weight:500;white-space:nowrap}
+.ow-ppl{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 16px;margin-top:14px}.ow-p{padding:8px 0;border-bottom:1px dashed var(--line);font-size:14px}.ow-top{display:flex;justify-content:space-between;gap:8px}.ow-p b{font-weight:500;color:var(--text3)}.ow-p b.pos{color:#3f9a62}.ow-p b.neg{color:#d05a5a}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));border:1px solid var(--line);border-radius:12px;margin-top:20px;overflow:hidden;background:var(--card)}
 .st{padding:12px 14px;border-left:1px solid var(--line)}.st:first-child{border-left:0}.st b{display:block;font:700 22px/1.2 'Playfair Display',serif}.st span{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3)}.st small{display:block;font-size:11px;color:var(--text3)}
 @media(max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}.st:nth-child(odd){border-left:0}.st:nth-child(n+3){border-top:1px solid var(--line)}.att{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.at{height:96px}.it{flex-direction:column;gap:2px}.d{width:auto}h1{font-size:28px}}</style></head><body><main>${body}</main></body></html>`;
@@ -63,6 +78,7 @@ export async function onRequestGet({params}){
     ${statsHtml(s)}
     ${o.notes&&s.notes?`<p class="m" style="margin-top:14px;white-space:pre-wrap">${esc(s.notes)}</p>`:''}
     <h2>Itinerary</h2>${rows.length?rows.map(r=>`<div class="it"><div class="d">${esc(r.d)}</div><div>${r.h}</div></div>`).join(''):'<p class="sub">No bookings added yet.</p>'}
+    ${o.owe?oweHtml(s):''}
     ${o.files&&(s.attachments||[]).length?`<h2>Attachments</h2><div class="att">${s.attachments.slice(0,60).map(attHtml).join('')}</div>`:''}
     <p class="note">A read-only copy, kept up to date by the trip's owner${s.updated_at?' (last updated '+esc(dt(s.updated_at))+')':''}. Times are local to each place.</p>
     <div class="sig">Planned with The Planner · designed and created by <a href="https://www.instagram.com/irn.w" target="_blank" rel="noopener noreferrer">@irn.w</a></div>`;
