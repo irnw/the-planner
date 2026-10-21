@@ -35,7 +35,7 @@ const amt=(v,c)=>/^[A-Z]{3}$/.test(c||'')&&isFinite(v)?`${c} ${Math.abs(+v).toLo
 const oweHtml=s=>{const w=s.owe;if(!w||typeof w!=='object'||!/^[A-Z]{3}$/.test(w.cur||''))return '';
   const ppl=(Array.isArray(w.people)?w.people:[]).slice(0,30),pay=(Array.isArray(w.pay)?w.pay:[]).slice(0,60);
   const net=p=>{const v=+p.net||0;return v>0.009?`<b class="pos">gets back ${esc(amt(v,w.cur))}</b>`:v<-0.009?`<b class="neg">owes ${esc(amt(v,w.cur))}</b>`:'<b>settled</b>';};
-  return `<h2>Who owes whom</h2>
+  return `<h2>Settle up</h2>
     <div class="ow-tot"><span>Still to settle</span><b>${+w.total>0?esc(amt(w.total,w.cur)):'All settled ✓'}</b></div>
     ${pay.length?`<div class="ow-pay">${pay.map(x=>`<div class="ow-r"><span>${esc(x.from)} pays ${esc(x.to)}</span><b>${esc(amt(x.amt,w.cur))}</b></div>`).join('')}</div>`:''}
     <div class="ow-ppl">${ppl.map(p=>`<div class="ow-p"><div class="ow-top"><span>${esc(p.name)}</span>${net(p)}</div>${(Array.isArray(p.by)?p.by:[]).length?`<div class="ref">${p.by.slice(0,8).map(([c,v])=>(v>0?'+':'−')+esc(amt(v,c))).join(' · ')}${Math.abs(+p.paid||0)>0.009?' · paid '+(p.paid>0?'+':'−')+esc(amt(p.paid,w.cur)):''}</div>`:''}</div>`).join('')}</div>

@@ -2863,7 +2863,7 @@ function vGuideCard(){
       'In a booking, add the <b>Deposit</b> and <b>Full Payment</b> with due dates. The card shows the balance and the Dashboard reminds you.',
       `Enter each cost in the currency you paid. Totals appear in your own currency (${esc(baseCur())}) using daily exchange rates, so they're estimates. Adjust rates in <b>Settings → Exchange Rates</b>.`,
       '<b>Split shared bookings:</b> in a trip’s <b>Split</b> tab, add who’s going. When you add or edit a booking, pick <b>Split cost</b> (everyone, some of you, or a number of people) and <b>Paid by</b>. Totals and Budget count only your share.',
-      '<b>Who owes whom:</b> the Split tab nets everything into your home currency (with a per-currency breakdown) and shows the fewest payments to settle up, like Splitwise. Tap <b>Mark as paid</b> when someone pays. <b>View split ›</b> on a booking card jumps there. Tick <b>Who owes whom</b> in Share to show it on the shared page.',
+      '<b>Settle up:</b> the Split tab nets everything into your home currency (with a per-currency breakdown) and shows the fewest payments to settle up, like Splitwise. Tap <b>Mark as paid</b> when someone pays. <b>View split ›</b> on a booking card jumps there. Tick <b>Settle up</b> in Share to show it on the shared page.',
       '<b>Budget</b> totals your spending by year, event and category.'
     ]))}
     ${sec('Apple Calendar, Google Calendar and Outlook',`${sub('Show your trips in your calendar')}${ol([
@@ -3684,7 +3684,7 @@ function rSplit(t){
         ${named?`<label><span>Paid by</span><select class="fc" data-sp-paid="${e.id}">${ppl.map(p=>opt(p.id,p.name,e.paidBy||'me')).join('')}</select></label>`:''}
       </div>
       ${named&&v==='pick'?`<div class="sp-pick">${ppl.map(p=>`<label class="sp-chip"><input type="checkbox" data-sp-with="${e.id}" value="${esc(p.id)}"${(e.splitWith||[]).includes(p.id)?' checked':''}><span>${esc(p.name)}</span></label>`).join('')}</div>`:''}
-      ${named&&!sh&&n>1?`<div class="sp-warn">Split by a head count: pick Everyone or Some of us to include it in who owes whom.</div>`:''}
+      ${named&&!sh&&n>1?`<div class="sp-warn">Split by a head count: pick Everyone or Some of us to include it in Settle up.</div>`:''}
     </div>`;};
   // Settle up like Splitwise: one net balance each in your home currency, then the fewest payments
   const{H,pay:tr,total,curs,multi}=oweSummary(t),r2=v=>Math.round(v*100)/100;
@@ -3708,12 +3708,12 @@ function rSplit(t){
     <div class="sp-sec"><div class="sp-h"><h3>Who’s going</h3><span class="sp-hint">${pax} ${pax>1?'people':'person'}</span></div>
       <div class="sp-ppl">${ppl.map(p=>`<span class="sp-person">${esc(p.name)}${p.id==='me'?'':`<button class="sp-x" data-action="sp-del-person" data-pid="${esc(p.id)}" title="Remove ${esc(p.name)}">×</button>`}</span>`).join('')}
         <form class="sp-add" data-sp-form><input class="fc" id="sp-new" maxlength="40" placeholder="Add a name" autocomplete="off"><button class="btn btn-s" type="submit">Add</button></form></div>
-      ${named?'':`<p class="sp-hint">${(parseInt(t.pax)||1)>1?`You set ${parseInt(t.pax)} people in Edit trip. Add their names to see who owes whom.`:'Add the friends you’re travelling with to split bookings and see who owes whom.'}</p>`}
+      ${named?'':`<p class="sp-hint">${(parseInt(t.pax)||1)>1?`You set ${parseInt(t.pax)} people in Edit trip. Add their names to see who pays who back.`:'Add the friends you’re travelling with to split bookings and see who pays who back.'}</p>`}
     </div>
     <div class="sp-sec"><div class="sp-h"><h3>Bookings</h3><span class="sp-hint">Your share ${fmtM(eCost(t),baseCur())} of ${fmtM(eCostFull(t),baseCur())}</span></div>
       ${items.length?items.map(row).join(''):'<p class="sp-hint">Add a cost to a flight, hotel, activity or transport booking and it shows up here to split.</p>'}
     </div>
-    ${named?`<div class="sp-sec"><div class="sp-h"><h3>Who owes whom</h3></div>
+    ${named?`<div class="sp-sec"><div class="sp-h"><h3>Settle up</h3></div>
       ${bal||'<div class="sp-ok">Nothing to settle yet. Set who paid and who shares each booking above.</div>'}
       ${loose.length?`<p class="sp-hint">${loose.length} booking${loose.length>1?'s are':' is'} split by a head count and not counted here.</p>`:''}
       ${paid.length?`<div class="sp-sub">Payments between you</div>${paid.map(x=>`<div class="sp-tr"><span>${esc(personName(t,x.from))} paid ${esc(personName(t,x.to))} ${esc(x.cur)} ${fmtAmt(x.amt)} <span class="sp-each">${x.at?fmtS(x.at.slice(0,10)):''}</span></span><button class="btn btn-ghost" style="color:var(--accent);font-size:10px" data-action="sp-del-settle" data-id="${esc(x.id)}">Del</button></div>`).join('')}`:''}
@@ -4313,7 +4313,7 @@ function renderShareModal(t){
       ${opt('refs','Booking references','Flight PNRs and confirmation numbers. Anyone with these and your surname may be able to manage a booking, so only include them if needed.')}
       ${opt('costs','Costs','What each booking cost.')}
       ${opt('notes','Trip notes','The notes on this trip.')}
-      ${partyOf(t).length?opt('owe','Who owes whom','Each person’s balance and the payments to settle up, from the Split tab. Shows everyone’s names.'):''}
+      ${partyOf(t).length?opt('owe','Settle up','Each person’s balance and the payments to settle up, from the Split tab. Shows everyone’s names.'):''}
       ${opt('files','Attachments','Links, images and PDFs from the Attachments tab. Tickets and confirmations can show booking references.')}</div>
     <p class="sh-fine">Anyone with the link can open it, so share it only with people you trust.</p>
     <div class="sh-acts">${url?`<button class="btn btn-d" data-action="sh-stop">Stop sharing</button><button class="btn btn-p" data-action="sh-save">Update link</button>`:`<button class="btn btn-p" data-action="sh-create" style="width:100%">Create link</button>`}</div>
