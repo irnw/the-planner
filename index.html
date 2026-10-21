@@ -2731,7 +2731,7 @@ async function acctSignIn(){
 }
 // Google sign-in run by the app itself (Google's button, then the ID token goes to Supabase), so Google's prompt
 // names The Planner and theplanner.pages.dev instead of the Supabase address. Public OAuth client ID; empty = old redirect flow
-const GOOGLE_CLIENT_ID='';
+const GOOGLE_CLIENT_ID='1083339327919-sgjv54cefjj8n59k7c3s7ut6q1eljqs4.apps.googleusercontent.com';
 let _gsiLoad=null,_gsiNonce='';
 function gsiReady(){
   if(!GOOGLE_CLIENT_ID)return Promise.resolve(false);
@@ -2759,7 +2759,7 @@ async function gsiMount(force){
   btns.forEach(b=>{if(!b.isConnected||b.disabled)return;b.dataset.gsi='1';const slot=document.createElement('div');slot.className='gsi-slot';b.after(slot);
     const w=Math.min(400,Math.max(220,Math.round(b.getBoundingClientRect().width)||320));
     google.accounts.id.renderButton(slot,{type:'standard',theme:document.documentElement.dataset.theme==='dark'?'filled_black':'outline',size:'large',shape:'pill',text:'continue_with',logo_alignment:'center',width:w});
-    b.hidden=true;});
+    b.style.display='none';});
 }
 // New accounts come from Google only; existing email accounts can still sign in with their password
 async function acctGoogle(){
