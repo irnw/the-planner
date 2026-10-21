@@ -301,6 +301,9 @@ textarea.fc{resize:vertical;min-height:50px}
 .sp-ctl{display:flex;gap:8px}.sp-ctl label{display:flex;flex-direction:column;gap:2px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)}.sp-ctl .fc{padding:5px 8px;font-size:12px;min-width:110px}
 .sp-pick{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.sp-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;cursor:pointer}
 .sp-chip:has(input:checked){border-color:var(--primary);background:var(--primary-dim)}.sp-chip input{accent-color:var(--primary);margin:0}
+.sp-settle{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;font-size:11px;color:var(--text3)}.sp-settle>span{margin-right:2px}
+.sp-settle .sp-chip:has(input:checked){border-color:var(--green);background:var(--green-dim);color:var(--text)}.sp-settle .sp-chip input{accent-color:var(--green)}.sp-ok-tag{color:var(--green);font-weight:600}
+.sp-done .sp-b{opacity:.75}
 .sp-warn{grid-column:1/-1;font-size:11px;color:var(--orange)}
 .sp-nets{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px 14px}.sp-net{font-size:12px;padding:6px 0;border-bottom:1px dashed var(--line)}.sp-net-top{display:flex;justify-content:space-between;gap:8px}
 .sp-bd{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:3px;font-size:10px;color:var(--text3)}
@@ -2913,7 +2916,7 @@ function vGuideCard(){
       '<b>Split shared bookings:</b> in a trip’s <b>Split</b> tab, add who’s going. When you add or edit a booking, pick <b>Split cost</b> (everyone, some of you, or a number of people) and <b>Paid by</b>. Totals and Budget count only your share.',
       '<b>Who’s flying:</b> once people are named in the Split tab, each flight (added or scanned) has tick boxes for who’s on it, and its cost can split between just them. <b>Show flights for</b> on the Timeline and Flights tab shows one person’s flights and times.',
       '<b>Plan together:</b> in a trip, tap <b>People</b> and invite someone by email as <b>Editor</b> (everything), <b>Budget only</b> (costs, splits, Settle up) or <b>Custom</b>. No email is sent: they sign in to The Planner with that address and tap <b>Join</b>. Changes sync both ways, even when you edit at the same time. Only you can invite or remove people and delete the trip; others can remove only flights they added.',
-      '<b>Settle up:</b> the Split tab nets everything into your home currency (with a per-currency breakdown) and shows the fewest payments to settle up, like Splitwise. Tap <b>Mark as paid</b> when someone pays. <b>View split ›</b> on a booking card jumps there. Tick <b>Settle up</b> in Share to show it on the shared page.',
+      '<b>Settle up:</b> the Split tab nets everything into your home currency (with a per-currency breakdown) and shows the fewest payments to settle up, like Splitwise. Tap <b>Mark as paid</b> when someone pays. Already squared up for one booking? Tick the people under it in <b>Paid back to …</b> and it’s left out of Settle up. <b>View split ›</b> on a booking card jumps there. Tick <b>Settle up</b> in Share to show it on the shared page.',
       '<b>Budget</b> totals your spending by year, event and category.'
     ]))}
     ${sec('Apple Calendar, Google Calendar and Outlook',`${sub('Show your trips in your calendar')}${ol([
@@ -3005,12 +3008,17 @@ function tripBalances(t){
   tripItems(t).forEach(({e})=>{const c=parseFloat(e.cost);if(!c)return;const sh=sharersOf(e,t),payer=e.paidBy||'me';
     if(!sh){loose.push(e);return;}
     if(sh.length===1&&sh[0]===payer)return;
-    const cur=e.currency||baseCur(),b=out[cur]||(out[cur]={}),hc=toBase(c,cur,e.rateToSGD);
-    add(b,payer,c);sh.forEach(id=>add(b,id,-c/sh.length));
-    add(home,payer,hc);sh.forEach(id=>add(home,id,-hc/sh.length));});
+    const cur=e.currency||baseCur(),b=out[cur]||(out[cur]={}),hc=toBase(c,cur,e.rateToSGD),done=spSettled(e,t);
+    // A share already paid back for this booking is left out (as if they'd paid their part directly)
+    add(b,payer,c);sh.forEach(id=>add(b,id,-c/sh.length));done.forEach(id=>{add(b,id,c/sh.length);add(b,payer,-c/sh.length);});
+    add(home,payer,hc);sh.forEach(id=>add(home,id,-hc/sh.length));done.forEach(id=>{add(home,id,hc/sh.length);add(home,payer,-hc/sh.length);});});
   (t.settle||[]).forEach(x=>{const v=toBase(x.amt,x.cur);add(home,x.from,v);add(home,x.to,-v);add(paid,x.from,v);add(paid,x.to,-v);});
   return{out,home,paid,loose};
 }
+// People who owe the payer for a booking, and those already marked as paid back for it
+function spOwers(e,t){const sh=sharersOf(e,t),payer=e.paidBy||'me';return sh?sh.filter(id=>id!==payer):[];}
+function spSettled(e,t){const o=spOwers(e,t);return(e.settled||[]).filter(id=>o.includes(id));}
+const spAllSettled=(e,t)=>{const o=spOwers(e,t);return o.length>0&&spSettled(e,t).length===o.length;};
 // Fewest transfers that square a balance: the biggest debtor pays the biggest creditor, repeat
 function settleUp(b){
   const r=v=>Math.round(v*100)/100,cr=[],db=[],res=[];
@@ -3033,7 +3041,7 @@ function oweSummary(t){
 function eCost(t){let s=0;['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>s+=toBase(e.cost,e.currency,e.rateToSGD)*myFrac(e,t)));return s;}
 function eCostFull(t){let s=0;['hotels','flights','activities','transport'].forEach(k=>(t[k]||[]).forEach(e=>s+=toBase(e.cost,e.currency,e.rateToSGD)));return s;}
 // "Your share" line on a booking card
-function splitEg(e,t){const n=myFrac(e,t)===1?1:Math.max(2,splitN(e,t));if(!parseFloat(e.cost))return'';if(n<2)return e.paidBy&&partyOf(t).some(p=>p.id===e.paidBy)?`<div class="eg"><span class="ek">Paid by</span><span class="ev">${esc(personName(t,e.paidBy))} <button class="sp-go" data-action="sp-go" data-eid="${e.id}">View split ›</button></span></div>`:'';return`<div class="eg"><span class="ek">Your share</span><span class="ev">${esc(e.currency||baseCur())} ${fmtAmt(shareAmt(e,t))} <span class="split-n">${myFrac(e,t)?`split ${n} ways`:'for '+esc(sharersOf(e,t).map(id=>personName(t,id)).join(', '))}</span>${e.paidBy&&partyOf(t).some(p=>p.id===e.paidBy)?` <span class="split-n">· paid by ${esc(personName(t,e.paidBy))}</span>`:''} <button class="sp-go" data-action="sp-go" data-eid="${e.id}">View split ›</button></span></div>`;}
+function splitEg(e,t){const n=myFrac(e,t)===1?1:Math.max(2,splitN(e,t));if(!parseFloat(e.cost))return'';if(n<2)return e.paidBy&&partyOf(t).some(p=>p.id===e.paidBy)?`<div class="eg"><span class="ek">Paid by</span><span class="ev">${esc(personName(t,e.paidBy))} <button class="sp-go" data-action="sp-go" data-eid="${e.id}">View split ›</button></span></div>`:'';return`<div class="eg"><span class="ek">Your share</span><span class="ev">${esc(e.currency||baseCur())} ${fmtAmt(shareAmt(e,t))} <span class="split-n">${myFrac(e,t)?`split ${n} ways`:'for '+esc(sharersOf(e,t).map(id=>personName(t,id)).join(', '))}${spAllSettled(e,t)?' · settled ✓':spSettled(e,t).includes('me')?' · you paid back ✓':''}</span>${e.paidBy&&partyOf(t).some(p=>p.id===e.paidBy)?` <span class="split-n">· paid by ${esc(personName(t,e.paidBy))}</span>`:''} <button class="sp-go" data-action="sp-go" data-eid="${e.id}">View split ›</button></span></div>`;}
 // The Split picker on booking forms: just me, everyone on the trip, or a number of people
 function splitHtml(ev,e,isNew,kind){
   const pax=paxOf(ev),ppl=partyOf(ev),fl=kind==='flight'&&ppl.length,v=e&&e.split!=null&&e.split!==''?String(e.split):(isNew&&pax>1?(fl?'flyers':'party'):''),w=new Set((e&&e.splitWith)||['me']);
@@ -3762,7 +3770,7 @@ function rSplit(t){
   const opt=(v,l,cur)=>`<option value="${esc(v)}"${String(cur)===String(v)?' selected':''}>${esc(l)}</option>`;
   const nums=[];for(let i=2;i<=20;i++)nums.push(i);
   const row=({k,e})=>{const n=splitN(e,t),v=e.split||'',sh=sharersOf(e,t);
-    return`<div class="sp-row${S._spFocus===e.id?' sp-focus':''}" id="sp-${e.id}">
+    return`<div class="sp-row${S._spFocus===e.id?' sp-focus':''}${spAllSettled(e,t)?' sp-done':''}" id="sp-${e.id}">
       <div class="sp-b"><button class="sp-name" data-action="${SP_KIND[k][1]}" data-eid="${e.id}" title="Open this booking"><span class="sp-kind">${SP_KIND[k][0]}</span>${esc(spLabel(k,e)||SP_KIND[k][0])}</button>
         <div class="sp-amt">${esc(e.currency||baseCur())} ${fmtAmt(parseFloat(e.cost))}${myFrac(e,t)!==1?` <span class="sp-each">· your share ${esc(e.currency||baseCur())} ${fmtAmt(shareAmt(e,t))}</span>`:''}</div></div>
       <div class="sp-ctl">
@@ -3770,6 +3778,8 @@ function rSplit(t){
         ${named?`<label><span>Paid by</span><select class="fc" data-sp-paid="${e.id}">${ppl.map(p=>opt(p.id,p.name,e.paidBy||'me')).join('')}</select></label>`:''}
       </div>
       ${named&&v==='pick'?`<div class="sp-pick">${ppl.map(p=>`<label class="sp-chip"><input type="checkbox" data-sp-with="${e.id}" value="${esc(p.id)}"${(e.splitWith||[]).includes(p.id)?' checked':''}><span>${esc(p.name)}</span></label>`).join('')}</div>`:''}
+      ${named&&parseFloat(e.cost)&&spOwers(e,t).length?(()=>{const ow=spOwers(e,t),dn=new Set(spSettled(e,t)),payer=e.paidBy||'me',each=parseFloat(e.cost)/sh.length;
+        return`<div class="sp-settle"><span>${spAllSettled(e,t)?'<b class="sp-ok-tag">✓ Settled</b> ':''}Paid back to ${esc(personName(t,payer))}</span>${ow.map(id=>`<label class="sp-chip${dn.has(id)?' done':''}"><input type="checkbox" data-sp-settled="${e.id}" value="${esc(id)}"${dn.has(id)?' checked':''}><span>${esc(personName(t,id))} · ${esc(fmtCur(each,e.currency||baseCur()))}</span></label>`).join('')}${ow.length>1&&dn.size<ow.length?`<button class="sp-go" data-action="sp-settle-all" data-eid="${e.id}">All paid back</button>`:''}</div>`;})():''}
       ${named&&!sh&&n>1?`<div class="sp-warn">Split by a head count: pick Everyone or Some of us to include it in Settle up.</div>`:''}
     </div>`;};
   // Settle up like Splitwise: one net balance each in your home currency, then the fewest payments
@@ -3823,11 +3833,12 @@ document.addEventListener('change',e=>{
     sbClient().rpc('trip_invite',{p_id:t.collab.id,p_email:el.dataset.clRole,p_role:role,p_perms:perms,p_person:null}).then(({error})=>{if(error)toast(error.message);else{toast(role==='custom'?'Changed to Custom: Budget & Split and Checklist':'Changed to '+ROLE_LBL[role]);showPeople(t.id);}});return;}
 });
 document.addEventListener('change',e=>{
-  const el=e.target,d=el.dataset||{};if(!(d.spSplit||d.spPaid||d.spWith))return;
-  const t=S.events.find(x=>x.id===S.tid),f=t&&spFind(t,d.spSplit||d.spPaid||d.spWith);if(!f)return;const b=f.e;
+  const el=e.target,d=el.dataset||{};if(!(d.spSplit||d.spPaid||d.spWith||d.spSettled))return;
+  const t=S.events.find(x=>x.id===S.tid),f=t&&spFind(t,d.spSplit||d.spPaid||d.spWith||d.spSettled);if(!f)return;const b=f.e;
   if(!can(t,'budget')){toast('You can’t change the split on this trip.');render();return;}
   if(d.spSplit){b.split=el.value;if(el.value==='pick'&&!(b.splitWith&&b.splitWith.length))b.splitWith=['me',...partyOf(t).map(p=>p.id)];if(el.value!=='pick')delete b.splitWith;}
-  if(d.spPaid)b.paidBy=el.value;
+  if(d.spPaid){b.paidBy=el.value;delete b.settled;}// paid back to someone else now
+  if(d.spSettled){const w=new Set(b.settled||[]);el.checked?w.add(el.value):w.delete(el.value);b.settled=[...w];if(!b.settled.length)delete b.settled;}
   if(d.spWith){const w=new Set(b.splitWith||[]);el.checked?w.add(el.value):w.delete(el.value);b.splitWith=[...w];if(!w.size){b.splitWith=['me'];}}
   S._spFocus=b.id;saveS();render();
 });
@@ -3838,7 +3849,7 @@ document.addEventListener('change',e=>{
 // In the server copy people are ids ('u:<account>' or a Split name's id); on this device you are 'me'.
 const COLLAB_BASE_KEY='htCollabBase',COLLAB_PARTS=['flights','hotels','activities','transport','checklist','attachments','party','settle'];
 const COLLAB_PERMS=['details','flights','hotels','activities','transport','budget','checklist','attachments'];
-const COLLAB_MONEY=['cost','currency','rateToSGD','split','splitWith','paidBy','depositAmount','depositCurrency','depositDate','depositPaid','paymentDueDate','fullyPaid','fullPaymentAmount','fullPaymentCurrency'];
+const COLLAB_MONEY=['cost','currency','rateToSGD','split','splitWith','paidBy','settled','depositAmount','depositCurrency','depositDate','depositPaid','paymentDueDate','fullyPaid','fullPaymentAmount','fullPaymentCurrency'];
 const PERM_LBL={details:'Trip details',flights:'Flights',hotels:'Hotels',activities:'Activities',transport:'Transport',budget:'Budget & Split',checklist:'Checklist',attachments:'Attachments'};
 const ROLE_LBL={editor:'Editor',budget:'Budget only',custom:'Custom'};
 const KIND_PERM={flights:'flights',hotels:'hotels',activities:'activities',transport:'transport'};
@@ -3853,7 +3864,7 @@ function cSetBase(id,b){const o=cBases();if(b)o[id]=b;else delete o[id];try{loca
 function collabOwnerName(t){if(!isCollab(t)||t.collab.owner)return'you';const o=(t.party||[]).find(p=>/^u:/.test(p.id)&&p.id===t.collab.ownerPid);return o?o.name:'the trip owner';}
 function mapIds(d,from,to){
   const sw=v=>v===from?to:v;
-  SPLIT_KINDS.forEach(k=>(d[k]||[]).forEach(e=>{if(e.paidBy!=null)e.paidBy=sw(e.paidBy);if(Array.isArray(e.splitWith))e.splitWith=e.splitWith.map(sw);if(Array.isArray(e.travellers))e.travellers=e.travellers.map(sw);}));
+  SPLIT_KINDS.forEach(k=>(d[k]||[]).forEach(e=>{if(e.paidBy!=null)e.paidBy=sw(e.paidBy);if(Array.isArray(e.splitWith))e.splitWith=e.splitWith.map(sw);if(Array.isArray(e.travellers))e.travellers=e.travellers.map(sw);if(Array.isArray(e.settled))e.settled=e.settled.map(sw);}));
   (d.settle||[]).forEach(x=>{x.from=sw(x.from);x.to=sw(x.to);});
 }
 // Server copy → this device: you become 'me' and leave the Split names list
@@ -4085,7 +4096,7 @@ function collabBlock(a,t,el){
   if(a==='edit-event')return can(t,'details')?null:'You can’t change this trip’s details.'+ask;
   if(/^ck-/.test(a))return can(t,'checklist')?null:'You can’t change the checklist on this trip.'+ask;
   if(/^(add-attach-|del-attach)/.test(a))return can(t,'attachments')?null:'You can’t change attachments on this trip.'+ask;
-  if(/^sp-(del-person|mark|del-settle)$/.test(a))return can(t,'budget')?null:'You can’t change the split on this trip.'+ask;
+  if(/^sp-(del-person|mark|del-settle|settle-all)$/.test(a))return can(t,'budget')?null:'You can’t change the split on this trip.'+ask;
   return null;
 }
 // PDF attachments: the file is kept on this device (IndexedDB) and, when signed in, in the private 'attachments' bucket
@@ -8611,13 +8622,14 @@ document.addEventListener('click',e=>{
     case 'cl-join':collabJoin(el.dataset.id);break;
     case 'cl-decline':collabDecline(el.dataset.id);break;
     case 'who-f':{if(ev){whoSet(ev,el.dataset.p);render();}break;}
+    case 'sp-settle-all':{if(ev){const f=spFind(ev,el.dataset.eid);if(f){const was=f.e.settled;f.e.settled=spOwers(f.e,ev);S._spFocus=f.e.id;saveS();render();toastUndo('Marked as paid back',()=>{if(was)f.e.settled=was;else delete f.e.settled;saveS();render();});}}break;}
     case 'sp-go':{S._spFocus=el.dataset.eid;S.tab='split';saveS();render();setTimeout(()=>{const r=document.getElementById('sp-'+el.dataset.eid);if(r)r.scrollIntoView({block:'center',behavior:'smooth'});},50);break;}
     case 'sp-del-person':{if(ev){const pid=el.dataset.pid,p=partyOf(ev).find(x=>x.id===pid);if(!p)break;
-      const keep=JSON.parse(JSON.stringify({party:ev.party,settle:ev.settle||[],b:tripItems(ev).map(({e})=>[e.id,e.paidBy,e.splitWith,e.split])}));
+      const keep=JSON.parse(JSON.stringify({party:ev.party,settle:ev.settle||[],b:tripItems(ev).map(({e})=>[e.id,e.paidBy,e.splitWith,e.split,e.settled])}));
       ev.party=ev.party.filter(x=>x.id!==pid);ev.pax=paxOf(ev);ev.settle=(ev.settle||[]).filter(x=>x.from!==pid&&x.to!==pid);
-      tripItems(ev).forEach(({e})=>{if(e.paidBy===pid)delete e.paidBy;if(e.splitWith){e.splitWith=e.splitWith.filter(x=>x!==pid);if(!e.splitWith.length||(e.splitWith.length===1&&e.splitWith[0]==='me')){delete e.splitWith;e.split='';}}});
+      tripItems(ev).forEach(({e})=>{if(e.settled){e.settled=e.settled.filter(x=>x!==pid);if(!e.settled.length)delete e.settled;}if(e.paidBy===pid)delete e.paidBy;if(e.splitWith){e.splitWith=e.splitWith.filter(x=>x!==pid);if(!e.splitWith.length||(e.splitWith.length===1&&e.splitWith[0]==='me')){delete e.splitWith;e.split='';}}});
       saveS();render();
-      toastUndo(p.name+' removed',()=>{ev.party=keep.party;ev.settle=keep.settle;ev.pax=paxOf(ev);keep.b.forEach(([id,pb,sw,sp])=>{const f=spFind(ev,id);if(!f)return;f.e.split=sp;if(pb)f.e.paidBy=pb;else delete f.e.paidBy;if(sw)f.e.splitWith=sw;else delete f.e.splitWith;});saveS();render();});}break;}
+      toastUndo(p.name+' removed',()=>{ev.party=keep.party;ev.settle=keep.settle;ev.pax=paxOf(ev);keep.b.forEach(([id,pb,sw,sp,st])=>{const f=spFind(ev,id);if(!f)return;f.e.split=sp;if(st)f.e.settled=st;else delete f.e.settled;if(pb)f.e.paidBy=pb;else delete f.e.paidBy;if(sw)f.e.splitWith=sw;else delete f.e.splitWith;});saveS();render();});}break;}
     case 'sp-mark':{if(ev){const x={id:uid(),from:el.dataset.from,to:el.dataset.to,amt:parseFloat(el.dataset.amt),cur:el.dataset.cur,at:new Date().toISOString()};
       if(!ev.settle)ev.settle=[];ev.settle.push(x);saveS();render();toastUndo('Payment recorded',()=>{ev.settle=ev.settle.filter(y=>y.id!==x.id);saveS();render();});}break;}
     case 'sp-del-settle':{if(ev){const i=(ev.settle||[]).findIndex(y=>y.id===el.dataset.id);if(i<0)break;const x=ev.settle.splice(i,1)[0];saveS();render();toastUndo('Payment deleted',()=>{ev.settle.splice(i,0,x);saveS();render();});}break;}

@@ -118,7 +118,7 @@ create or replace function public.trip_save(p_id uuid, p_version bigint, p_data 
 language plpgsql security definer set search_path = '' as $$
 declare
   t public.trip; pr text[]; me text := auth.uid()::text; k text; o jsonb; n jsonb; gone text[];
-  money text[] := array['cost','currency','rateToSGD','split','splitWith','paidBy','depositAmount','depositCurrency','depositDate',
+  money text[] := array['cost','currency','rateToSGD','split','splitWith','paidBy','settled','depositAmount','depositCurrency','depositDate',
     'depositPaid','paymentDueDate','fullyPaid','fullPaymentAmount','fullPaymentCurrency'];
   parts text[] := array['flights','hotels','activities','transport','checklist','attachments','party','settle'];
 begin
