@@ -1303,6 +1303,10 @@ body.gated .main{margin-left:0!important;padding:0!important;max-width:none!impo
 .dz-paste-area{font-size:16px}
 @media(min-width:701px){.dz-paste-area{font-size:12px}}
 .guide .guide-sub{margin:14px 0 4px;font-size:13px}
+.guide-search{position:relative;margin:4px 0 12px}.guide-search svg{position:absolute;left:12px;top:50%;width:15px;height:15px;transform:translateY(-50%);color:var(--text3);pointer-events:none}
+.guide-search .fc{padding-left:36px;padding-right:36px}.guide-search .fc::-webkit-search-cancel-button{display:none}
+.guide-x{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--text3);font-size:18px;cursor:pointer;padding:4px 6px}.guide-x[hidden]{display:none}
+.guide mark{background:var(--primary-glow);color:inherit;border-radius:3px;padding:0 1px}.guide-none{font-size:13px;color:var(--text3);margin:10px 0}.guide-none[hidden],.guide [hidden]{display:none}
 .guide .guide-sub:first-child{margin-top:0}
 /* iOS gives date/time fields an intrinsic width (they spill out of cards) and centred text */
 input.fc[type=date],input.fc[type=time],input.fc[type=datetime-local],input.fc[type=month]{-webkit-appearance:none;appearance:none;display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;text-align:left}
@@ -2849,76 +2853,96 @@ function vGuidePage(){
 function signatureHtml(){return `<div class="sig">designed and created by <a href="https://www.instagram.com/irn.w" target="_blank" rel="noopener noreferrer">@irn.w</a></div>`;}
 
 function vGuideCard(){
-  // Accordion: opening one section closes the others (native 'name' grouping, plus a fallback below)
-  const sec=(title,body,open)=>`<details class="guide-sec" name="guide-acc"${open?' open':''}><summary>${title}</summary><div class="guide-body">${body}</div></details>`;
+  // Accordion: opening one section closes the others (native 'name' grouping, plus a fallback below).
+  // k = extra search words for the section (things people might type that aren't in its text)
+  const sec=(title,body,open,k)=>`<details class="guide-sec" name="guide-acc"${open?' open':''}${k?` data-k="${esc(k)}"`:''}><summary>${title}</summary><div class="guide-body">${body}</div></details>`;
   const ol=items=>`<ol>${items.map(i=>`<li>${i}</li>`).join('')}</ol>`;
   const ul=items=>`<ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul>`;
   const sub=t=>`<p class="guide-sub"><b>${t}</b></p>`;
   const firstTime=acctEnabled()&&!_acct,acc=acctEnabled();
   const APPLE='<b>Settings → Apple Calendar (iCloud) Sync</b>';
   return `<div class="card" id="guide-card" style="margin-bottom:16px"><div class="card-header"><h3>📖 User Guide</h3></div><div class="card-body guide">
-    <p class="guide-intro">${APP_NAME} keeps every trip in one place: bookings, to-dos, payments, leave, holidays and the countries you've visited. Tap a heading to open it.</p>
+    <p class="guide-intro">${APP_NAME} keeps every trip in one place: bookings, to-dos, shared costs, leave, holidays and the countries you've visited. Tap a heading to open it, or search below.</p>
+    <div class="guide-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input class="fc" id="guide-q" type="search" placeholder="Search the guide, e.g. split, leave, PDF" autocomplete="off" aria-label="Search the guide"><button type="button" class="guide-x" data-action="guide-clear" aria-label="Clear search" hidden>×</button></div>
+    <p class="guide-none" hidden>Nothing found. Try another word, like <b>flight</b>, <b>share</b> or <b>holiday</b>.</p>
     ${sec('Getting started',`${acc?ol([
       'Tap <b>Continue with Google</b> on the welcome page. (Older email accounts use <b>Sign in with email</b>.)',
       'Choose your <b>home country</b>. It sets your currency, public holidays, weekend and date style.',
       'On your phone, open the same address and sign in the same way. For an app icon: <b>iPhone (Safari)</b> Share → <b>Add to Home Screen</b>; <b>Android (Chrome)</b> ⋮ → <b>Add to Home screen</b>.'
     ]):''}${ul([
       'Everything saves by itself and reaches your other devices within about 30 seconds.',
-      '<b>No signal?</b> The app still opens and you can keep editing (on a plane, or abroad without data). Changes sync when you\'re back online. Scanning, sharing and live exchange rates need a connection.',
+      '<b>No signal?</b> The app still opens and you can keep editing. Changes sync when you\'re back online. Scanning, sharing and live exchange rates need a connection.',
       'When a <b>New version available</b> bar appears, tap <b>Reload</b> (or <b>Later</b>).'
-    ])}`,firstTime)}
+    ])}`,firstTime,'sign in login account google install home screen app offline sync update')}
     ${sec('Trips and bookings',ul([
-      'Tap <b>+ New Event</b> and give it a name, dates, places and a category (Trip, Work, Training, Social, Personal or Activity). You can also start one from a day on the <b>Calendar</b> or from a <b>Long weekend</b> idea.',
-      'Inside an event, the tabs hold everything: <b>Timeline</b> (day by day), <b>Flights</b>, <b>Hotels</b>, <b>Activities</b>, <b>Transport</b>, <b>Split</b> (shared costs), <b>Checklist</b> and <b>Attachments</b> (PDFs, images and links: tickets, vouchers, confirmations). PDFs up to 10 MB open on all your devices when you’re signed in.',
-      'Add a booking with the <b>+ Add</b> button on its tab: type it in, or drop in the confirmation and let the app fill it in (see <b>Scan a booking</b>).',
-      'Use <b>⋯ → Duplicate</b> on a flight to start the return flight. Flight times show in the local time, and in your home time zone too.',
-      'Booked something twice? The event offers <b>Review &amp; merge</b>. <b>⚠ Clash</b> means two things at the same time; <b>⚠ Overlap</b> means two events share dates. Tap the label to see which.'
-    ]))}
+      'Tap <b>+ New Event</b> and give it a name, dates, places and a category (Trip, Work, Training, Social, Personal or Activity). You can also start one from a day on the <b>Calendar</b> or a <b>Long weekend</b> idea.',
+      'Inside an event, the tabs hold everything: <b>Timeline</b> (day by day), <b>Flights</b>, <b>Hotels</b>, <b>Activities</b>, <b>Transport</b>, <b>Split</b>, <b>Checklist</b> and <b>Attachments</b>.',
+      'Add a booking with <b>+ Add</b> on its tab: type it in, or drop in the confirmation and let the app fill it in (see <b>Scan a booking</b>).',
+      '<b>Who’s flying:</b> on a trip with people named in Split, tick who’s on each flight. <b>Show flights for</b> on the Timeline and Flights tab shows one person’s flights and times.',
+      'Use <b>⋯ → Duplicate</b> on a flight to start the return flight. Flight times show in local time, and in your home time zone too.',
+      'Booked something twice? The event offers <b>Review &amp; merge</b>. <b>⚠ Clash</b> means two things at the same time; <b>⚠ Overlap</b> means two events share dates.'
+    ]),false,'event add create new flight hotel activity transport duplicate return timeline itinerary travellers passengers clash overlap merge')}
     ${sec('Scan a booking',`${ol([
-      'Tap <b>Scan</b> (bottom right), or use the upload box inside <b>Add Flight</b>, <b>Add Hotel</b>, <b>Add Activity</b> or <b>Add Transport</b>.',
+      'Tap <b>Scan</b> (bottom right), or use the upload box inside any <b>Add</b> form.',
       'Add a PDF, photo or screenshot (choose, drag in, or copy and tap <b>Paste</b>), or paste the email text.',
-      'Check what it found, fix anything that\'s off, then <b>Save</b>.'
+      'Check what it found, fix anything that\'s off, pick who’s flying if asked, then <b>Save</b>.'
     ])}${ul([
       'Several files for one booking (e.g. an e-ticket and a receipt) combine into one.',
-      'If you scan a hotel in Add Flight, the app tells you which tab to use.',
-      'New layouts are read by AI when you\'re signed in and online (20 a day). Only the text is sent, never the image. After that the app knows the layout, so the next one is read instantly, on any tab, even offline.'
-    ])}<p class="guide-note">Avoid uploading documents that show full passport or card numbers.</p>`)}
+      'New layouts are read by AI when you\'re signed in and online (20 a day). Only the text is sent, never the image. After that the app knows the layout and reads it instantly, even offline.'
+    ])}<p class="guide-note">Avoid uploading documents that show full passport or card numbers.</p>`,false,'upload ocr photo screenshot email paste confirmation ai read import')}
     ${sec('Checklist',ul([
-      'Open an event → <b>Checklist</b>. Type a to-do and press <b>Enter</b> (or <b>Add</b>); keep typing to add the next one.',
-      'Tap an <b>idea</b> (passport, visa, insurance, online check-in…) to add it with a sensible due date before you leave. <b>Hide</b> them if you don\'t need them.',
-      'Tap the <b>circle</b> to tick a to-do off, the <b>text</b> to change it, and the <b>calendar</b> to set or change a due date.',
-      'To-dos with a date go to the top. Due within 3 days turns <b>amber</b>, overdue turns <b>red</b>.',
-      'Ticked to-dos move to <b>Done</b>. <b>Clear done</b> removes them; deleting can be undone for a few seconds.',
-      'The tab and the event in your Events list show your progress, e.g. <b>✓ 3/8</b>.'
-    ]))}
+      'Open an event → <b>Checklist</b>. Type a to-do and press <b>Enter</b>; keep typing to add the next one.',
+      'Tap an <b>idea</b> (passport, visa, insurance, online check-in…) to add it with a due date before you leave. <b>Hide</b> them if you don\'t need them.',
+      'Tap the <b>circle</b> to tick it off, the <b>text</b> to change it, and the <b>calendar</b> to set a due date. Due within 3 days turns <b>amber</b>, overdue <b>red</b>.',
+      '<b>Clear done</b> removes ticked to-dos. Progress shows on the tab and in your Events list, e.g. <b>✓ 3/8</b>.'
+    ]),false,'to-do todo tasks packing list reminder due')}
+    ${sec('Attachments',ul([
+      'Open an event → <b>Attachments</b>. <b>+ Upload file</b> takes a PDF (up to 10 MB) or an image; <b>+ Add Link</b> saves a web link.',
+      'PDFs show a preview of the first page. Tap one to open it. When you\'re signed in they open on all your devices.',
+      'Deleting can be undone for a few seconds.'
+    ]),false,'pdf file document ticket voucher image photo upload link')}
+    ${sec('Split costs and Settle up',ul([
+      'Open a trip → <b>Split</b> → add the names of who’s going.',
+      'On each booking (in the Split tab or its form) choose <b>Split cost</b>: everyone, some of you, a number of people, or for flights the people on it. Then choose <b>Paid by</b>.',
+      'Totals, Budget and the Dashboard count only <b>your share</b>. Booking cards show it with <b>View split ›</b>.',
+      '<b>Settle up</b> adds everything up in your home currency (with a breakdown by currency) and shows the fewest payments needed, like Splitwise.',
+      'When someone pays, tap <b>Mark as paid</b>. Already squared up for one booking? Tick the people under <b>Paid back to …</b> (or <b>All paid back</b>) and it\'s left out.'
+    ]),false,'splitwise share expense owe owes debt pay back money friends group per person settle paid')}
+    ${sec('Plan a trip together',ul([
+      'Open a trip → <b>People</b> → enter a friend\'s email and choose what they can change: <b>Everything</b>, <b>Budget only</b> (costs, splits, Settle up) or <b>Custom</b>.',
+      'No email is sent. Tell them to sign in to The Planner with that email; the invite waits on their Events page. They tap <b>Join</b>.',
+      'Changes sync both ways within about 30 seconds, even if you edit at the same time.',
+      'Only you can invite or remove people and delete the trip. Others can remove only the flights they added, or <b>Leave this trip</b>.'
+    ]),false,'invite collaborate together members friends family editor permission access role join leave remove')}
+    ${sec('Share a read-only link',ul([
+      'Open a trip → <b>Share</b> → <b>Create link</b>, then <b>Copy</b> or <b>Send…</b>. No account needed to view it, and it stays up to date.',
+      'Companions see the dates, itinerary and trip stats (days, people, bookings). Choose what else to include: <b>Booking references</b>, <b>Costs</b> (with cost per person), <b>Trip notes</b>, <b>Settle up</b> and <b>Attachments</b>.',
+      'Your checklist is never shared. The page has its own light/dark button.',
+      '<b>Stop sharing</b> turns the link off straight away.'
+    ]),false,'link companions view only read-only send url whatsapp')}
     ${sec('Dashboard, events, calendar and countries',ul([
-      '<b>Dashboard</b>: what\'s now or next, anything that needs attention (payments due, leave short, clashes, documents expiring), coming trips and the next 7 days of Apple Calendar appointments.',
-      '<b>Events</b>: switch between cards and list, filter by year or category, group by category and sort. Past events are folded away.',
+      '<b>Dashboard</b>: what\'s now or next, anything needing attention (payments due, leave short, clashes, documents expiring, invites), coming trips and the next 7 days of Apple Calendar appointments.',
+      '<b>Events</b>: cards or list, filter by year or category, group and sort. Past events are folded away.',
       '<b>Search</b> (top) finds trips, places, flight numbers, hotels and booking references.',
-      '<b>Calendar</b>: everything by month with public holidays. Tap a day for details, the month or year to jump, or switch to the list view.',
-      '<b>Countries</b>: tap a country to mark it visited. <b>Travel stats</b> shows your trips, flights, hours in the air, hotel nights and top countries and airlines by year.',
+      '<b>Calendar</b>: everything by month with public holidays. Tap a day for details, or switch to the list view.',
+      '<b>Countries</b>: tap a country to mark it visited. <b>Travel stats</b> shows trips, flights, hours in the air, hotel nights and top countries and airlines.',
       'On a phone, Budget, Countries, Settings, this guide and Sign out are under <b>More</b>. The sun/moon button switches light and dark.',
       'On a computer: <b>/</b> search, <b>1–6</b> pages, <b>N</b> new event, <b>U</b> scan, <b>Esc</b> close.'
-    ]))}
+    ]),false,'home overview map visited stats statistics keyboard shortcuts dark mode light mode theme')}
     ${sec('Leave, holidays and your region',ul([
       '<b>Settings → Region &amp; Preferences</b>: home country, currency, weekend, first day of the week, date style and home time zone.',
-      '<b>Leave</b> works like your company\'s: enter your annual leave a year and it\'s prorated if you joined or left mid-year (to the nearest half day). Set whether it\'s given at the start of the year or earned monthly.',
-      'Tick <b>I still work here</b> instead of an end date. Changed jobs? <b>+ Add Job</b> and each job\'s leave counts for its own months.',
-      '<b>Carry forward:</b> what\'s left at year end moves to the next year (tap <b>+ Year</b>), up to the limit you set. If carried days expire (e.g. 31 Mar), they\'re used first and any left after that date are lost.',
-      '<b>Days in lieu:</b> add days earned for working on a public holiday or rest day, or overtime. The app also points out holidays that fall on your rest day. <b>Volunteer leave</b> (often 1 day in Singapore) is set per job. Neither carries over.',
-      'Add leave you take or book with its type (annual, in lieu, volunteer, or sick/other, which isn\'t deducted). Past dates count as <b>Taken</b>, future ones as <b>Booked</b>, and trips without leave booked show under <b>Trips not booked</b>. Tap <b>Taken</b>, <b>Booked</b> or <b>Trips not booked</b> to see the trips, open one, or book its leave in one tap.',
-      'Choose which public holidays are days off at work (including state ones), add other countries\' holidays to the Calendar, or add missing ones in <b>Leave → My holidays</b>.',
-      '<b>Long weekends</b> suggests the best days to take off around public holidays. Tap <b>Plan a trip</b> to create the event.'
-    ]))}
+      '<b>Leave</b>: enter your annual leave a year; it\'s prorated if you joined or left mid-year. Choose whether it\'s given at the start of the year or earned monthly. Tick <b>I still work here</b> instead of an end date, and <b>+ Add Job</b> if you changed jobs.',
+      '<b>Carry forward:</b> unused days move to next year (tap <b>+ Year</b>) up to your limit. If they expire (e.g. 31 Mar), they\'re used first.',
+      '<b>Days in lieu</b> and <b>volunteer leave</b> are their own allowances. The app points out holidays that fall on your rest day.',
+      'Add leave with its type. Past dates are <b>Taken</b>, future ones <b>Booked</b>. Tap <b>Taken</b>, <b>Booked</b> or <b>Trips not booked</b> to see the trips or book their leave in one tap.',
+      'Pick which public holidays are days off, add other countries\' holidays to the Calendar, or add missing ones in <b>My holidays</b>.',
+      '<b>Long weekends</b> suggests the best days to take off. Tap <b>Plan a trip</b> to create the event.'
+    ]),false,'annual leave vacation days off pto in lieu volunteer carry forward public holiday country currency time zone weekend')}
     ${sec('Payments and budget',ul([
       'In a booking, add the <b>Deposit</b> and <b>Full Payment</b> with due dates. The card shows the balance and the Dashboard reminds you.',
-      `Enter each cost in the currency you paid. Totals appear in your own currency (${esc(baseCur())}) using daily exchange rates, so they're estimates. Adjust rates in <b>Settings → Exchange Rates</b>.`,
-      '<b>Split shared bookings:</b> in a trip’s <b>Split</b> tab, add who’s going. When you add or edit a booking, pick <b>Split cost</b> (everyone, some of you, or a number of people) and <b>Paid by</b>. Totals and Budget count only your share.',
-      '<b>Who’s flying:</b> once people are named in the Split tab, each flight (added or scanned) has tick boxes for who’s on it, and its cost can split between just them. <b>Show flights for</b> on the Timeline and Flights tab shows one person’s flights and times.',
-      '<b>Plan together:</b> in a trip, tap <b>People</b> and invite someone by email as <b>Editor</b> (everything), <b>Budget only</b> (costs, splits, Settle up) or <b>Custom</b>. No email is sent: they sign in to The Planner with that address and tap <b>Join</b>. Changes sync both ways, even when you edit at the same time. Only you can invite or remove people and delete the trip; others can remove only flights they added.',
-      '<b>Settle up:</b> the Split tab nets everything into your home currency (with a per-currency breakdown) and shows the fewest payments to settle up, like Splitwise. Tap <b>Mark as paid</b> when someone pays. Already squared up for one booking? Tick the people under it in <b>Paid back to …</b> and it’s left out of Settle up. <b>View split ›</b> on a booking card jumps there. Tick <b>Settle up</b> in Share to show it on the shared page.',
-      '<b>Budget</b> totals your spending by year, event and category.'
-    ]))}
+      `Enter each cost in the currency you paid. Totals show in your currency (${esc(baseCur())}) using daily exchange rates, so they're estimates. Adjust rates in <b>Settings → Exchange Rates</b>.`,
+      '<b>Budget</b> totals your spending (your share) by year, event and category.'
+    ]),false,'deposit due cost spending currency exchange rate money')}
     ${sec('Apple Calendar, Google Calendar and Outlook',`${sub('Show your trips in your calendar')}${ol([
       `Go to ${APPLE} → <b>Your calendar feed</b> → <b>Subscribe on this device</b>, or <b>Copy URL</b> and add it in your calendar app:${ul([
         '<b>Mac:</b> Calendar → File → New Calendar Subscription (Location <b>iCloud</b>, refresh <b>Every hour</b>).',
@@ -2929,28 +2953,57 @@ function vGuideCard(){
       ${sub('Bring Apple Calendar appointments in')}${ol([
         'In Apple Calendar, make the calendar <b>Public</b> and copy its link (Mac: right-click → Sharing Settings; iPhone: Calendars → ⓘ).',
         `Paste it in ${APPLE} under <b>Inbound</b> and tap <b>Save</b>. Appointments arrive within about 10 minutes.`,
-        'Tap <b>+</b> on an appointment (or drag it on a computer) to add it to a trip as a flight, hotel, activity or transport. Delete appointments in Apple Calendar, not here.'
-      ])}<p class="guide-note">Need a one-off file instead? <b>Calendar Export</b> downloads an .ics that doesn't update.</p>`)}
-    ${sec('Sharing, documents, backups and account',ul([
-      '<b>Share a trip:</b> event → <b>Share</b> → <b>Create link</b>. Companions get a read-only page that stays up to date, no account needed. Attachments are included (untick to leave them out); references, costs and notes are hidden unless you tick them; your checklist is never shared. <b>Stop sharing</b> turns the link off.',
+        'Tap <b>+</b> on an appointment (or drag it on a computer) to add it to a trip. Delete appointments in Apple Calendar, not here.'
+      ])}<p class="guide-note">Need a one-off file instead? <b>Calendar Export</b> downloads an .ics that doesn't update.</p>`,false,'ical ics subscribe feed sync icloud calendar')}
+    ${sec('Documents, backups and account',ul([
       '<b>Export:</b> event → <b>Export</b> → PDF or Excel. Untick costs or booking details before sending.',
       '<b>Travel documents</b> (Settings): add passports, visas and IDs with expiry dates for reminders, including passports under 6 months after a trip. The last 4 characters of the number are enough.',
       '<b>Back up:</b> <b>Settings → Data → Export JSON</b>; <b>Import JSON</b> restores it. <b>Export CSV</b> gives a summary.',
       ...(acc?[
       '<b>Sign out</b> (menu, or <b>More</b> on a phone) removes your data from that device only. Always sign out on shared devices.',
       '<b>Forgot your password?</b> (email accounts) <b>Sign in with email</b> → <b>Forgot password?</b>, or message <a href="https://www.instagram.com/irn.w" target="_blank" rel="noopener noreferrer">@irn.w</a> on Instagram.',
-      '<b>Privacy:</b> only you can see your data. Nobody can see your password and you\'ll never be asked for it.',
+      '<b>Privacy:</b> only you, and people you invite to a trip, can see your data. You\'ll never be asked for your password.',
       '<b>Delete Account</b> (Settings → Your Account) removes everything for good. Export a backup first.']:[])
-    ]))}
+    ]),false,'passport visa expiry backup restore export import json csv excel pdf print password privacy delete account sign out logout')}
     ${sec('Something not working?',ul([
       '<b>Not syncing:</b> check you\'re online, reload, or tap <b>↻ Sync Now</b> in Settings → Your Account.',
       '<b>A scan got something wrong:</b> fix the field before saving. If a photo misreads, try the PDF or paste the email text.',
       '<b>Paste does nothing on a phone:</b> copy again, tap <b>Paste</b> and allow it, or save the screenshot and choose it.',
-      '<b>Calendar not updating:</b> on a Mac, check the subscription\'s refresh setting (right-click → Get Info). iPhone and Google refresh on their own schedule.',
+      '<b>Invite not showing:</b> sign in with the exact email you were invited with (confirm it first if you signed up by email), then open Events.',
+      '<b>“Some changes weren’t saved” on a shared trip:</b> you don\'t have access to change that part. Ask the trip owner.',
+      '<b>Calendar not updating:</b> on a Mac, check the subscription\'s refresh setting. iPhone and Google refresh on their own schedule.',
       '<b>Apple appointments not arriving:</b> check the calendar is still Public and the link in Settings is current, then tap <b>Save</b>.'
-    ]))}
+    ]),false,'problem error help bug broken not working troubleshoot fix')}
   </div></div>`;
 }
+// Guide search: shows matching sections (opened) and, inside them, the matching points with the words highlighted
+function guideSearch(q){
+  const card=document.getElementById('guide-card');if(!card)return;
+  const words=q.toLowerCase().trim().split(/\s+/).filter(Boolean),secs=[...card.querySelectorAll('.guide-sec')];
+  const x=card.querySelector('.guide-x');if(x)x.hidden=!words.length;
+  secs.forEach(d=>{const b=d.querySelector('.guide-body');if(b.dataset.orig==null)b.dataset.orig=b.innerHTML;else b.innerHTML=b.dataset.orig;
+    if(d.dataset.name==null)d.dataset.name=d.getAttribute('name')||'';});
+  card.dataset.searching=words.length?'1':'';
+  if(!words.length){secs.forEach(d=>{d.hidden=false;d.open=false;if(d.dataset.name)d.setAttribute('name',d.dataset.name);});card.querySelector('.guide-none').hidden=true;return;}
+  const has=t=>{t=t.toLowerCase();return words.every(w=>t.includes(w));};
+  let any=0;
+  secs.forEach(d=>{
+    d.removeAttribute('name');// several sections may open at once while searching
+    const title=d.querySelector('summary').textContent+' '+(d.dataset.k||''),b=d.querySelector('.guide-body');
+    const items=[...b.querySelectorAll(':scope > ul > li, :scope > ol > li, :scope > p')];
+    // A point matches when it has at least one of the words and the rest are in it or the section's heading/keywords
+    const hit=items.filter(el=>{const t=el.textContent.toLowerCase();return words.some(w=>t.includes(w))&&has(title+' '+t);});
+    const show=hit.length||has(title+' '+b.textContent);
+    d.hidden=!show;d.open=!!show;if(!show)return;any++;
+    if(hit.length)items.forEach(el=>{if(!hit.includes(el)&&!el.classList.contains('guide-sub'))el.hidden=true;});
+    // Highlight
+    const re=new RegExp('('+words.map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')','gi');
+    const tw=document.createTreeWalker(b,NodeFilter.SHOW_TEXT),nodes=[];while(tw.nextNode())nodes.push(tw.currentNode);
+    nodes.forEach(n=>{if(!re.test(n.nodeValue))return;re.lastIndex=0;const f=document.createElement('span');f.innerHTML=esc(n.nodeValue).replace(re,'<mark>$1</mark>');n.replaceWith(...f.childNodes);});
+  });
+  card.querySelector('.guide-none').hidden=!!any;
+}
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='guide-q')guideSearch(e.target.value);});
 function defS(){return{v:'dashboard',tid:null,tab:'flights',ly:2026,calY:2026,calM:new Date().getMonth(),tfY:null,theme:null,_themeSet:false,rates:{...DRATES},events:importEvents(),leave:importLeave(),lastModified:1}}
 // Cost splitting: a booking shared with friends ('party' = everyone on the trip, or a number of people) counts only your share in every total
 // Travel party: you plus the friends named in the Split tab (or just a head count set in Edit trip)
@@ -8614,6 +8667,7 @@ document.addEventListener('click',e=>{
       },100);
       }break;}
     case 'att-open':attOpen(el.dataset.aid);break;
+    case 'guide-clear':{const q=document.getElementById('guide-q');if(q){q.value='';guideSearch('');q.focus();}break;}
     case 'people':showPeople(el.dataset.id);break;
     case 'cl-invite':{const t=S.events.find(x=>x.id===(document.querySelector('#mbg .modal')||{dataset:{}}).dataset.peopleTid);if(t)collabInvite(t);break;}
     case 'cl-remove':{const t=S.events.find(x=>x.id===(document.querySelector('#mbg .modal')||{dataset:{}}).dataset.peopleTid);if(!t||!isCollab(t))break;const em=el.dataset.email;
@@ -8653,6 +8707,7 @@ document.addEventListener('input',e=>{if(e.target&&e.target.id==='gsearch')rende
 // Countries: remember which regions are open across redraws
 document.addEventListener('toggle',e=>{const d=e.target;if(d instanceof HTMLDetailsElement&&d.classList.contains('c-region')){const o=window._cOpen||(window._cOpen=new Set());d.open?o.add(d.dataset.region):o.delete(d.dataset.region);}},true);
 document.addEventListener('toggle',e=>{const d=e.target;if(!(d instanceof HTMLDetailsElement)||!d.open||!d.classList.contains('guide-sec'))return;
+  const gc=document.getElementById('guide-card');if(gc&&gc.dataset.searching)return;
   document.querySelectorAll('details.guide-sec[open]').forEach(o=>{if(o!==d)o.removeAttribute('open');});},true);
 document.addEventListener('keydown',e=>{
   const inp=document.getElementById('gsearch');if(!inp||e.target!==inp)return;
