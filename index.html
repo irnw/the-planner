@@ -316,6 +316,13 @@ textarea.fc{resize:vertical;min-height:50px}
 @media(max-width:600px){.sp-row{grid-template-columns:1fr}.sp-ctl{flex-wrap:wrap}.sp-ctl label{flex:1}.sp-ctl .fc{min-width:0;width:100%}.sp-sec{padding:12px}.sp-focus{margin:0 -12px;padding:10px 12px}}
 .who-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 12px}.who-bar>span{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-right:4px}
 .who-chip{border:1px solid var(--line);background:none;color:var(--text2);border-radius:999px;padding:4px 12px;font:inherit;font-size:12px;cursor:pointer}.who-chip.on{background:var(--primary-dim);border-color:var(--primary);color:var(--text)}
+.cl-inv{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}.cl-inv-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--primary);border-radius:12px;background:var(--primary-dim);font-size:13px}
+.cl-inv-acts{display:flex;gap:8px}.cl-dim{font-size:11px;color:var(--text3)}.cl-pend{color:var(--orange)}
+.cl-banner{margin-top:6px;font-size:11px;color:var(--text2)}.cl-badge{display:inline-block;padding:2px 8px;border-radius:999px;background:var(--primary-dim);color:var(--primary);font-size:10px;letter-spacing:.06em;text-transform:uppercase;margin-right:4px}
+.cl-list{display:flex;flex-direction:column;margin:12px 0}.cl-m{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}.cl-m:first-child{border-top:0}
+.cl-m-main{min-width:0;font-size:13px;overflow-wrap:anywhere}.cl-m-acts{display:flex;align-items:center;gap:6px}.cl-m-acts .fc{padding:5px 8px;font-size:12px;width:auto}
+.cl-form{border-top:1px solid var(--line);padding-top:12px}.cl-perms .sp-pick{margin-top:2px}.cl-perms[hidden]{display:none}
+.cl-note{font-size:12px;color:var(--primary);background:var(--primary-dim);padding:8px 10px;border-radius:8px;margin:0 0 10px}
 .split-hint{font-size:11px;color:var(--primary);margin-top:4px;line-height:1.4}.split-hint:empty{display:none}.sp-pick[hidden]{display:none}.split-hint.quiet{color:var(--text3)}.split-n{font-size:10px;color:var(--text3);margin-left:4px}
 .att-pick-note{font-size:11px;color:var(--text3);margin-top:4px}.att-pick-note.warn{color:var(--accent)}
 
@@ -818,6 +825,7 @@ code,.kbd,.mono{font-family:var(--mono)!important}
 .btn-p:hover{filter:brightness(1.08)}
 .btn-s{background:transparent;color:var(--text);border:1px solid var(--line-strong)}
 .btn-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:340px;padding:11px 16px;border-radius:999px;border:1px solid var(--line-strong);background:var(--card);color:var(--text);font:500 14px var(--font);cursor:pointer;transition:border-color .15s,background .15s}
+.gsi-slot{display:flex;justify-content:center;width:100%;max-width:340px;min-height:44px}.landing .gsi-slot{max-width:320px;margin:0 auto}
 .btn-google:hover{border-color:var(--primary-deep);background:var(--input-bg)}.btn-google svg{width:18px;height:18px;flex:none}
 .acct-email-login{margin-top:14px}.acct-email-login summary{font-size:12px;color:var(--text2);cursor:pointer;list-style:none}.acct-email-login summary::-webkit-details-marker{display:none}.acct-email-login summary:hover{color:var(--primary-deep)}
 .btn-s:hover{border-color:var(--primary);color:var(--primary-deep);background:transparent}
@@ -1470,6 +1478,7 @@ details.c-region .country-grid{margin:0 0 14px}
 .dt-del{padding:9px 14px 9px 13px;color:var(--text3)}
 .dt-del:hover{color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
 @media(max-width:700px){.dtools{width:100%}.dtools-grp{width:100%}.dt-b{flex:1;justify-content:center;padding:10px 8px}.dt-del{flex:0 0 auto;padding:10px 14px}}
+@media(max-width:520px){.dtools-grp{border-radius:14px}.dt-b{flex-direction:column;gap:4px;padding:8px 2px;font-size:9px;letter-spacing:.08em;min-width:0}.dt-b:first-child{padding-left:2px}.dt-del{flex:0 0 44px;padding:8px 0;justify-content:center}}
 .sh-intro{font-size:13px;line-height:1.6;color:var(--text2);margin:0 0 14px}
 .sh-link{display:flex;gap:6px;margin-bottom:8px}.sh-link .fc{flex:1;min-width:0;font-family:var(--mono,monospace);font-size:12px}
 .sh-native{width:100%;margin-bottom:6px}
@@ -2077,7 +2086,7 @@ function loadS(){
   }
   return defS();
 }
-function saveS(){if(!S.prefs)S.prefs=JSON.parse(JSON.stringify(P()));S.lastModified=Date.now();try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}debouncedSync();}
+function saveS(){if(!S.prefs)S.prefs=JSON.parse(JSON.stringify(P()));S.lastModified=Date.now();try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}debouncedSync();try{collabSchedule();}catch(e){}}
 
 // ===== GIST SYNC =====
 const GIST_FILE='holiday-tracker-data.json';
@@ -2126,6 +2135,10 @@ function startSyncPolling(){
   },30000);
 }
 function stopSyncPolling(){clearInterval(_pollTimer);_pollTimer=null;}
+// Shared trips and invites: every 30 s while the app is open, and when it comes back to the front
+let _collabTick=0;
+setInterval(()=>{if(document.visibilityState!=='visible'||typeof _acct==='undefined'||!_acct)return;collabSync();if(++_collabTick%4===0)collabInvitesLoad();},30000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&_acct){collabSync();collabInvitesLoad();}});
 
 let _syncErrorState=null; // null = ok, '401' = token expired, 'error' = other error
 async function gistAPI(path,opts={}){
@@ -2456,8 +2469,8 @@ function cloudPull(){return cloudMode()==='account'?acctPull():cloudMode()==='gi
 function cloudFullSync(){return cloudMode()==='account'?acctPull(true).then(()=>acctPush()):cloudMode()==='gist'?fullSync():null;}
 
 // Everything personal this app keeps in the browser — removed on sign-out
-function wipeLocalData(){attWipeLocal();['htV5','htV4','htV5_backup','htV5_backup_ts','htSync',OWNER_KEY].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});}
-function acctPayload(){const d=syncData();delete d.trips;return d;}
+function wipeLocalData(){attWipeLocal();_collabInv=[];['htCollabBase','htWho','htV5','htV4','htV5_backup','htV5_backup_ts','htSync',OWNER_KEY].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});}
+function acctPayload(){const d=syncData();delete d.trips;d.events=(d.events||[]).filter(t=>!(t.collab&&t.collab.id));return d;}
 function normEvents(r){return(r.events||r.trips||[]).map(t=>t.category?t:{...t,category:'trip',requiresLeave:true});}
 function hasLocalData(){return(S.events||[]).length>0;}
 
@@ -2686,7 +2699,7 @@ async function acctInit(){
     // Supabase advises not awaiting its own calls inside this callback
     setTimeout(()=>{
       if(ev==='PASSWORD_RECOVERY')acctShowNewPassword();
-      if(u&&u.id!==was)acctOnSignIn(u);
+      if(u&&u.id!==was){acctOnSignIn(u);setTimeout(()=>{collabSync({full:true,force:true});collabInvitesLoad();},3500);}
       else if(!u&&was){wipeLocalData();S=defS();applyTheme();render();toast('Signed out');}
       else render();
     },0);
@@ -2715,6 +2728,38 @@ async function acctSignIn(){
   _acctMsg('acct-msg','Signing in…');
   const{error}=await sbClient().auth.signInWithPassword({email,password});
   if(error)return _acctMsg('acct-msg',/confirm/i.test(error.message)?'Please confirm your email first: open the link we emailed you.':/invalid/i.test(error.message)?'Wrong email or password.':error.message,1);
+}
+// Google sign-in run by the app itself (Google's button, then the ID token goes to Supabase), so Google's prompt
+// names The Planner and theplanner.pages.dev instead of the Supabase address. Public OAuth client ID; empty = old redirect flow
+const GOOGLE_CLIENT_ID='';
+let _gsiLoad=null,_gsiNonce='';
+function gsiReady(){
+  if(!GOOGLE_CLIENT_ID)return Promise.resolve(false);
+  return _gsiLoad||(_gsiLoad=new Promise(res=>{const sc=document.createElement('script');sc.src='https://accounts.google.com/gsi/client';sc.async=true;
+    sc.onload=()=>res(!!(window.google&&google.accounts&&google.accounts.id));sc.onerror=()=>{_gsiLoad=null;res(false);};document.head.appendChild(sc);setTimeout(()=>res(false),8000);}));
+}
+async function gsiInit(){
+  // A fresh nonce each time: Google signs its hash into the token, Supabase checks it against the original
+  const raw=Array.from(crypto.getRandomValues(new Uint8Array(24)),b=>b.toString(16).padStart(2,'0')).join('');
+  const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw))),b=>b.toString(16).padStart(2,'0')).join('');
+  _gsiNonce=raw;
+  google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,nonce:hash,ux_mode:'popup',use_fedcm_for_prompt:true,itp_support:true,context:'signin',
+    callback:async r=>{
+      _acctMsg('acct-msg','Signing in…');
+      const{error}=await sbClient().auth.signInWithIdToken({provider:'google',token:r.credential,nonce:_gsiNonce});
+      if(error){_acctMsg('acct-msg',error.message,1);gsiMount(true);}
+    }});
+}
+// Swap each "Continue with Google" button for Google's own; the old button stays if Google's script can't load
+async function gsiMount(force){
+  const btns=[...document.querySelectorAll('button[data-action="acct-google"]:not([data-gsi])')];
+  if(!btns.length||!GOOGLE_CLIENT_ID||!navigator.onLine)return;
+  if(!(await gsiReady()))return;
+  try{await gsiInit();}catch(e){return;}
+  btns.forEach(b=>{if(!b.isConnected||b.disabled)return;b.dataset.gsi='1';const slot=document.createElement('div');slot.className='gsi-slot';b.after(slot);
+    const w=Math.min(400,Math.max(220,Math.round(b.getBoundingClientRect().width)||320));
+    google.accounts.id.renderButton(slot,{type:'standard',theme:document.documentElement.dataset.theme==='dark'?'filled_black':'outline',size:'large',shape:'pill',text:'continue_with',logo_alignment:'center',width:w});
+    b.hidden=true;});
 }
 // New accounts come from Google only; existing email accounts can still sign in with their password
 async function acctGoogle(){
@@ -2757,6 +2802,7 @@ async function acctDelete(){
     if(document.getElementById('acct-del-confirm').value.trim()!=='DELETE'){toast('Type DELETE to confirm');return false;}
     (async()=>{
       await attRemoveAll();
+      for(const t of (S.events||[]).filter(x=>isCollab(x)&&isTripOwner(x)))await attRemoveDir('trips/'+t.collab.id);
       const{error}=await sbClient().rpc('delete_my_account');
       if(error){toast('Could not delete account: '+error.message);return;}
       await sbClient().auth.signOut().catch(()=>{});
@@ -2866,6 +2912,7 @@ function vGuideCard(){
       `Enter each cost in the currency you paid. Totals appear in your own currency (${esc(baseCur())}) using daily exchange rates, so they're estimates. Adjust rates in <b>Settings → Exchange Rates</b>.`,
       '<b>Split shared bookings:</b> in a trip’s <b>Split</b> tab, add who’s going. When you add or edit a booking, pick <b>Split cost</b> (everyone, some of you, or a number of people) and <b>Paid by</b>. Totals and Budget count only your share.',
       '<b>Who’s flying:</b> once people are named in the Split tab, each flight (added or scanned) has tick boxes for who’s on it, and its cost can split between just them. <b>Show flights for</b> on the Timeline and Flights tab shows one person’s flights and times.',
+      '<b>Plan together:</b> in a trip, tap <b>People</b> and invite someone by email as <b>Editor</b> (everything), <b>Budget only</b> (costs, splits, Settle up) or <b>Custom</b>. No email is sent: they sign in to The Planner with that address and tap <b>Join</b>. Changes sync both ways, even when you edit at the same time. Only you can invite or remove people and delete the trip; others can remove only flights they added.',
       '<b>Settle up:</b> the Split tab nets everything into your home currency (with a per-currency breakdown) and shows the fewest payments to settle up, like Splitwise. Tap <b>Mark as paid</b> when someone pays. <b>View split ›</b> on a booking card jumps there. Tick <b>Settle up</b> in Share to show it on the shared page.',
       '<b>Budget</b> totals your spending by year, event and category.'
     ]))}
@@ -3010,7 +3057,7 @@ function splitFields(m){
   const o={split:splitVal(m)},pb=m.querySelector('[name="paidBy"]');
   if(o.split==='pick'){o.splitWith=[...m.querySelectorAll('[name="splitWith"]:checked')].map(i=>i.value);if(!o.splitWith.length||(o.splitWith.length===1&&o.splitWith[0]==='me')){o.split='';o.splitWith=undefined;}}
   else o.splitWith=undefined;
-  if(pb)o.paidBy=pb.value==='me'?undefined:pb.value;
+  if(pb)o.paidBy=pb.value;
   return o;
 }
 function splitHintUpd(m){
@@ -3277,7 +3324,7 @@ function render(){
   try{renderSidebar();restoreSidebarState();}catch(e){console.error('Sidebar error:',e);}
   const a=document.getElementById('app');
   const gate=gateState();document.body.classList.toggle('gated',gate!=='open');
-  if(gate!=='open'){a.innerHTML=vLanding(gate);return;}
+  if(gate!=='open'){a.innerHTML=vLanding(gate);if(GOOGLE_CLIENT_ID)setTimeout(gsiMount,0);return;}
   try{
     switch(S.v){
       case 'dashboard':a.innerHTML=vDash();break;
@@ -3291,9 +3338,11 @@ function render(){
       case 'guide':a.innerHTML=vGuidePage();break;
       default:a.innerHTML=vDash();
     }
+    if((S.v==='dashboard'||S.v==='events'||!S.v)&&_collabInv.length){const pc=a.querySelector('.page-content');if(pc)pc.insertAdjacentHTML('afterbegin',collabInvitesHtml());}
     a.insertAdjacentHTML('beforeend',signatureHtml());
   }catch(e){console.error('View error:',e);_appErrorState=true;stopSyncPolling();a.innerHTML='<div style="padding:40px;color:#ff6b6b"><h2>Error</h2><pre style="margin-top:12px;font-size:12px;white-space:pre-wrap;color:#e8e9ed">'+e.message+'\n'+e.stack+'</pre><p style="margin-top:8px;font-size:11px;color:var(--text3)">Sync has been paused to prevent data loss.</p><button onclick="localStorage.removeItem(\'htV4\');localStorage.removeItem(\'htV3\');location.reload()" style="margin-top:16px;padding:8px 16px;background:#6c8cff;color:#fff;border:none;border-radius:8px;cursor:pointer">Reset &amp; Reload</button></div>';}
   try{bind();}catch(e){console.error('Bind error:',e);}
+  if(GOOGLE_CLIENT_ID)setTimeout(gsiMount,0);
   if(S.v==='countries')setTimeout(renderWorldMap,100);
   initPdfJs();
 }
@@ -3510,12 +3559,14 @@ function vDetail(){
       ${S._from&&S._from.v==='calendar'?`<div class="back-row"><span class="back-link" data-action="cal-back">&larr; Calendar · ${new Date(S._from.y,S._from.m,1).toLocaleDateString(dloc(),{month:'long',year:'numeric'})}</span><span class="back-link back-alt" data-action="nav" data-to="events">All Events</span></div>`:`<div class="back-link" data-action="nav" data-to="events">&larr; All Events</div>`}
       <h2>${esc(t.name)}</h2>
       <div class="subtitle">${fmt(t.startDate)} — ${fmt(t.endDate)} · ${dayN(t.startDate)} · ${days(t.startDate,t.endDate)} days, ${nights(t.startDate,t.endDate)} nights</div>
+      ${isCollab(t)?`<div class="cl-banner"><span class="cl-badge">Planned together</span> ${isTripOwner(t)?'You’re the owner':esc(collabOwnerName(t))+'’s trip · you can change: '+esc(roleText(COLLAB_PERMS.every(p=>t.collab.perms.includes(p))?'editor':'custom',t.collab.perms))}</div>`:''}
     </div>
     <div class="dtools">
       ${t.source==='apple'?`<button class="btn btn-p" data-action="apple-attach" data-id="${t.id}">+ Add to event…</button>`:''}
       <div class="dtools-grp" role="group" aria-label="Trip actions">
         <button class="dt-b" data-action="edit-event" data-id="${t.id}" title="Edit trip"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg><span>Edit</span></button>
         ${t.source!=='apple'&&acctEnabled()?`<button class="dt-b${_shares&&_shares.has(t.id)?' sh-on':''}" data-action="share-trip" data-id="${t.id}" title="Share a read-only link"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg><span>${_shares&&_shares.has(t.id)?'Shared':'Share'}</span></button>`:''}
+        ${t.source!=='apple'&&acctEnabled()?`<button class="dt-b${isCollab(t)?' sh-on':''}" data-action="people" data-id="${t.id}" title="Plan this trip with others"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.4 6-5.4s5.4 2 6 5.4"/><path d="M16 4.6a3.2 3.2 0 010 6.3M18 14.8c1.7.7 2.8 2.5 3 5.2"/></svg><span>People</span></button>`:''}
         <button class="dt-b" data-action="export-event" data-id="${t.id}" title="Export"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg><span>Export</span></button>
         <button class="dt-b dt-del" data-action="del-event" data-id="${t.id}" title="Delete trip" aria-label="Delete trip"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
       </div>
@@ -3685,6 +3736,7 @@ function ckAdd(t,text,due){
 document.addEventListener('submit',e=>{
   if(!e.target.matches||!e.target.matches('[data-ck-form]'))return;
   e.preventDefault();const t=S.events.find(x=>x.id===S.tid),i=document.getElementById('ck-new');
+  if(t&&!can(t,'checklist')){toast('You can’t change the checklist on this trip.');return;}
   if(t&&i)ckAdd(t,i.value);
 });
 document.addEventListener('change',e=>{
@@ -3757,19 +3809,285 @@ function rSplit(t){
 document.addEventListener('submit',e=>{
   if(!e.target.matches||!e.target.matches('[data-sp-form]'))return;
   e.preventDefault();const t=S.events.find(x=>x.id===S.tid),i=document.getElementById('sp-new');if(!t||!i)return;
+  if(!can(t,'budget')){toast('You can’t change who’s going on this trip.');return;}
   const v=i.value.trim().replace(/\s+/g,' ').slice(0,40);if(!v)return;
   if(/^you$/i.test(v)||partyOf(t).some(p=>p.name.toLowerCase()===v.toLowerCase())){toast(v+' is already on this trip');return;}
   if(!t.party)t.party=[];t.party.push({id:uid(),name:v});t.pax=paxOf(t);saveS();render();
   const n=document.getElementById('sp-new');if(n)n.focus();
 });
 document.addEventListener('change',e=>{
+  const el=e.target;
+  if(el.id==='cl-role'){const c=document.querySelector('.cl-perms');if(c)c.hidden=el.value!=='custom';return;}
+  if(el.dataset&&el.dataset.clRole){const t=S.events.find(x=>x.id===(document.querySelector('#mbg .modal')||{dataset:{}}).dataset.peopleTid);if(!t||!isCollab(t))return;
+    const role=el.value,perms=role==='custom'?['budget','checklist']:[];
+    sbClient().rpc('trip_invite',{p_id:t.collab.id,p_email:el.dataset.clRole,p_role:role,p_perms:perms,p_person:null}).then(({error})=>{if(error)toast(error.message);else{toast(role==='custom'?'Changed to Custom: Budget & Split and Checklist':'Changed to '+ROLE_LBL[role]);showPeople(t.id);}});return;}
+});
+document.addEventListener('change',e=>{
   const el=e.target,d=el.dataset||{};if(!(d.spSplit||d.spPaid||d.spWith))return;
   const t=S.events.find(x=>x.id===S.tid),f=t&&spFind(t,d.spSplit||d.spPaid||d.spWith);if(!f)return;const b=f.e;
+  if(!can(t,'budget')){toast('You can’t change the split on this trip.');render();return;}
   if(d.spSplit){b.split=el.value;if(el.value==='pick'&&!(b.splitWith&&b.splitWith.length))b.splitWith=['me',...partyOf(t).map(p=>p.id)];if(el.value!=='pick')delete b.splitWith;}
-  if(d.spPaid){if(el.value==='me')delete b.paidBy;else b.paidBy=el.value;}
+  if(d.spPaid)b.paidBy=el.value;
   if(d.spWith){const w=new Set(b.splitWith||[]);el.checked?w.add(el.value):w.delete(el.value);b.splitWith=[...w];if(!w.size){b.splitWith=['me'];}}
   S._spFocus=b.id;saveS();render();
 });
+// ===== TRIPS PLANNED TOGETHER (People → invite by email; needs supabase/trip_members.sql) =====
+// A trip you invite people to lives in its own row (trip). Each person's app keeps a local copy in S.events with
+// t.collab = {id, perms, person, owner, meName, meIdx}; the last copy agreed with the server is kept per trip
+// (htCollabBase) so changes made at the same time merge booking by booking instead of overwriting.
+// In the server copy people are ids ('u:<account>' or a Split name's id); on this device you are 'me'.
+const COLLAB_BASE_KEY='htCollabBase',COLLAB_PARTS=['flights','hotels','activities','transport','checklist','attachments','party','settle'];
+const COLLAB_PERMS=['details','flights','hotels','activities','transport','budget','checklist','attachments'];
+const COLLAB_MONEY=['cost','currency','rateToSGD','split','splitWith','paidBy','depositAmount','depositCurrency','depositDate','depositPaid','paymentDueDate','fullyPaid','fullPaymentAmount','fullPaymentCurrency'];
+const PERM_LBL={details:'Trip details',flights:'Flights',hotels:'Hotels',activities:'Activities',transport:'Transport',budget:'Budget & Split',checklist:'Checklist',attachments:'Attachments'};
+const ROLE_LBL={editor:'Editor',budget:'Budget only',custom:'Custom'};
+const KIND_PERM={flights:'flights',hotels:'hotels',activities:'activities',transport:'transport'};
+let _collabBusy=false,_collabAgain=false,_collabMissing=0,_collabInv=[],_collabTimer=null,_collabErr={};
+const isCollab=t=>!!(t&&t.collab&&t.collab.id);
+const isTripOwner=t=>!isCollab(t)||(t.collab.perms||[]).includes('owner');
+function can(t,p){if(!isCollab(t))return true;const pr=t.collab.perms||[];return pr.includes('owner')||pr.includes(p);}
+// Compare by content, not key order
+const _cj=v=>JSON.stringify(v===undefined?null:v,(k,x)=>x&&typeof x==='object'&&!Array.isArray(x)?Object.keys(x).sort().reduce((o,kk)=>(o[kk]=x[kk],o),{}):x);
+function cBases(){try{return JSON.parse(localStorage.getItem(COLLAB_BASE_KEY)||'{}');}catch(e){return{};}}
+function cSetBase(id,b){const o=cBases();if(b)o[id]=b;else delete o[id];try{localStorage.setItem(COLLAB_BASE_KEY,JSON.stringify(o));}catch(e){}}
+function collabOwnerName(t){if(!isCollab(t)||t.collab.owner)return'you';const o=(t.party||[]).find(p=>/^u:/.test(p.id)&&p.id===t.collab.ownerPid);return o?o.name:'the trip owner';}
+function mapIds(d,from,to){
+  const sw=v=>v===from?to:v;
+  SPLIT_KINDS.forEach(k=>(d[k]||[]).forEach(e=>{if(e.paidBy!=null)e.paidBy=sw(e.paidBy);if(Array.isArray(e.splitWith))e.splitWith=e.splitWith.map(sw);if(Array.isArray(e.travellers))e.travellers=e.travellers.map(sw);}));
+  (d.settle||[]).forEach(x=>{x.from=sw(x.from);x.to=sw(x.to);});
+}
+// Server copy → this device: you become 'me' and leave the Split names list
+function collabFromRemote(data,c){
+  const t=JSON.parse(JSON.stringify(data||{})),me=c.person,party=t.party||[],i=party.findIndex(p=>p.id===me);
+  c.meName=i>=0?party[i].name:(c.meName||acctFirstName()||'Me');c.meIdx=i>=0?i:0;
+  // A booking without "paid by" was paid by the trip owner (who had it before the trip was shared)
+  if(c.ownerPid)SPLIT_KINDS.forEach(k=>(t[k]||[]).forEach(e=>{if(e.paidBy==null)e.paidBy=c.ownerPid;}));
+  t.party=party.filter(p=>p.id!==me);mapIds(t,me,'me');t.collab=c;return t;
+}
+// This device → server copy. Bookings added here are marked as added by you
+function collabToRemote(t,base){
+  const d=JSON.parse(JSON.stringify(t)),c=d.collab;delete d.collab;Object.keys(d).forEach(k=>{if(k[0]==='_')delete d[k];});
+  mapIds(d,'me',c.person);
+  const p=(d.party||[]).slice();p.splice(Math.min(c.meIdx||0,p.length),0,{id:c.person,name:c.meName||acctFirstName()||'Me'});d.party=p;
+  SPLIT_KINDS.forEach(k=>{const bi=new Map(((base&&base[k])||[]).map(e=>[e.id,e]));
+    (d[k]||[]).forEach((e,i)=>{const o=bi.get(e.id);
+      if(!e.by&&!o){e.by=_acct.id;const le=(t[k]||[]).find(x=>x.id===e.id);if(le)le.by=_acct.id;}// new here: added by you (kept on this device too)
+      // "Paid by" is always written out: on another device an empty one would mean that person
+      if(e.paidBy==null||e.paidBy==='me')e.paidBy=e.paidBy==='me'?c.person:(o?o.paidBy:c.person);
+      if(e.paidBy==null)delete e.paidBy;});});
+  return d;
+}
+// Keep only the changes this person may make (the server checks the same rules)
+function collabShape(d,base,t){
+  if(!base||isTripOwner(t))return d;
+  const out=JSON.parse(JSON.stringify(d)),b=base;
+  if(!can(t,'details')){Object.keys(out).forEach(k=>{if(!COLLAB_PARTS.includes(k))delete out[k];});Object.keys(b).forEach(k=>{if(!COLLAB_PARTS.includes(k))out[k]=b[k];});}
+  SPLIT_KINDS.forEach(k=>{
+    const bi=new Map((b[k]||[]).map(e=>[e.id,e])),mine=new Map((out[k]||[]).map(e=>[e.id,e]));
+    if(!can(t,KIND_PERM[k])){out[k]=(b[k]||[]).map(e=>{const m=mine.get(e.id);if(!m||!can(t,'budget'))return e;const r={...e};COLLAB_MONEY.forEach(f=>{if(f in m)r[f]=m[f];else delete r[f];});return r;});return;}
+    out[k]=(out[k]||[]).map(e=>{const o=bi.get(e.id);if(!o)return e;const r={...e};if('by' in o)r.by=o.by;else delete r.by;
+      if(!can(t,'budget'))COLLAB_MONEY.forEach(f=>{if(f in o)r[f]=o[f];else delete r[f];});return r;});
+    if(k==='flights')(b.flights||[]).forEach((e,i)=>{if(e.by!==_acct.id&&!mine.has(e.id))out.flights.splice(Math.min(i,out.flights.length),0,e);});
+  });
+  if(!can(t,'budget')){out.party=b.party;out.settle=b.settle;}
+  ['checklist','attachments'].forEach(k=>{if(!can(t,k))out[k]=b[k];});
+  Object.keys(out).forEach(k=>{if(out[k]===undefined)delete out[k];});
+  return out;
+}
+// Three-way merge: a field changed here wins; otherwise the server's copy; items matched by id
+function collabMerge(base,mine,theirs){
+  const eq=(a,b)=>_cj(a)===_cj(b),out={...theirs};
+  new Set([...Object.keys(mine),...Object.keys(base)]).forEach(k=>{
+    if(COLLAB_PARTS.includes(k)){out[k]=collabMergeArr(base[k]||[],mine[k]||[],theirs[k]||[]);return;}
+    if(!eq(mine[k],base[k])){if(mine[k]===undefined)delete out[k];else out[k]=mine[k];}
+  });
+  return out;
+}
+function collabMergeArr(b,m,t){
+  const eq=(x,y)=>_cj(x)===_cj(y),bi=new Map(b.map(x=>[x.id,x])),mi=new Map(m.map(x=>[x.id,x])),out=[],seen=new Set();
+  t.forEach(x=>{seen.add(x.id);const bx=bi.get(x.id),mx=mi.get(x.id);
+    if(!bx){out.push(mx?{...x,...mx}:x);return;}
+    if(!mx){if(!eq(x,bx))out.push(x);return;}// removed here: stays removed unless someone changed it meanwhile
+    const r={...x};new Set([...Object.keys(mx),...Object.keys(bx)]).forEach(f=>{if(!eq(mx[f],bx[f])){if(mx[f]===undefined)delete r[f];else r[f]=mx[f];}});out.push(r);});
+  m.forEach(x=>{if(!seen.has(x.id)&&!bi.has(x.id))out.push(x);});
+  return out;
+}
+// Swap a trip's contents in place, so anything holding it (an open form) keeps working
+function collabReplace(t,nt){Object.keys(t).forEach(k=>delete t[k]);Object.assign(t,nt);}
+const _collabMissingErr=e=>/PGRST202|PGRST205|42883|42P01|schema cache|trip_/i.test(((e&&e.code)||'')+' '+((e&&e.message)||''));
+function collabSchedule(){if(!_acct||!(S.events||[]).some(isCollab))return;clearTimeout(_collabTimer);_collabTimer=setTimeout(collabSync,1500);}
+async function collabSync(opts){
+  opts=opts||{};
+  if(!_acct||_acctOffline||!navigator.onLine||_appErrorState||!sbClient())return;
+  if(_collabMissing&&Date.now()-_collabMissing<6e5&&!opts.force)return;
+  if(_collabBusy){_collabAgain=_collabAgain&&_collabAgain.full?_collabAgain:(opts.full?opts:true);return;}
+  _collabBusy=true;const me=_acct.id,sb=sbClient();let changed=false;
+  try{
+    const{data:vers,error:ve}=await sb.rpc('trip_versions');
+    if(!_stillMe(me))return;
+    if(ve){if(_collabMissingErr(ve))_collabMissing=Date.now();return;}
+    _collabMissing=0;
+    const bases=cBases(),local=(S.events||[]).filter(isCollab);
+    // vers: {trip id: [version, your permissions]}; a new role shows up without the trip changing
+    const vOf=x=>Array.isArray(x)?x[0]:x,pOf=x=>Array.isArray(x)?x[1]:null;
+    const stale=Object.keys(vers||{}).some(id=>{const t=local.find(x=>x.collab.id===id);return!bases[id]||bases[id].v!==vOf(vers[id])||!t||(pOf(vers[id])&&_cj(pOf(vers[id]))!==_cj(t.collab.perms));})||local.some(t=>!(t.collab.id in (vers||{})));
+    if(stale||opts.full){
+      const{data:list,error}=await sb.rpc('trip_list');if(!_stillMe(me)||error)return;
+      const ids=new Set();
+      for(const r of list||[]){
+        ids.add(r.id);
+        const c={id:r.id,perms:r.perms||[],person:r.person,owner:!!r.owner,ownerPid:r.ownerPerson||null};
+        let t=(S.events||[]).find(x=>isCollab(x)&&x.collab.id===r.id);const base=bases[r.id];
+        if(!t){
+          const nt=collabFromRemote(r.data,c);if(!nt.id)nt.id='c_'+r.id.replace(/-/g,'').slice(0,16);
+          // An older personal copy of the same trip (another device of the owner) gives way to the shared one
+          S.events=(S.events||[]).filter(x=>!(x.id===nt.id&&!isCollab(x)));
+          S.events.push(nt);cSetBase(r.id,{v:r.version,d:r.data});changed=true;continue;
+        }
+        const keep={...t.collab,...c,meName:t.collab.meName,meIdx:t.collab.meIdx};
+        if(!base||base.v!==r.version){
+          const mine=base?collabShape(collabToRemote(t,base.d),base.d,t):null;
+          const merged=mine&&_cj(mine)!==_cj(base.d)?collabMerge(base.d,mine,r.data):r.data;
+          collabReplace(t,collabFromRemote(merged,keep));cSetBase(r.id,{v:r.version,d:r.data});changed=true;
+        }else if(_cj(t.collab.perms)!==_cj(c.perms)||t.collab.person!==c.person){t.collab=keep;changed=true;}
+      }
+      // Trips you were removed from, left on another device, or that the owner deleted
+      (S.events||[]).filter(t=>isCollab(t)&&!ids.has(t.collab.id)).forEach(t=>{
+        if(!t.collab.owner)toast(`“${t.name}” is no longer shared with you`);
+        S.events=S.events.filter(x=>x!==t);cSetBase(t.collab.id,null);changed=true;if(S.tid===t.id&&S.v==='detail')S.v='events';});
+    }
+    // Send changes made here
+    for(const t of (S.events||[]).filter(isCollab)){
+      for(let tries=0;tries<3;tries++){
+        const base=cBases()[t.collab.id];if(!base)break;
+        const raw=collabToRemote(t,base.d),d=collabShape(raw,base.d,t);
+        // Changes this person may not make are undone here too (the server would refuse them anyway)
+        if(_cj(raw)!==_cj(d)){collabReplace(t,collabFromRemote(d,t.collab));changed=true;if(_collabErr[t.collab.id]!=='shape'){_collabErr[t.collab.id]='shape';toast('Some changes weren’t saved: you don’t have access to change them on this trip.');}}
+        if(_cj(d)===_cj(base.d))break;
+        const{data:res,error}=await sb.rpc('trip_save',{p_id:t.collab.id,p_version:base.v,p_data:d});
+        if(!_stillMe(me))return;
+        if(error){
+          const msg=(error.message||'Could not save').replace(/^.*?:\s*/,'');
+          if(_collabErr[t.collab.id]!==msg){_collabErr[t.collab.id]=msg;toast(msg);}
+          collabReplace(t,collabFromRemote(base.d,t.collab));changed=true;break;
+        }
+        if(res&&res.ok){cSetBase(t.collab.id,{v:res.version,d});delete _collabErr[t.collab.id];break;}
+        // Someone saved first: merge theirs in and try again
+        collabReplace(t,collabFromRemote(collabMerge(base.d,d,res.data),t.collab));cSetBase(t.collab.id,{v:res.version,d:res.data});changed=true;
+      }
+    }
+  }catch(e){console.warn('Shared trip sync failed:',e);}
+  finally{
+    _collabBusy=false;
+    if(changed&&_stillMe(me)){saveUI();const busy=document.getElementById('mbg').classList.contains('open')||(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName));if(!busy)render();}
+    if(_collabAgain){const o=_collabAgain===true?{}:_collabAgain;_collabAgain=false;setTimeout(()=>collabSync(o),300);}
+  }
+}
+async function collabInvitesLoad(){
+  if(!_acct||!navigator.onLine||!sbClient()||(_collabMissing&&Date.now()-_collabMissing<6e5))return;
+  const me=_acct.id;
+  try{const{data,error}=await sbClient().rpc('trip_invites');if(!_stillMe(me))return;
+    if(error){if(_collabMissingErr(error))_collabMissing=Date.now();return;}
+    const was=_cj(_collabInv);_collabInv=data||[];if(was!==_cj(_collabInv)&&(S.v==='dashboard'||S.v==='events'))render();}catch(e){}
+}
+function collabInvitesHtml(){
+  if(!_collabInv.length)return'';
+  return`<div class="cl-inv">${_collabInv.map(i=>`<div class="cl-inv-row"><div><b>${esc(i.from)}</b> invited you to <b>${esc(i.name||'a trip')}</b>${i.startDate?` <span class="cl-dim">${esc(fmtS(i.startDate))}${i.endDate&&i.endDate!==i.startDate?' – '+esc(fmtS(i.endDate)):''}</span>`:''}<div class="cl-dim">${esc(ROLE_LBL[i.role]||'')}${i.role==='budget'?': costs, splits and Settle up':i.role==='editor'?': can change everything':''}</div></div>
+    <div class="cl-inv-acts"><button class="btn btn-s" data-action="cl-decline" data-id="${esc(i.id)}">Decline</button><button class="btn btn-p" data-action="cl-join" data-id="${esc(i.id)}">Join</button></div></div>`).join('')}</div>`;
+}
+async function collabJoin(id){
+  const{error}=await sbClient().rpc('trip_join',{p_id:id});
+  if(error){toast(error.message);return;}
+  _collabInv=_collabInv.filter(i=>i.id!==id);await collabSync({full:true,force:true});
+  const t=(S.events||[]).find(x=>isCollab(x)&&x.collab.id===id);
+  if(t){toast(`You joined “${t.name}”`);nav('detail',{tid:t.id,tab:'timeline'});}else render();
+}
+async function collabDecline(id){const{error}=await sbClient().rpc('trip_decline',{p_id:id});if(error){toast(error.message);return;}_collabInv=_collabInv.filter(i=>i.id!==id);render();toast('Invite declined');}
+// First invite: the trip moves to its own shared row (PDFs move next to it so everyone on it can open them)
+async function collabStart(t){
+  const c={id:null,perms:['owner',...COLLAB_PERMS],person:'u:'+_acct.id,ownerPid:'u:'+_acct.id,owner:true,meName:acctFirstName()||'Me',meIdx:0};
+  const tmp={...JSON.parse(JSON.stringify(t)),collab:c},d=collabToRemote(tmp,null);
+  const{data,error}=await sbClient().rpc('trip_create',{p_data:d});
+  if(error)throw error;
+  c.id=data.id;t.collab=c;cSetBase(c.id,{v:data.version,d});
+  (t.flights||[]).forEach(f=>{if(!f.by)f.by=_acct.id;});SPLIT_KINDS.forEach(k=>(t[k]||[]).forEach(e=>{if(!e.by)e.by=_acct.id;}));
+  for(const a of (t.attachments||[]).filter(a=>a.type==='pdf'&&a.cloud&&!a.path)){
+    const to='trips/'+c.id+'/'+a.id+'.pdf';
+    try{const{error:ce}=await sbClient().storage.from(ATT_BUCKET).copy(attPath(a),to);if(!ce)a.path=to;}catch(e){}
+  }
+  saveS();
+}
+const roleText=(role,perms)=>role==='editor'?'Can change everything':role==='budget'?'Costs, splits, who paid and Settle up':(perms||[]).map(p=>PERM_LBL[p]).filter(Boolean).join(', ')||'View only';
+async function showPeople(tid){
+  const t=S.events.find(x=>x.id===tid);if(!t)return;
+  if(!_acct){toast('Sign in to plan a trip with others');return;}
+  modal('People on this trip','<p class="quiet" style="margin:0">Loading…</p>',null,{noSave:true});
+  let members=[];
+  if(isCollab(t)){const{data,error}=await sbClient().rpc('trip_members',{p_id:t.collab.id});
+    if(error){const mb=document.querySelector('#mbg .modal-body');if(mb)mb.innerHTML=`<p class="cl-dim">${_collabMissingErr(error)?'Planning together isn’t switched on yet. Please try again later.':esc(error.message)}</p>`;return;}members=data||[];}
+  else{const{error}=await sbClient().rpc('trip_versions');if(error&&_collabMissingErr(error)){const mb=document.querySelector('#mbg .modal-body');if(mb)mb.innerHTML='<p class="cl-dim">Planning together isn’t switched on yet. Please try again later.</p>';return;}}
+  renderPeople(t,members);
+}
+function renderPeople(t,members){
+  const own=isTripOwner(t),pname=pid=>pid?(pid===(isCollab(t)?t.collab.person:'')?'You':personName(t,pid)):'';
+  const linked=new Set(members.map(m=>m.person).filter(Boolean));
+  const free=partyOf(t).filter(p=>!linked.has(p.id)&&!/^u:/.test(p.id));
+  const row=m=>`<div class="cl-m"><div class="cl-m-main"><b>${esc(m.me?'You':(pname(m.person)&&pname(m.person)!=='Someone'?pname(m.person):(m.email||'Invited')))}</b>${m.email&&own?` <span class="cl-dim">${esc(m.email)}</span>`:''}
+      <div class="cl-dim">${m.joined?'':'<span class="cl-pend">Invited</span> · '}${esc(ROLE_LBL[m.role]||'')}: ${esc(roleText(m.role,m.perms))}</div></div>
+    ${own?`<div class="cl-m-acts"><select class="fc" data-cl-role="${esc(m.email)}" aria-label="Role">${Object.entries(ROLE_LBL).map(([v,l])=>`<option value="${v}"${m.role===v?' selected':''}>${l}</option>`).join('')}</select><button class="sp-x" data-action="cl-remove" data-email="${esc(m.email)}" title="Remove">×</button></div>`:''}</div>`;
+  const ownerRow=`<div class="cl-m"><div class="cl-m-main"><b>${own?'You':esc(collabOwnerName(t))}</b><div class="cl-dim">Owner: can change everything, invite and remove people, delete the trip</div></div></div>`;
+  const body=`<p class="sh-intro">Plan <b>${esc(t.name)}</b> together. People you add see it in their own Planner and can change the parts you allow. Only you can invite or remove people and delete the trip. Anyone can remove flights they added; only you can remove other people’s.</p>
+    <div class="cl-list">${ownerRow}${members.map(row).join('')}</div>
+    ${own?`<div class="cl-form"><div class="sh-h">Invite someone</div>
+      <div class="fg"><div class="fi full"><label>Their email</label><input class="fc" id="cl-email" type="email" autocomplete="off" placeholder="name@example.com"></div>
+      <div class="fi"><label>They can change</label><select class="fc" id="cl-role"><option value="editor">Everything (Editor)</option><option value="budget">Budget only</option><option value="custom">Custom…</option></select></div>
+      <div class="fi"><label>In the Split tab they are</label><select class="fc" id="cl-person"><option value="">Add them as a new person</option>${free.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select></div>
+      <div class="fi full cl-perms" hidden><label>Custom access</label><div class="sp-pick">${COLLAB_PERMS.map(p=>`<label class="sp-chip"><input type="checkbox" name="cl-perm" value="${p}"${['budget','checklist'].includes(p)?' checked':''}><span>${PERM_LBL[p]}</span></label>`).join('')}</div></div></div>
+      <button class="btn btn-p" data-action="cl-invite" style="width:100%;margin-top:4px">Invite</button>
+      <p class="sh-fine">No email is sent. Tell them to sign in at theplanner.pages.dev with this email address; the invite waits for them there.</p></div>`
+    :`<div class="sh-acts"><button class="btn btn-d" data-action="cl-leave">Leave this trip</button></div><p class="sh-fine">You can: ${esc(roleText(t.collab.perms.includes('details')&&t.collab.perms.length>=COLLAB_PERMS.length?'editor':'custom',t.collab.perms))}.</p>`}
+    <p id="cl-msg" style="font-size:12px;color:var(--text3);margin:8px 0 0"></p>`;
+  const mb=document.querySelector('#mbg .modal-body');if(mb)mb.innerHTML=body;
+  const mo=document.querySelector('#mbg .modal');if(mo)mo.dataset.peopleTid=t.id;
+}
+async function collabInvite(t){
+  const msg=document.getElementById('cl-msg'),email=(document.getElementById('cl-email').value||'').trim().toLowerCase(),role=document.getElementById('cl-role').value;
+  const perms=role==='custom'?[...document.querySelectorAll('[name="cl-perm"]:checked')].map(i=>i.value):[],person=document.getElementById('cl-person').value;
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.style.color='var(--accent)';msg.textContent='Enter their email address';return;}
+  msg.style.color='';msg.textContent='Inviting…';
+  try{
+    if(!isCollab(t))await collabStart(t);
+    else await collabSync({force:true});
+    const{error}=await sbClient().rpc('trip_invite',{p_id:t.collab.id,p_email:email,p_role:role,p_perms:perms,p_person:person||null});
+    if(error)throw error;
+    toast('Invited '+email);render();await showPeople(t.id);
+  }catch(e){const m=document.getElementById('cl-msg');if(m){m.style.color='var(--accent)';m.textContent=_collabMissingErr(e)?'Planning together isn’t switched on yet. Please try again later.':(e.message||'Could not invite');}}
+}
+// Booking forms for someone who may only change money: everything else is read-only
+function collabLockForm(t,kind){
+  if(!isCollab(t)||can(t,kind))return;
+  const m=document.querySelector('#mbg .modal');if(!m)return;
+  m.querySelectorAll('input,select,textarea').forEach(i=>{if(!COLLAB_MONEY.includes(i.name)&&i.name!=='splitWith')i.disabled=true;});
+  m.querySelectorAll('.dz,.dz-tabs,.dz-clip').forEach(x=>x.style.display='none');
+  const fg=m.querySelector('.modal-body');if(fg)fg.insertAdjacentHTML('afterbegin','<p class="cl-note">You can change the cost, split and payments on this trip.</p>');
+}
+// Which permission an action needs on a shared trip (null = no check); returns a message when it isn't allowed
+function collabBlock(a,t,el){
+  if(!isCollab(t))return null;
+  const ask=' Ask '+collabOwnerName(t)+' if you need it.';
+  const kinds={flight:'flights',hotel:'hotels',act:'activities',trans:'transport'};
+  let m=a.match(/^(add|dup|del)-(flight|hotel|act|trans)$/);
+  if(m){const k=kinds[m[2]];if(!can(t,k))return'You can’t add or remove '+k+' on this trip.'+ask;
+    if(m[1]==='del'&&k==='flights'&&!isTripOwner(t)){const f=(t.flights||[]).find(x=>x.id===el.dataset.eid);if(f&&f.by!==_acct.id)return'Only '+collabOwnerName(t)+' can remove flights other people added. You can remove flights you added.';}
+    return null;}
+  m=a.match(/^edit-(flight|hotel|act|trans)$/);
+  if(m){const k=kinds[m[1]];return can(t,k)||can(t,'budget')?null:'You can’t change '+k+' on this trip.'+ask;}
+  if(a==='edit-event')return can(t,'details')?null:'You can’t change this trip’s details.'+ask;
+  if(/^ck-/.test(a))return can(t,'checklist')?null:'You can’t change the checklist on this trip.'+ask;
+  if(/^(add-attach-|del-attach)/.test(a))return can(t,'attachments')?null:'You can’t change attachments on this trip.'+ask;
+  if(/^sp-(del-person|mark|del-settle)$/.test(a))return can(t,'budget')?null:'You can’t change the split on this trip.'+ask;
+  return null;
+}
 // PDF attachments: the file is kept on this device (IndexedDB) and, when signed in, in the private 'attachments' bucket
 const ATT_MAX=10*1024*1024,ATT_BUCKET='attachments';
 let _attDB=null;
@@ -3779,7 +4097,7 @@ const attPut=(id,blob)=>attIdb('readwrite',st=>st.put(blob,id)).catch(()=>{});
 const attGet=id=>attIdb('readonly',st=>st.get(id)).catch(()=>null);
 const attDelLocal=id=>attIdb('readwrite',st=>st.delete(id)).catch(()=>{});
 function attWipeLocal(){try{if(_attDB)_attDB.then(db=>db.close()).catch(()=>{});_attDB=null;indexedDB.deleteDatabase('htFiles');}catch(e){}}
-function attPath(a){return _acct.id+'/'+a.id+'.pdf';}
+function attPath(a){return a.path||(_acct.id+'/'+a.id+'.pdf');}
 function attFind(id){for(const ev of S.events||[]){const a=(ev.attachments||[]).find(x=>x.id===id);if(a)return a;}return null;}
 async function attUpload(a,blob){
   const sb=sbClient();if(!sb||!_acct||_acctOffline)return false;
@@ -8010,6 +8328,7 @@ document.addEventListener('click',e=>{document.querySelectorAll('details.more-me
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-action]');if(!el)return;
   const a=el.dataset.action,ev=S.events.find(t=>t.id===S.tid);
+  if(ev&&isCollab(ev)&&_acct){const no=collabBlock(a,ev,el);if(no){toast(no);return;}}
   switch(a){
     case 'nav':nav(el.dataset.to);break;
     case 'cal-back':nav('calendar',{_back:true});break;
@@ -8025,7 +8344,12 @@ document.addEventListener('click',e=>{
     case 'dup-ignore':{if(ev){const a=(ev[el.dataset.arr]||[]).find(x=>x.id===el.dataset.a);if(a){a._notDup=[...(a._notDup||[]),el.dataset.b];saveS();render();}}break;}
     case 'export-event':showExportModal(el.dataset.id);break;
     case 'edit-event':{const t=S.events.find(x=>x.id===el.dataset.id);if(t)fEvent(t);break;}
-    case 'del-event':{const delId=el.dataset.id;const delEv=S.events.find(t=>t.id===delId);if(delEv){const bc=(delEv.flights||[]).length+(delEv.hotels||[]).length+(delEv.activities||[]).length+(delEv.transport||[]).length;modal('Delete Event',`<div class="confirm-modal-body"><div class="cm-icon">⚠️</div><div class="cm-title">Delete "${esc(delEv.name)}"?</div><div class="cm-sub">${bc?'This will remove <strong>'+bc+' booking'+(bc>1?'s':'')+'</strong> (flights, hotels, activities, transport).':'This trip has no bookings.'}<br>This action cannot be undone.</div></div>`,()=>{const idx=S.events.indexOf(delEv);S.events.splice(idx,1);saveS();nav('events');toast('Event deleted');},{saveLabel:'Delete',danger:true});}}break;
+    case 'del-event':{const delId=el.dataset.id;const delEv=S.events.find(t=>t.id===delId);
+      if(delEv&&isCollab(delEv)){const own=isTripOwner(delEv);
+        acctAsk({title:own?'Delete this trip for everyone?':'Leave this trip?',body:own?esc(delEv.name)+' will be removed from your Planner and from everyone you planned it with. This can’t be undone.':'It will be removed from your Planner. Ask '+esc(collabOwnerName(delEv))+' to invite you again if you change your mind.',yes:own?'Delete for everyone':'Leave',no:'Cancel'}).then(async ok=>{
+          if(!ok)return;const{error}=await sbClient().rpc(own?'trip_delete':'trip_leave',{p_id:delEv.collab.id});if(error){toast(error.message);return;}
+          if(own)attRemoveDir('trips/'+delEv.collab.id);cSetBase(delEv.collab.id,null);S.events=S.events.filter(x=>x!==delEv);saveS();nav('events');toast(own?'Trip deleted for everyone':'You left the trip');});break;}
+      if(delEv){const bc=(delEv.flights||[]).length+(delEv.hotels||[]).length+(delEv.activities||[]).length+(delEv.transport||[]).length;modal('Delete Event',`<div class="confirm-modal-body"><div class="cm-icon">⚠️</div><div class="cm-title">Delete "${esc(delEv.name)}"?</div><div class="cm-sub">${bc?'This will remove <strong>'+bc+' booking'+(bc>1?'s':'')+'</strong> (flights, hotels, activities, transport).':'This trip has no bookings.'}<br>This action cannot be undone.</div></div>`,()=>{const idx=S.events.indexOf(delEv);S.events.splice(idx,1);saveS();nav('events');toast('Event deleted');},{saveLabel:'Delete',danger:true});}}break;
     case 'tab':S.tab=el.dataset.t;delete S._spFocus;saveS();render();break;
     case 'ck-toggle':{const f=ckFind(el.dataset.id);if(f&&f.it){f.it.done=!f.it.done;f.it.doneAt=f.it.done?Date.now():undefined;saveS();render();}break;}
     case 'ck-del':{const f=ckFind(el.dataset.id);if(f&&f.it){const idx=f.t.checklist.indexOf(f.it);f.t.checklist.splice(idx,1);saveS();render();toastUndo('To-do deleted',()=>{f.t.checklist.splice(idx,0,f.it);saveS();render();});}break;}
@@ -8079,17 +8403,17 @@ document.addEventListener('click',e=>{
         if(f){const e={from:f,to:t&&t>=f?t:f,note:g('la-note').value,type:g('la-type').value};if(g('la-half').checked&&e.to===e.from)e.half=true;l.applied.push(e);saveS();render();toast('Leave added');}});break;}
     case 'del-applied':{const y=S.ly||2026;const ai=parseInt(el.dataset.ai);if(S.leave[y]&&S.leave[y].applied){const entry=S.leave[y].applied[ai];S.leave[y].applied.splice(ai,1);saveS();render();toastUndo('Leave entry removed',()=>{S.leave[y].applied.splice(ai,0,entry);saveS();render();});}break;}
     case 'add-flight':if(ev)fFlight(ev);break;
-    case 'edit-flight':{if(ev){const f=ev.flights.find(x=>x.id===el.dataset.eid);if(f)fFlight(ev,f);}break;}
+    case 'edit-flight':{if(ev){const f=ev.flights.find(x=>x.id===el.dataset.eid);if(f)fFlight(ev,f);collabLockForm(ev,'flights');}break;}
     case 'del-flight':{if(ev){const eid=el.dataset.eid;const entry=ev.flights.find(x=>x.id===eid);if(entry){const idx=ev.flights.indexOf(entry);ev.flights.splice(idx,1);saveS();render();toastUndo('Flight deleted',()=>{ev.flights.splice(idx,0,entry);saveS();render();});}}}break;
     case 'dup-flight':{if(ev){const f=ev.flights.find(x=>x.id===el.dataset.eid);if(f){const dup={...f,id:uid(),from:f.to,to:f.from,departureTime:'',arrivalTime:'',duration:'',flightNumber:'',seat:'',notes:'Return flight'};fFlight(ev,dup);}}}break;
     case 'add-hotel':if(ev)fHotel(ev);break;
-    case 'edit-hotel':{if(ev){const h=ev.hotels.find(x=>x.id===el.dataset.eid);if(h)fHotel(ev,h);}break;}
+    case 'edit-hotel':{if(ev){const h=ev.hotels.find(x=>x.id===el.dataset.eid);if(h)fHotel(ev,h);collabLockForm(ev,'hotels');}break;}
     case 'del-hotel':{if(ev){const eid=el.dataset.eid;const entry=ev.hotels.find(x=>x.id===eid);if(entry){const idx=ev.hotels.indexOf(entry);ev.hotels.splice(idx,1);saveS();render();toastUndo('Hotel deleted',()=>{ev.hotels.splice(idx,0,entry);saveS();render();});}}}break;
     case 'add-act':if(ev)fAct(ev);break;
-    case 'edit-act':{if(ev){const x=ev.activities.find(x=>x.id===el.dataset.eid);if(x)fAct(ev,x);}break;}
+    case 'edit-act':{if(ev){const x=ev.activities.find(x=>x.id===el.dataset.eid);if(x)fAct(ev,x);collabLockForm(ev,'activities');}break;}
     case 'del-act':{if(ev){const eid=el.dataset.eid;const entry=ev.activities.find(x=>x.id===eid);if(entry){const idx=ev.activities.indexOf(entry);ev.activities.splice(idx,1);saveS();render();toastUndo('Activity deleted',()=>{ev.activities.splice(idx,0,entry);saveS();render();});}}}break;
     case 'add-trans':if(ev)fTrans(ev);break;
-    case 'edit-trans':{if(ev){const x=ev.transport.find(x=>x.id===el.dataset.eid);if(x)fTrans(ev,x);}break;}
+    case 'edit-trans':{if(ev){const x=ev.transport.find(x=>x.id===el.dataset.eid);if(x)fTrans(ev,x);collabLockForm(ev,'transport');}break;}
     case 'del-trans':{if(ev){const eid=el.dataset.eid;const entry=ev.transport.find(x=>x.id===eid);if(entry){const idx=ev.transport.indexOf(entry);ev.transport.splice(idx,1);saveS();render();toastUndo('Transport deleted',()=>{ev.transport.splice(idx,0,entry);saveS();render();});}}}break;
     case 'xm':xm();break;
     case 'cal-prev':if(S.calM===0){S.calM=11;S.calY--;}else S.calM--;saveUI();render();break;
@@ -8232,7 +8556,7 @@ document.addEventListener('click',e=>{
         if(!pend&&!url){toast('Choose a file or add a link');return false;}
         if(!ev.attachments)ev.attachments=[];
         const at={id:uid(),addedAt:new Date().toISOString(),url:url||''};
-        if(pend&&pend.pdf){Object.assign(at,{type:'pdf',name:name||pend.name||'PDF',thumbData:pend.thumb||'',pages:pend.pages||0,size:pend.blob.size});
+        if(pend&&pend.pdf){if(isCollab(ev))at.path='trips/'+ev.collab.id+'/'+at.id+'.pdf';Object.assign(at,{type:'pdf',name:name||pend.name||'PDF',thumbData:pend.thumb||'',pages:pend.pages||0,size:pend.blob.size});
           ev.attachments.push(at);saveS();render();
           attPut(at.id,pend.blob).then(()=>attUpload(at,pend.blob)).then(ok=>{if(ok&&S.v==='detail')render();});
           toast('PDF added');return;}
@@ -8279,6 +8603,13 @@ document.addEventListener('click',e=>{
       },100);
       }break;}
     case 'att-open':attOpen(el.dataset.aid);break;
+    case 'people':showPeople(el.dataset.id);break;
+    case 'cl-invite':{const t=S.events.find(x=>x.id===(document.querySelector('#mbg .modal')||{dataset:{}}).dataset.peopleTid);if(t)collabInvite(t);break;}
+    case 'cl-remove':{const t=S.events.find(x=>x.id===(document.querySelector('#mbg .modal')||{dataset:{}}).dataset.peopleTid);if(!t||!isCollab(t))break;const em=el.dataset.email;
+      acctAsk({title:'Remove '+em+'?',body:'They won’t see this trip any more. Their name stays in the Split tab so the costs still add up.',yes:'Remove',no:'Cancel'}).then(async ok=>{if(!ok)return;const{error}=await sbClient().rpc('trip_remove_member',{p_id:t.collab.id,p_email:em});if(error){toast(error.message);return;}toast('Removed');showPeople(t.id);});break;}
+    case 'cl-leave':{const t=S.events.find(x=>x.id===(document.querySelector('#mbg .modal')||{dataset:{}}).dataset.peopleTid);if(!t)break;xm();const b=document.createElement('button');b.dataset.action='del-event';b.dataset.id=t.id;b.hidden=true;document.body.appendChild(b);b.click();b.remove();break;}
+    case 'cl-join':collabJoin(el.dataset.id);break;
+    case 'cl-decline':collabDecline(el.dataset.id);break;
     case 'who-f':{if(ev){whoSet(ev,el.dataset.p);render();}break;}
     case 'sp-go':{S._spFocus=el.dataset.eid;S.tab='split';saveS();render();setTimeout(()=>{const r=document.getElementById('sp-'+el.dataset.eid);if(r)r.scrollIntoView({block:'center',behavior:'smooth'});},50);break;}
     case 'sp-del-person':{if(ev){const pid=el.dataset.pid,p=partyOf(ev).find(x=>x.id===pid);if(!p)break;
