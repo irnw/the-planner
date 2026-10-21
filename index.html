@@ -314,6 +314,8 @@ textarea.fc{resize:vertical;min-height:50px}
 .sp-dot{display:inline-block;min-width:16px;padding:0 4px;border-radius:8px;background:var(--orange);color:#111;font-size:9px;line-height:16px;text-align:center;font-weight:700;vertical-align:1px}
 .sp-go{border:0;background:none;color:var(--primary);font:inherit;font-size:10px;cursor:pointer;padding:0;margin-left:6px;white-space:nowrap}.sp-go:hover{text-decoration:underline}
 @media(max-width:600px){.sp-row{grid-template-columns:1fr}.sp-ctl{flex-wrap:wrap}.sp-ctl label{flex:1}.sp-ctl .fc{min-width:0;width:100%}.sp-sec{padding:12px}.sp-focus{margin:0 -12px;padding:10px 12px}}
+.who-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 12px}.who-bar>span{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-right:4px}
+.who-chip{border:1px solid var(--line);background:none;color:var(--text2);border-radius:999px;padding:4px 12px;font:inherit;font-size:12px;cursor:pointer}.who-chip.on{background:var(--primary-dim);border-color:var(--primary);color:var(--text)}
 .split-hint{font-size:11px;color:var(--primary);margin-top:4px;line-height:1.4}.split-hint:empty{display:none}.sp-pick[hidden]{display:none}.split-hint.quiet{color:var(--text3)}.split-n{font-size:10px;color:var(--text3);margin-left:4px}
 .att-pick-note{font-size:11px;color:var(--text3);margin-top:4px}.att-pick-note.warn{color:var(--accent)}
 
@@ -2863,6 +2865,7 @@ function vGuideCard(){
       'In a booking, add the <b>Deposit</b> and <b>Full Payment</b> with due dates. The card shows the balance and the Dashboard reminds you.',
       `Enter each cost in the currency you paid. Totals appear in your own currency (${esc(baseCur())}) using daily exchange rates, so they're estimates. Adjust rates in <b>Settings → Exchange Rates</b>.`,
       '<b>Split shared bookings:</b> in a trip’s <b>Split</b> tab, add who’s going. When you add or edit a booking, pick <b>Split cost</b> (everyone, some of you, or a number of people) and <b>Paid by</b>. Totals and Budget count only your share.',
+      '<b>Who’s flying:</b> once people are named in the Split tab, each flight (added or scanned) has tick boxes for who’s on it, and its cost can split between just them. <b>Show flights for</b> on the Timeline and Flights tab shows one person’s flights and times.',
       '<b>Settle up:</b> the Split tab nets everything into your home currency (with a per-currency breakdown) and shows the fewest payments to settle up, like Splitwise. Tap <b>Mark as paid</b> when someone pays. <b>View split ›</b> on a booking card jumps there. Tick <b>Settle up</b> in Share to show it on the shared page.',
       '<b>Budget</b> totals your spending by year, event and category.'
     ]))}
@@ -2903,12 +2906,13 @@ function defS(){return{v:'dashboard',tid:null,tab:'flights',ly:2026,calY:2026,ca
 // Travel party: you plus the friends named in the Split tab (or just a head count set in Edit trip)
 const partyOf=t=>(t&&t.party)||[];
 function paxOf(t){return partyOf(t).length?partyOf(t).length+1:Math.max(1,parseInt(t&&t.pax)||1);}
-function splitN(e,t){const v=e&&e.split;return Math.max(1,v==='party'?paxOf(t):v==='pick'?((e.splitWith||[]).length||1):parseInt(v)||1);}
+function splitN(e,t){const v=e&&e.split;return Math.max(1,v==='party'?paxOf(t):v==='pick'?((e.splitWith||[]).length||1):v==='flyers'?flyersOf(e,t).length:parseInt(v)||1);}
 // Who shares a booking (ids, 'me' = you); null when it's split by a head count without names
 function sharersOf(e,t){
   const all=['me',...partyOf(t).map(p=>p.id)];
   // Chosen people: any number, with or without you (a ticket bought just for a friend)
   if(e.split==='pick'){const w=(e.splitWith||[]).filter(id=>all.includes(id));return w.length?w:['me'];}
+  if(e.split==='flyers')return flyersOf(e,t);
   if(splitN(e,t)<2)return['me'];
   if(e.split==='party')return partyOf(t).length?all:null;
   // A head count that matches everyone on the trip is everyone
@@ -2918,6 +2922,31 @@ function sharersOf(e,t){
 // Your part of a booking: 0 when it's only for others
 function myFrac(e,t){const sh=sharersOf(e,t);return sh?(sh.includes('me')?1/sh.length:0):1/splitN(e,t);}
 const personName=(t,id)=>id==='me'?'You':(partyOf(t).find(p=>p.id===id)||{}).name||'Someone';
+// Who's on a flight ('me' = you). A flight with no list is everyone's (flights added before this existed)
+const allIds=t=>['me',...partyOf(t).map(p=>p.id)];
+function flyersOf(f,t){const all=allIds(t),l=(f.travellers||[]).filter(i=>all.includes(i));return l.length?l:all;}
+function whoNames(t,ids){const all=allIds(t);return all.length>1&&all.every(i=>ids.includes(i))?'Everyone':ids.map(i=>personName(t,i)).join(', ');}
+// Flights shown for one person (Timeline and Flights tab), remembered per trip on this device
+function whoSel(t){try{const v=(JSON.parse(localStorage.getItem('htWho')||'{}'))[t.id];return v&&(v==='all'||allIds(t).includes(v))?v:'all';}catch(e){return'all';}}
+function whoSet(t,v){try{const o=JSON.parse(localStorage.getItem('htWho')||'{}');o[t.id]=v;localStorage.setItem('htWho',JSON.stringify(o));}catch(e){}}
+const flightShown=(f,t)=>{const w=whoSel(t);return w==='all'||flyersOf(f,t).includes(w);};
+function whoBarHtml(t){
+  if(!partyOf(t).length||!(t.flights||[]).length)return'';
+  const w=whoSel(t);
+  return`<div class="who-bar"><span>Show flights for</span>${[['all','Everyone'],...allIds(t).map(i=>[i,personName(t,i)])].map(([v,l])=>`<button class="who-chip${w===v?' on':''}" data-action="who-f" data-p="${esc(v)}">${esc(l)}</button>`).join('')}</div>`;
+}
+// "Who's flying" tick boxes (flight form and Scan); def = ids ticked
+function whoPickHtml(t,def,name){
+  if(!partyOf(t).length)return'';
+  const d=new Set(def);
+  return`<div class="fi full"><label>Who’s flying</label><div class="sp-pick">${allIds(t).map(i=>`<label class="sp-chip"><input type="checkbox" name="${name||'travellers'}" value="${esc(i)}"${d.has(i)?' checked':''}><span>${esc(personName(t,i))}</span></label>`).join('')}</div><div class="split-hint quiet">Just you, or everyone on the same booking. Each person’s Timeline can show only their flights.</div></div>`;
+}
+// Passengers named in a booking: tick the people whose first name appears (and you, by your account name)
+function whoGuess(t,txt){
+  const all=allIds(t),T=String(txt||'').toUpperCase(),me=(typeof acctFirstName==='function'&&acctFirstName())||'';
+  const hit=all.filter(i=>{const n=(i==='me'?me:personName(t,i)).trim().split(/\s+/)[0].toUpperCase();return n.length>1&&new RegExp('(^|[^A-Z])'+n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'([^A-Z]|$)').test(T);});
+  return hit.length?hit:['me'];
+}
 const SPLIT_KINDS=['flights','hotels','activities','transport'];
 function tripItems(t){return SPLIT_KINDS.flatMap(k=>(t[k]||[]).map(e=>({k,e})));}
 // Balances per currency: + is owed to that person, − owes. Payments between you (t.settle) count too
@@ -2959,11 +2988,12 @@ function eCostFull(t){let s=0;['hotels','flights','activities','transport'].forE
 // "Your share" line on a booking card
 function splitEg(e,t){const n=myFrac(e,t)===1?1:Math.max(2,splitN(e,t));if(!parseFloat(e.cost))return'';if(n<2)return e.paidBy&&partyOf(t).some(p=>p.id===e.paidBy)?`<div class="eg"><span class="ek">Paid by</span><span class="ev">${esc(personName(t,e.paidBy))} <button class="sp-go" data-action="sp-go" data-eid="${e.id}">View split ›</button></span></div>`:'';return`<div class="eg"><span class="ek">Your share</span><span class="ev">${esc(e.currency||baseCur())} ${fmtAmt(shareAmt(e,t))} <span class="split-n">${myFrac(e,t)?`split ${n} ways`:'for '+esc(sharersOf(e,t).map(id=>personName(t,id)).join(', '))}</span>${e.paidBy&&partyOf(t).some(p=>p.id===e.paidBy)?` <span class="split-n">· paid by ${esc(personName(t,e.paidBy))}</span>`:''} <button class="sp-go" data-action="sp-go" data-eid="${e.id}">View split ›</button></span></div>`;}
 // The Split picker on booking forms: just me, everyone on the trip, or a number of people
-function splitHtml(ev,e,isNew){
-  const pax=paxOf(ev),ppl=partyOf(ev),v=e&&e.split!=null&&e.split!==''?String(e.split):(isNew&&pax>1?'party':''),w=new Set((e&&e.splitWith)||['me']);
+function splitHtml(ev,e,isNew,kind){
+  const pax=paxOf(ev),ppl=partyOf(ev),fl=kind==='flight'&&ppl.length,v=e&&e.split!=null&&e.split!==''?String(e.split):(isNew&&pax>1?(fl?'flyers':'party'):''),w=new Set((e&&e.splitWith)||['me']);
   const nums=[];for(let i=2;i<=20;i++)nums.push(i);
   return`<div class="fi full"><label>Split cost</label><select class="fc" name="split" data-pax="${pax}">
     <option value=""${v===''?' selected':''}>Just me (I pay all of it)</option>
+    ${fl?`<option value="flyers"${v==='flyers'?' selected':''}>The people on this flight</option>`:''}
     ${pax>1?`<option value="party"${v==='party'?' selected':''}>Everyone on this trip (${pax} people)</option>`:''}
     ${ppl.length?`<option value="pick"${v==='pick'?' selected':''}>Some of us…</option>`:''}
     ${nums.map(i=>`<option value="${i}"${v===String(i)?' selected':''}>Split between ${i} people</option>`).join('')}
@@ -2972,7 +3002,7 @@ function splitHtml(ev,e,isNew){
   <div class="split-hint"></div>${pax>1?'':'<div class="split-hint quiet">Tip: add who’s going in the trip’s Split tab (or Edit trip), then pick “Everyone on this trip”.</div>'}</div>
   ${ppl.length?`<div class="fi full"><label>Paid by</label><select class="fc" name="paidBy">${[{id:'me',name:'You'},...ppl].map(p=>`<option value="${esc(p.id)}"${(e&&e.paidBy||'me')===p.id?' selected':''}>${esc(p.name)}</option>`).join('')}</select></div>`:''}`;
 }
-function tlCost(e,t){if(!e.cost)return'';return myFrac(e,t)!==1?`${e.currency||''} ${fmtAmt(shareAmt(e,t))} (your share)`:`${e.currency||''} ${parseFloat(e.cost).toLocaleString()}`;}
+function tlCost(e,t){if(!e.cost)return'';if(myFrac(e,t)===0)return`${e.currency||''} ${parseFloat(e.cost).toLocaleString()} (not yours)`;return myFrac(e,t)!==1?`${e.currency||''} ${fmtAmt(shareAmt(e,t))} (your share)`:`${e.currency||''} ${parseFloat(e.cost).toLocaleString()}`;}
 const spNote=(d,ev)=>splitN(d,ev)>1||(d.paidBy&&d.paidBy!=='me')?` · split ${splitN(d,ev)} ways, see the Split tab`:'';
 function splitVal(m){const el=m.querySelector('[name="split"]');return el?el.value:'';}
 // Split choices from a booking form: {split, splitWith?, paidBy?}
@@ -2989,11 +3019,13 @@ function splitHintUpd(m){
   const pk=sel.parentElement.querySelector('.sp-pick');if(pk)pk.hidden=sel.value!=='pick';
   const ck=[...m.querySelectorAll('[name="splitWith"]:checked')].map(i=>i.value);
   if(sel.value==='pick'&&ck.length&&!ck.includes('me')){const c0=parseFloat((m.querySelector('[name="cost"]')||{}).value);h.textContent=c0?'Not part of your share: '+(ck.length>1?'split between the people ticked':'all for the person ticked')+'. Pick who paid below.':'';return;}
-  const n=sel.value==='party'?parseInt(sel.dataset.pax)||1:sel.value==='pick'?ck.length||1:parseInt(sel.value)||1;
+  const fly=[...m.querySelectorAll('[name="travellers"]:checked')].map(i=>i.value);
+  if(sel.value==='flyers'&&fly.length&&!fly.includes('me')){h.textContent='You’re not on this flight, so it isn’t part of your share. Pick who paid below.';return;}
+  const n=sel.value==='party'?parseInt(sel.dataset.pax)||1:sel.value==='pick'?ck.length||1:sel.value==='flyers'?fly.length||1:parseInt(sel.value)||1;
   h.textContent=n>1&&c?`Your share: ${cur} ${fmtAmt(c/n)} of ${cur} ${fmtAmt(c)}. Only your share counts in totals and the budget.`:'';
 }
-document.addEventListener('input',e=>{const m=e.target.closest&&e.target.closest('.modal');if(m&&/^(cost|split|splitWith|currency|fullPaymentAmount)$/.test(e.target.name||''))splitHintUpd(m);});
-document.addEventListener('change',e=>{const m=e.target.closest&&e.target.closest('.modal');if(m&&/^(cost|split|splitWith|currency)$/.test(e.target.name||''))splitHintUpd(m);});
+document.addEventListener('input',e=>{const m=e.target.closest&&e.target.closest('.modal');if(m&&/^(cost|split|splitWith|travellers|currency|fullPaymentAmount)$/.test(e.target.name||''))splitHintUpd(m);});
+document.addEventListener('change',e=>{const m=e.target.closest&&e.target.closest('.modal');if(m&&/^(cost|split|splitWith|travellers|currency)$/.test(e.target.name||''))splitHintUpd(m);});
 function allCost(){return S.events.reduce((s,t)=>s+eCost(t),0);}
 function upcoming(){const td=ymd(new Date());return S.events.filter(t=>t.endDate>=td).sort((a,b)=>a.startDate.localeCompare(b.startDate));}
 function past(){const td=ymd(new Date());return S.events.filter(t=>t.endDate<td).sort((a,b)=>b.startDate.localeCompare(a.startDate));}
@@ -3511,10 +3543,12 @@ function rFlights(t){
   const sorted=sortEntries(t.flights||[],'flights');
   return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><h3 style="font-size:14px">Flights</h3><div style="display:flex;gap:8px;align-items:center">${sortCtrlHtml('entry',sortKey,sortDir)}<button class="btn btn-p" data-action="add-flight">+ Add Flight</button></div></div>
   ${dupBannerHtml(t,'flights')}
-  ${sorted.length?sorted.map(f=>`
+  ${whoBarHtml(t)}
+  ${sorted.length?sorted.filter(f=>flightShown(f,t)).map(f=>`
     <div class="entry">
       <div class="entry-top"><h4>${esc(f.airline||'')} ${esc(f.flightNumber||'')}${f.appleUid?' <span class="tag" style="font-size:10.5px;background:var(--glass);color:var(--text3);border:1px solid var(--glass-border);vertical-align:2px" title="Synced from Apple Calendar">&#63743; Apple</span>':''}</h4><div class="entry-acts"><button class="btn btn-ghost" data-action="edit-flight" data-eid="${f.id}">Edit</button><details class="more-menu"><summary aria-label="More actions" title="More actions">⋯</summary><div class="mm">${f.appleUid?`<button  data-action="apple-detach" data-eid="${f.id}" title="Make it a separate Apple event again">Detach from Apple Calendar</button>`:''}<button  data-action="dup-flight" data-eid="${f.id}" title="Duplicate (return flight)">Duplicate</button><button class="mm-del" data-action="del-flight" data-eid="${f.id}">Delete</button></div></details></div></div>
       <div class="entry-grid">
+        ${partyOf(t).length?`<div class="eg"><span class="ek">Flying</span><span class="ev">${esc(whoNames(t,flyersOf(f,t)))}</span></div>`:''}
         ${f.from||f.to?`<div class="eg"><span class="ek">Route</span><span class="ev">${esc(f.from||'?')} → ${esc(f.to||'?')}</span></div>`:''}
         ${f.pnr?`<div class="eg"><span class="ek">PNR</span><span class="ev" style="font-family:monospace">${esc(f.pnr)}</span></div>`:''}
         ${f.seat?`<div class="eg"><span class="ek">Seat</span><span class="ev">${esc(f.seat)}</span></div>`:''}
@@ -3830,14 +3864,14 @@ function rAttach(t){
 function rTimeline(t){
   // Collect all entries with dates
   const items=[];
-  (t.flights||[]).forEach(f=>{const d=f.departureTime?(f.departureTime.includes('T')?f.departureTime.split('T')[0]:f.departureTime.split(' ')[0]):'';const fz=flightTzs(f),homeNote=(()=>{const ms=fz.dep&&f.departureTime&&!/T00:00$/.test(f.departureTime)?zonedToUtc(f.departureTime,fz.dep):NaN;return !isNaN(ms)&&tzOffsetMin(ms,fz.dep)!==tzOffsetMin(ms,homeTz())?' · departs '+new Date(ms).toLocaleTimeString(dloc(),{timeZone:homeTz(),hour:'numeric',minute:'2-digit',hour12:true})+' '+homeTzLabel()+' time':'';})();items.push({type:'flight',date:d||t.startDate,time:f.departureTime,label:`${f.airline||''} ${f.flightNumber||''}`.trim()||'Flight',sub:`${f.from||'?'} → ${f.to||'?'}${homeNote}`,cost:tlCost(f,t)});});
+  (t.flights||[]).filter(f=>flightShown(f,t)).forEach(f=>{const d=f.departureTime?(f.departureTime.includes('T')?f.departureTime.split('T')[0]:f.departureTime.split(' ')[0]):'';const fz=flightTzs(f),homeNote=(()=>{const ms=fz.dep&&f.departureTime&&!/T00:00$/.test(f.departureTime)?zonedToUtc(f.departureTime,fz.dep):NaN;return !isNaN(ms)&&tzOffsetMin(ms,fz.dep)!==tzOffsetMin(ms,homeTz())?' · departs '+new Date(ms).toLocaleTimeString(dloc(),{timeZone:homeTz(),hour:'numeric',minute:'2-digit',hour12:true})+' '+homeTzLabel()+' time':'';})();items.push({type:'flight',date:d||t.startDate,time:f.departureTime,label:`${f.airline||''} ${f.flightNumber||''}`.trim()||'Flight',sub:`${f.from||'?'} → ${f.to||'?'}${homeNote}${partyOf(t).length&&whoNames(t,flyersOf(f,t))!=='Everyone'?' · '+whoNames(t,flyersOf(f,t)):''}`,cost:tlCost(f,t)});});
   (t.hotels||[]).forEach(h=>{items.push({type:'hotel',date:h.checkIn||t.startDate,time:'',label:h.name||'Hotel',sub:`${fmt(h.checkIn)} — ${fmt(h.checkOut)} (${nights(h.checkIn,h.checkOut)}n)`,cost:tlCost(h,t)});});
   (t.activities||[]).forEach(a=>{items.push({type:'activity',date:a.date||t.startDate,time:a.time||'',label:a.name||'Activity',sub:a.location||'',cost:tlCost(a,t)});});
   (t.transport||[]).forEach(x=>{items.push({type:'transport',date:x.date||t.startDate,time:x.time||'',label:`${x.type||''} ${x.name||''}`.trim()||'Transport',sub:x.location||'',cost:tlCost(x,t)});});
   items.sort((a,b)=>(a.date+' '+(a.time||'99')).localeCompare(b.date+' '+(b.time||'99')));
   if(!items.length)return '<div class="empty"><p>No entries yet — add flights, hotels, or activities to see your itinerary</p></div>';
   let lastDate='';
-  return `<h3 style="font-size:14px;margin-bottom:12px">Itinerary Timeline</h3><div class="timeline">${items.map(it=>{
+  return `<h3 style="font-size:14px;margin-bottom:12px">Itinerary Timeline</h3>${whoBarHtml(t)}<div class="timeline">${items.map(it=>{
     const showDate=it.date!==lastDate;lastDate=it.date;
     return `${showDate?`<div class="tl-date" style="margin-top:${showDate&&lastDate?'8':'0'}px">${fmt(it.date)} · ${dayN(it.date)}</div>`:''}<div class="tl-item tl-${it.type}"><div class="tl-content"><div style="display:flex;justify-content:space-between;align-items:center"><h4>${esc(it.label)}</h4>${it.cost?`<span style="font-size:11px;font-weight:600;color:var(--text2)">${it.cost}</span>`:''}</div>${it.sub?`<div class="tl-sub">${esc(it.sub)}</div>`:''}</div></div>`;
   }).join('')}</div>`;
@@ -4268,7 +4302,7 @@ function shareSnapshot(t,o,files){
         people:['me',...partyOf(t).map(p=>p.id)].map(id=>({name:nm(id),net:r2(w.home[id]||0),by:w.multi?w.curs.map(c=>[c,r2((w.out[c]||{})[id]||0)]).filter(([,v])=>Math.abs(v)>0.009):[],paid:w.multi?r2(w.paid[id]||0):0}))};})()}:{}),
     ...(o.notes&&t.notes?{notes:t.notes}:{}),
     ...(o.files?{attachments:shareAttachments(t,files||{})}:{}),
-    flights:(t.flights||[]).map(f=>({...pick(f,['airline','flightNumber','from','to','departureTime','arrivalTime','duration',...ref,...cost]),...ways(f)})),
+    flights:(t.flights||[]).map(f=>({...pick(f,['airline','flightNumber','from','to','departureTime','arrivalTime','duration',...ref,...cost]),...ways(f),...(partyOf(t).length?{who:whoNames(t,flyersOf(f,t)).replace(/\bYou\b/,acctFirstName()||'Trip owner')}:{})})),
     hotels:(t.hotels||[]).map(h=>({...pick(h,['name','checkIn','checkOut',...ref,...cost]),...ways(h)})),
     activities:(t.activities||[]).map(a=>({...pick(a,['name','date','endDate','time','location','duration',...ref,...cost]),...ways(a)})),
     transport:(t.transport||[]).map(x=>({...pick(x,['type','name','date','time','location','duration',...ref,...cost]),...ways(x)}))};
@@ -6152,6 +6186,10 @@ function suRefresh(parsed,opts){
   const n=document.querySelectorAll('#su-legs .su-leg').length;
   document.querySelectorAll('#su-legs .su-leg-n').forEach((el,i)=>el.textContent=n>1?'Flight '+(i+1):'Flight');
   const cnt=document.getElementById('su-leg-count');if(cnt)cnt.textContent=n===1?'1 flight':n+' flights';
+  // Who's flying: for a trip with people named in its Split tab (ticks guessed from the passenger names)
+  const who=document.getElementById('su-who');
+  if(who){const key=type==='flight'&&mev&&partyOf(mev).length?mev.id:'';
+    if(who.dataset.ev!==key){who.dataset.ev=key;who.innerHTML=key?`<div class="fg">${whoPickHtml(mev,whoGuess(mev,parsed.rawText),'su-trv')}</div>`:'';}}
 }
 function suShowResult(parsed){
   window._suParsed=parsed;
@@ -6290,6 +6328,7 @@ function showSmartUpload(){
         </div>
       </div>
       <div id="su-match-hint" class="su-hint" style="display:none"></div>
+      <div id="su-who" style="margin-top:8px"></div>
       <div id="su-new-ev" class="fg" style="margin-top:10px">
         <div class="fi full"><label>New event name</label><input class="fc" id="su-ev-name"></div>
         <div class="fi"><label>Start date</label><input class="fc" type="date" id="su-ev-sd"></div>
@@ -6317,7 +6356,7 @@ function showSmartUpload(){
       ['hotels','flights','activities','transport'].forEach(k=>{if(!ev[k])ev[k]=[];});
       if(type==='flight'){
         const dt=(d,t)=>d?(t?d+'T'+t:d+'T00:00'):'';
-        const perLegCost=legs.some(l=>l.cost);
+        const perLegCost=legs.some(l=>l.cost),suTrv=[...document.querySelectorAll('[name="su-trv"]:checked')].map(i=>i.value);
         legs.forEach((l,i)=>{
           const dep=dt(l.date,l.time),arr=dt(l.adate||l.date,l.atime);
           const lc=perLegCost?l.cost:(i===0?cost:''),lcur=perLegCost?(l.currency||cur):cur;
@@ -6325,7 +6364,7 @@ function showSmartUpload(){
           if(!duration&&l.time&&l.atime&&dep&&arr)duration=flightDuration(dep,arr,tzForPlace(l.from),tzForPlace(l.to));
           const code=(l.fn.match(/^[A-Z0-9]{2}/i)||[''])[0].toUpperCase();
           ev.flights.push({id:uid(),airline:AIRLINE_MAP[code]||l.airline||parsed.airline||'',flightNumber:l.fn.replace(/\s+/g,'').toUpperCase(),pnr:l.pnr||parsed.pnr||'',seat:l.seat,from:l.from,to:l.to,departureTime:dep,arrivalTime:arr,duration,
-            cost:lc,currency:lcur,rateToSGD:snapRate(lcur),...(paxOf(ev)>1?{split:'party'}:{}),notes:!perLegCost&&i===0&&cost&&legs.length>1?`Booking total for ${legs.length} flights`:'',ocrText:i===0?(parsed.rawText||''):''});
+            cost:lc,currency:lcur,rateToSGD:snapRate(lcur),...(partyOf(ev).length?{travellers:suTrv.length?suTrv:['me'],split:'flyers'}:paxOf(ev)>1?{split:'party'}:{}),notes:!perLegCost&&i===0&&cost&&legs.length>1?`Booking total for ${legs.length} flights`:'',ocrText:i===0?(parsed.rawText||''):''});
         });
       }else{
         const entry={id:uid(),...(paxOf(ev)>1?{split:'party'}:{}),cost:parsed.cost||'',currency:parsed.currency||baseCur(),rateToSGD:snapRate(parsed.currency||baseCur()),notes:parsed.rawText?'[Auto-extracted]':'',ocrText:parsed.rawText||''};
@@ -7800,6 +7839,7 @@ function fFlight(ev,f){
   const dz='f-'+uid();
   const hasDetails=!!(f.pnr||f.seat||f.duration||f.cost||f.notes||f.attachUrl||f.split||(!e&&paxOf(ev)>1));
   modal(e?'Edit Flight':'Add Flight',`<div class="fg">
+    ${whoPickHtml(ev,e?flyersOf(f,ev):['me'])}
     <div class="fi"><label>Airline</label><input class="fc" name="airline" list="airline-list" value="${esc(f.airline||'')}" autocomplete="off"></div>
     <div class="fi"><label>Flight #</label><input class="fc" name="fn" value="${esc(f.flightNumber||'')}"></div>
     <div class="fi"><label>From</label><input class="fc" name="from" list="location-list" value="${esc(f.from||'')}" autocomplete="off"></div>
@@ -7813,7 +7853,7 @@ function fFlight(ev,f){
       <div class="fi"><label>Duration</label><input class="fc" name="duration" value="${esc(f.duration||'')}" placeholder="Auto-calculated"></div>
       <div class="fi"><label>Cost</label><input class="fc" type="number" step="0.01" name="cost" value="${f.cost||''}"></div>
       <div class="fi"><label>Currency</label>${curSel(f.currency)}</div>
-      ${splitHtml(ev,f,!e)}
+      ${splitHtml(ev,f,!e,'flight')}
       <div class="fi full"><label>Notes</label><textarea class="fc" name="notes" rows="2">${esc(f.notes||'')}</textarea></div>
       <div class="fi full"><label>Attachment URL</label><input class="fc" name="attach" value="${esc(f.attachUrl||'')}" placeholder="Link to doc, PDF, or image"></div>
     </div></div>
@@ -7822,13 +7862,14 @@ function fFlight(ev,f){
   </div>`,()=>{
     const m=document.querySelector('.modal'),g=n=>m.querySelector(`[name="${n}"]`).value;
     const oE=document.getElementById('or-'+dz);
-    const d={airline:g('airline'),flightNumber:g('fn'),pnr:g('pnr'),seat:g('seat'),from:g('from'),to:g('to'),departureTime:g('dep'),arrivalTime:g('arr'),duration:g('duration'),cost:g('cost'),currency:g('currency'),rateToSGD:snapRate(g('currency')),...splitFields(m),notes:g('notes'),attachUrl:g('attach'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:f.ocrText)||'',...gatherPayment(g)};
+    const trv=[...m.querySelectorAll('[name="travellers"]:checked')].map(i=>i.value);
+    const d={...(partyOf(ev).length?{travellers:trv.length?trv:['me']}:{}),airline:g('airline'),flightNumber:g('fn'),pnr:g('pnr'),seat:g('seat'),from:g('from'),to:g('to'),departureTime:g('dep'),arrivalTime:g('arr'),duration:g('duration'),cost:g('cost'),currency:g('currency'),rateToSGD:snapRate(g('currency')),...splitFields(m),notes:g('notes'),attachUrl:g('attach'),ocrText:(oE&&oE.style.display!=='none'?oE.textContent:f.ocrText)||'',...gatherPayment(g)};
     if(e)Object.assign(f,d);else ev.flights.push({id:uid(),...d});
     // Add any pending multi-leg flights from OCR
     if(window._pendingFlightLegs&&window._pendingFlightLegs.length){
       const extra=window._pendingFlightLegs;
       window._pendingFlightLegs=null;
-      extra.forEach(leg=>ev.flights.push({id:uid(),...leg,split:d.split,splitWith:d.splitWith,paidBy:d.paidBy,rateToSGD:snapRate(leg.currency)}));
+      extra.forEach(leg=>ev.flights.push({id:uid(),...leg,travellers:d.travellers,split:d.split,splitWith:d.splitWith,paidBy:d.paidBy,rateToSGD:snapRate(leg.currency)}));
       saveS();render();toast((1+extra.length)+' flights added from scan');
     }else{saveS();render();toast((e?'Flight updated':'Flight added')+spNote(d,ev));}
   });
@@ -8238,6 +8279,7 @@ document.addEventListener('click',e=>{
       },100);
       }break;}
     case 'att-open':attOpen(el.dataset.aid);break;
+    case 'who-f':{if(ev){whoSet(ev,el.dataset.p);render();}break;}
     case 'sp-go':{S._spFocus=el.dataset.eid;S.tab='split';saveS();render();setTimeout(()=>{const r=document.getElementById('sp-'+el.dataset.eid);if(r)r.scrollIntoView({block:'center',behavior:'smooth'});},50);break;}
     case 'sp-del-person':{if(ev){const pid=el.dataset.pid,p=partyOf(ev).find(x=>x.id===pid);if(!p)break;
       const keep=JSON.parse(JSON.stringify({party:ev.party,settle:ev.settle||[],b:tripItems(ev).map(({e})=>[e.id,e.paidBy,e.splitWith,e.split])}));
