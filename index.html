@@ -1495,6 +1495,7 @@ details.c-region .country-grid{margin:0 0 14px}
 .sh-opt input{margin-top:3px;flex:none;width:16px;height:16px}
 .sh-opt b{display:block;font-size:13px;font-weight:500;color:var(--text)}
 .sh-opt small{display:block;font-size:12px;color:var(--text3);line-height:1.5}
+.sh-auto{font-size:12px;color:var(--green);background:var(--green-dim);border-radius:8px;padding:8px 10px;margin:12px 0 0;line-height:1.5}
 .sh-fine{font-size:12px;color:var(--text3);margin:8px 0 12px}
 .sh-acts{display:flex;gap:8px;justify-content:space-between}
 </style>
@@ -2144,7 +2145,7 @@ function startSyncPolling(){
 function stopSyncPolling(){clearInterval(_pollTimer);_pollTimer=null;}
 // Shared trips and invites: every 30 s while the app is open, and when it comes back to the front
 let _collabTick=0;
-setInterval(()=>{if(document.visibilityState!=='visible'||typeof _acct==='undefined'||!_acct)return;collabSync();if(++_collabTick%4===0)collabInvitesLoad();},30000);
+setInterval(()=>{if(document.visibilityState!=='visible'||typeof _acct==='undefined'||!_acct)return;collabSync();if(++_collabTick%4===0)collabInvitesLoad();if(_shares&&_shares.size)sharesSync();},30000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&_acct){collabSync();collabInvitesLoad();}});
 
 let _syncErrorState=null; // null = ok, '401' = token expired, 'error' = other error
@@ -2575,7 +2576,7 @@ async function acctPull(quiet){
     if(!_stillMe(me))return false;
     const apple=(await gistFeedSync(!changed,sbApple.used))||sbApple.changed;
     if(!_stillMe(me))return false;
-    if(changed||apple){try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}applyTheme();render();if(!quiet)updateSyncStatus('Pulled latest from your account');return true;}
+    if(changed||apple){try{localStorage.setItem('htV5',JSON.stringify(S));}catch(e){}applyTheme();render();if(!quiet)updateSyncStatus('Pulled latest from your account');if(changed)sharesSync();return true;}
     updateSyncStatus('Up to date');return false;
   }catch(e){console.error('Account pull failed:',e);updateSyncStatus('Sync error: '+(e.message||e));return false;}
 }
@@ -2918,6 +2919,7 @@ function vGuideCard(){
       'Open a trip → <b>Share</b> → <b>Create link</b>, then <b>Copy</b> or <b>Send…</b>. No account needed to view it, and it stays up to date.',
       'Companions see the dates, itinerary and trip stats (days, people, bookings). Choose what else to include: <b>Booking references</b>, <b>Costs</b> (with cost per person), <b>Trip notes</b>, <b>Settle up</b> and <b>Attachments</b>.',
       'Your checklist is never shared. The page has its own light/dark button.',
+      'The page <b>updates by itself</b> when anything in the trip changes, including changes by people you plan with. Only changing what’s included needs <b>Save what’s included</b>.',
       '<b>Stop sharing</b> turns the link off straight away.'
     ]),false,'link companions view only read-only send url whatsapp')}
     ${sec('Dashboard, events, calendar and countries',ul([
@@ -4043,7 +4045,7 @@ async function collabSync(opts){
   }catch(e){console.warn('Shared trip sync failed:',e);}
   finally{
     _collabBusy=false;
-    if(changed&&_stillMe(me)){saveUI();const busy=document.getElementById('mbg').classList.contains('open')||(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName));if(!busy)render();}
+    if(changed&&_stillMe(me)){saveUI();sharesSync();const busy=document.getElementById('mbg').classList.contains('open')||(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName));if(!busy)render();}
     if(_collabAgain){const o=_collabAgain===true?{}:_collabAgain;_collabAgain=false;setTimeout(()=>collabSync(o),300);}
   }
 }
@@ -4723,7 +4725,7 @@ async function showShareTrip(tid){
 function renderShareModal(t){
   const sh=_shares.get(t.id),o=sh?sh.opts:{costs:false,refs:false,notes:false,files:true},url=sh?SHARE_BASE+sh.token:'';
   const opt=(k,label,hint)=>`<label class="sh-opt"><input type="checkbox" data-shopt="${k}"${o[k]?' checked':''}><span><b>${label}</b><small>${hint}</small></span></label>`;
-  const body=`<p class="sh-intro">Send a <b>read-only</b> page of <b>${esc(t.name)}</b> to the people you're travelling with. They don't need an account. They see the dates, flights, hotels, activities, transport and any attachments you include, and the page updates when you change the trip. They can't edit anything or see your other trips.</p>
+  const body=`<p class="sh-intro">Send a <b>read-only</b> page of <b>${esc(t.name)}</b> to the people you're travelling with. They don't need an account. They see the dates, flights, hotels, activities, transport and any attachments you include. They can't edit anything or see your other trips.</p>
     ${url?`<div class="sh-link"><input class="fc" readonly value="${esc(url)}" id="sh-url" onclick="this.select()"><button class="btn btn-p" data-action="sh-copy">Copy</button></div>${navigator.share?'<button class="btn btn-s sh-native" data-action="sh-native">Send…</button>':''}`:''}
     <div class="sh-opts"><div class="sh-h">Also include</div>
       ${opt('refs','Booking references','Flight PNRs and confirmation numbers. Anyone with these and your surname may be able to manage a booking, so only include them if needed.')}
@@ -4731,13 +4733,17 @@ function renderShareModal(t){
       ${opt('notes','Trip notes','The notes on this trip.')}
       ${partyOf(t).length?opt('owe','Settle up','Each person’s balance and the payments to settle up, from the Split tab. Shows everyone’s names.'):''}
       ${opt('files','Attachments','Links, images and PDFs from the Attachments tab. Tickets and confirmations can show booking references.')}</div>
+    ${url?`<p class="sh-auto">✓ Updates by itself: anything added or changed in this trip shows on the shared page within a minute. Only changes to <b>Also include</b> need saving.</p>`:''}
     <p class="sh-fine">Anyone with the link can open it, so share it only with people you trust.</p>
-    <div class="sh-acts">${url?`<button class="btn btn-d" data-action="sh-stop">Stop sharing</button><button class="btn btn-p" data-action="sh-save">Update link</button>`:`<button class="btn btn-p" data-action="sh-create" style="width:100%">Create link</button>`}</div>
+    <div class="sh-acts">${url?`<button class="btn btn-d" data-action="sh-stop">Stop sharing</button><button class="btn btn-p" data-action="sh-save" hidden>Save what’s included</button>`:`<button class="btn btn-p" data-action="sh-create" style="width:100%">Create link</button>`}</div>
     <p id="sh-msg" style="font-size:12px;color:var(--text3);margin:8px 0 0"></p>`;
   const mb=document.querySelector('#mbg .modal-body');if(mb)mb.innerHTML=body;
   const mo=document.querySelector('#mbg .modal');if(mo)mo.dataset.shareTid=t.id;
 }
 const _shOpts=()=>{const o={};document.querySelectorAll('[data-shopt]').forEach(i=>o[i.dataset.shopt]=i.checked);return o;};
+// The save button appears only when what's included has changed (the content itself updates by itself)
+document.addEventListener('change',e=>{if(!e.target.dataset||e.target.dataset.shopt==null)return;const m=document.querySelector('#mbg .modal'),t=m&&S.events.find(x=>x.id===m.dataset.shareTid),sh=t&&_shares&&_shares.get(t.id),b=document.querySelector('[data-action="sh-save"]');
+  if(!sh||!b)return;const o=_shOpts(),diff=Object.keys(o).some(k=>!!o[k]!==!!sh.opts[k]);b.hidden=!diff;});
 async function shareSave(tid,create){
   const t=S.events.find(x=>x.id===tid);if(!t||!_acct)return;const me=_acct.id,o=_shOpts(),old=_shares.get(t.id);
   const msg=document.getElementById('sh-msg');if(msg)msg.textContent=create?'Creating link…':'Updating…';
