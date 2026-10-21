@@ -1080,6 +1080,16 @@ body.sb-collapsed .topbar{left:68px}
 .gs-why{font-size:12px;color:var(--text2)}
 .gs-empty{padding:14px 16px;font-size:13px;color:var(--text2)}
 .tb-sync .sync-dot{display:inline-flex;font-size:10.5px;text-transform:uppercase;letter-spacing:.16em;color:var(--text3);background:none!important;padding:0}
+.tb-bell{position:relative;display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:none;border:none;color:var(--text);cursor:pointer;flex:none}
+.tb-bell svg{width:18px;height:18px}.tb-bell:hover{background:var(--input-bg)}
+.tb-bell-dot{position:absolute;top:6px;right:7px;width:8px;height:8px;border-radius:50%;background:#e5484d;box-shadow:0 0 0 2px var(--header-bg,var(--bg));display:none}.tb-bell.has-new .tb-bell-dot{display:block}
+.nt-panel{position:fixed;top:60px;right:24px;width:360px;max-width:calc(100vw - 32px);max-height:min(70vh,560px);overflow:auto;background:var(--card);border:1px solid var(--line-strong);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.28);z-index:400;padding:6px 6px 10px}
+.nt-h{display:flex;justify-content:space-between;align-items:center;padding:8px 10px 6px;font-size:13px}.nt-x{border:0;background:none;color:var(--text3);font-size:20px;cursor:pointer;line-height:1}
+.nt-list{display:flex;flex-direction:column}.nt-i{display:flex;align-items:flex-start;gap:10px;text-align:left;width:100%;border:0;background:none;color:var(--text);font:inherit;padding:10px;border-radius:10px;cursor:pointer}
+.nt-i:hover{background:var(--input-bg)}.nt-i.new{background:var(--primary-dim)}.nt-ic{flex:none;width:22px;text-align:center;font-size:15px;line-height:1.3}
+.nt-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;font-size:13px;line-height:1.35}.nt-t b{font-weight:600}.nt-t small{font-size:11px;color:var(--text3)}.nt-i.bad .nt-t b{color:var(--accent)}
+.nt-dot{flex:none;width:8px;height:8px;border-radius:50%;background:#e5484d;margin-top:6px}.nt-empty{font-size:13px;color:var(--text3);padding:14px 10px 6px;margin:0}
+@media(max-width:860px){.nt-panel{top:62px;right:16px;left:16px;width:auto;max-width:none}}
 .tb-theme{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:none;border:none;color:var(--text);cursor:pointer}
 .tb-theme:hover{background:var(--primary-dim);color:var(--primary-deep)}
 .tb-theme svg{width:18px;height:18px}
@@ -2478,7 +2488,7 @@ function cloudPull(){return cloudMode()==='account'?acctPull():cloudMode()==='gi
 function cloudFullSync(){return cloudMode()==='account'?acctPull(true).then(()=>acctPush()):cloudMode()==='gist'?fullSync():null;}
 
 // Everything personal this app keeps in the browser — removed on sign-out
-function wipeLocalData(){attWipeLocal();_collabInv=[];['htCollabBase','htWho','htV5','htV4','htV5_backup','htV5_backup_ts','htSync',OWNER_KEY].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});}
+function wipeLocalData(){attWipeLocal();_collabInv=[];['htCollabBase','htWho','htNotifSeen','htNotifLog','htV5','htV4','htV5_backup','htV5_backup_ts','htSync',OWNER_KEY].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});}
 function acctPayload(){const d=syncData();delete d.trips;d.events=(d.events||[]).filter(t=>!(t.collab&&t.collab.id));return d;}
 function normEvents(r){return(r.events||r.trips||[]).map(t=>t.category?t:{...t,category:'trip',requiresLeave:true});}
 function hasLocalData(){return(S.events||[]).length>0;}
@@ -2927,11 +2937,12 @@ function vGuideCard(){
       '<b>Dashboard</b>: what\'s now or next, anything needing attention (payments due, leave short, clashes, documents expiring, invites), coming trips and the next 7 days of Apple Calendar appointments.',
       '<b>Events</b>: cards or list, filter by year or category, group and sort. Past events are folded away.',
       '<b>Search</b> (top) finds trips, places, flight numbers, hotels and booking references.',
+      '<b>Notifications</b> (the bell, top right): a red dot means something new: invites, changes others made to trips you plan together, trips starting within a week, payments due, to-dos due, passports or visas expiring, leave short and clashes. Tap an item to open it.',
       '<b>Calendar</b>: everything by month with public holidays. Tap a day for details, or switch to the list view.',
       '<b>Countries</b>: tap a country to mark it visited. <b>Travel stats</b> shows trips, flights, hours in the air, hotel nights and top countries and airlines.',
       'On a phone, Budget, Countries, Settings, this guide and Sign out are under <b>More</b>. The sun/moon button switches light and dark.',
       'On a computer: <b>/</b> search, <b>1–6</b> pages, <b>N</b> new event, <b>U</b> scan, <b>Esc</b> close.'
-    ]),false,'home overview map visited stats statistics keyboard shortcuts dark mode light mode theme')}
+    ]),false,'home overview map visited stats statistics keyboard shortcuts dark mode light mode theme bell notification alert reminder red dot')}
     ${sec('Leave, holidays and your region',ul([
       '<b>Settings → Region &amp; Preferences</b>: home country, currency, weekend, first day of the week, date style and home time zone.',
       '<b>Leave</b>: enter your annual leave a year; it\'s prorated if you joined or left mid-year. Choose whether it\'s given at the start of the year or earned monthly. Tick <b>I still work here</b> instead of an end date, and <b>+ Add Job</b> if you changed jobs.',
@@ -3294,6 +3305,70 @@ function renderSidebar(){
     <button class="sb-collapse" onclick="toggleSidebarCollapse()" title="Collapse or expand the sidebar" aria-label="Collapse or expand the sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>`;
   renderTopbar();
 }
+// ===== NOTIFICATIONS (bell, top right) =====
+// Built from what the app already knows (invites, payments, documents, checklists, trips coming up, leave, clashes)
+// plus a short log of changes other people made to trips you plan together. The red dot shows anything not yet seen
+// on this device; opening the list marks everything seen.
+const NOTIF_SEEN='htNotifSeen',NOTIF_LOG='htNotifLog';
+const _nGet=k=>{try{return JSON.parse(localStorage.getItem(k)||'null');}catch(e){return null;}};
+const _nSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
+function notifLogAdd(n){const l=(_nGet(NOTIF_LOG)||[]).filter(x=>x.key!==n.key);l.unshift({...n,at:Date.now()});_nSet(NOTIF_LOG,l.slice(0,30));}
+function leaveAheadNeed(){
+  const td=ymd(new Date()),y=new Date().getFullYear(),end=y+'-12-31';let n=0;
+  (S.events||[]).forEach(t=>{if(t.requiresLeave===false||!t.startDate||!t.endDate||t.source==='apple')return;
+    let c=new Date((t.startDate>td?t.startDate:td)+'T00:00:00');const e=new Date((t.endDate<end?t.endDate:end)+'T00:00:00');
+    while(c<=e){const ds=ymd(c);if(isWorkday(ds)&&!getAppliedForDate(ds))n++;c.setDate(c.getDate()+1);}});
+  return n;
+}
+function notifItems(){
+  const out=[],td=ymd(new Date()),live=(S.events||[]).filter(t=>t.source!=='apple'&&eventStatus(t)!=='completed');
+  const add=o=>out.push(o);
+  // Trip sharing: invites waiting
+  (_collabInv||[]).forEach(i=>add({key:'inv:'+i.id,o:-1000,ic:'👥',bad:false,title:`${i.from} invited you to ${i.name||'a trip'}`,sub:`${ROLE_LBL[i.role]||''} · tap to join or decline`,act:'nav',to:'events'}));
+  // Changes others made to trips you plan together (last 14 days)
+  (_nGet(NOTIF_LOG)||[]).filter(x=>Date.now()-x.at<14*864e5&&(S.events||[]).some(t=>t.id===x.tid)).forEach(x=>add({...x,o:-900+Math.min(0,(Date.now()-x.at)/864e5),act:'view',id:x.tid,ago:x.at}));
+  // Trips starting soon
+  live.forEach(t=>{const d=daysUntil(t.startDate);if(d>=0&&d<=7)add({key:'soon:'+t.id+':'+t.startDate+':'+(d<=1?'1':'7'),o:d,ic:'🧳',title:d===0?`${t.name} starts today`:d===1?`${t.name} starts tomorrow`:`${t.name} starts in ${d} days`,sub:fmt(t.startDate)+(t.endDate&&t.endDate!==t.startDate?' – '+fmt(t.endDate):''),act:'view',id:t.id});});
+  // Payments due
+  live.forEach(t=>SPLIT_KINDS.forEach(k=>(t[k]||[]).forEach(i=>{if(!i.paymentDueDate||i.fullyPaid==='yes')return;const d=daysUntil(i.paymentDueDate);if(d>14)return;
+    const nm=i.name||i.flightNumber||i.airline||({flights:'Flight',hotels:'Hotel',activities:'Activity',transport:'Transport'})[k];
+    add({key:'pay:'+i.id+':'+i.paymentDueDate+':'+(d<0?'late':'due'),o:d,ic:'💳',bad:d<0,title:d<0?'Payment overdue':d===0?'Payment due today':'Payment due '+fmtS(i.paymentDueDate),sub:nm+' · '+t.name,act:'view',id:t.id});})));
+  // Checklist to-dos due within 3 days or overdue
+  live.forEach(t=>(t.checklist||[]).forEach(c=>{if(c.done||!c.due)return;const d=daysUntil(c.due);if(d>3)return;
+    add({key:'ck:'+c.id+':'+c.due+':'+(d<0?'late':'due'),o:d,ic:'☑',bad:d<0,title:d<0?`Overdue: ${c.text}`:d===0?`Due today: ${c.text}`:`Due ${fmtS(c.due)}: ${c.text}`,sub:t.name+' · checklist',act:'view',id:t.id,tab:'checklist'});}));
+  // Passports, visas and IDs
+  docWarnings().forEach(w=>add({key:'doc:'+w.text,o:w.o,ic:'🛂',bad:w.bad,title:w.text,sub:w.sub,act:w.tid?'view':'nav',id:w.tid,to:'settings'}));
+  // Leave short this year
+  try{const lt=leaveJobTotals(),need=leaveAheadNeed();if(lt.tot&&need>lt.bal){const sh=+(need-lt.bal).toFixed(1);add({key:'leave:'+new Date().getFullYear()+':'+sh,o:500,ic:'🗓',bad:true,title:`${sh} more leave day${sh!==1?'s':''} needed this year`,sub:`Trips ahead need ${need}; you have ${lt.bal} left`,act:'nav',to:'leave'});}}catch(e){}
+  // Time clashes
+  live.forEach(t=>{if(findClashes(t,t.id).some(c=>c.severity==='time'))add({key:'clash:'+t.id,o:600,ic:'⚠',bad:true,title:`Time clash in ${t.name}`,sub:'Two bookings at the same time',act:'view',id:t.id});});
+  out.sort((a,b)=>a.o-b.o);
+  return out;
+}
+function notifUnseen(){const seen=new Set(_nGet(NOTIF_SEEN)||[]);return notifItems().filter(n=>!seen.has(n.key)).length;}
+function notifBellUpdate(){
+  const b=document.querySelector('.tb-bell');if(!b)return;
+  let n=0;try{n=notifUnseen();}catch(e){}
+  b.classList.toggle('has-new',n>0);b.setAttribute('aria-label',n?`Notifications, ${n} new`:'Notifications');b.title=n?`${n} new`:'Notifications';
+}
+function notifPanelHtml(){
+  const items=notifItems(),seen=new Set(_nGet(NOTIF_SEEN)||[]);
+  const ago=ms=>{const m=Math.round((Date.now()-ms)/6e4);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' d ago';};
+  return`<div class="nt-h"><b>Notifications</b><button class="nt-x" data-action="notif" aria-label="Close">×</button></div>
+    ${items.length?`<div class="nt-list">${items.map(n=>`<button class="nt-i${n.bad?' bad':''}${seen.has(n.key)?'':' new'}" data-action="notif-go" data-act="${esc(n.act||'')}" data-id="${esc(n.id||'')}" data-to="${esc(n.to||'')}" data-tab="${esc(n.tab||'')}">
+      <span class="nt-ic">${n.ic||'•'}</span><span class="nt-t"><b>${esc(n.title)}</b><small>${esc(n.sub||'')}${n.ago?' · '+ago(n.ago):''}</small></span>${seen.has(n.key)?'':'<span class="nt-dot" aria-label="New"></span>'}</button>`).join('')}</div>`
+      :'<p class="nt-empty">You’re all caught up ✓</p>'}`;
+}
+function notifToggle(force){
+  let p=document.getElementById('nt-panel');
+  if(p&&force!==true){p.remove();return;}
+  if(!p){p=document.createElement('div');p.id='nt-panel';p.className='nt-panel';p.setAttribute('role','dialog');p.setAttribute('aria-label','Notifications');document.body.appendChild(p);}
+  p.innerHTML=notifPanelHtml();
+  // Opening the list counts as seeing everything in it
+  _nSet(NOTIF_SEEN,notifItems().map(n=>n.key).concat((_nGet(NOTIF_SEEN)||[])).slice(0,300));notifBellUpdate();
+}
+document.addEventListener('click',e=>{const p=document.getElementById('nt-panel');if(p&&!p.contains(e.target)&&!e.target.closest('.tb-bell'))p.remove();},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){const p=document.getElementById('nt-panel');if(p)p.remove();}});
 // Top bar: search, sync status, light/dark. Built once so typing in search is never wiped by a re-render.
 function renderTopbar(){
   let tb=document.getElementById('topbar');
@@ -3301,11 +3376,12 @@ function renderTopbar(){
     tb=document.createElement('header');tb.id='topbar';tb.className='topbar';
     tb.innerHTML=`<div class="tb-brand" data-action="nav" data-to="dashboard"><span class="wordmark">The <em>Planner</em></span></div>
       <div class="tb-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="gsearch" type="search" placeholder="Search" title="Search trips, places and bookings" autocomplete="off" aria-label="Search"><kbd>/</kbd><div class="gs-results" id="gs-results" role="listbox"></div></div>
-      <div class="tb-sync"></div><button class="tb-theme" onclick="toggleTheme();renderTopbar()" aria-label="Switch light/dark"></button>`;
+      <div class="tb-sync"></div><button class="tb-bell" data-action="notif" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span class="tb-bell-dot"></span></button><button class="tb-theme" onclick="toggleTheme();renderTopbar()" aria-label="Switch light/dark"></button>`;
     document.body.appendChild(tb);
     if(window.innerWidth<=860)tb.querySelector('#gsearch').placeholder='Search';
   }
   tb.querySelector('.tb-sync').innerHTML=syncIndicatorHtml();
+  notifBellUpdate();const np=document.getElementById('nt-panel');if(np)np.innerHTML=notifPanelHtml();
   tb.querySelector('.tb-theme').innerHTML=S.theme==='dark'
     ?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>'
     :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>';
@@ -4013,6 +4089,9 @@ async function collabSync(opts){
         }
         const keep={...t.collab,...c,meName:t.collab.meName,meIdx:t.collab.meIdx};
         if(!base||base.v!==r.version){
+          if(base){// someone else changed it: note what's new for the bell
+            const ids=k=>new Set(((base.d&&base.d[k])||[]).map(e=>e.id)),added=SPLIT_KINDS.flatMap(k=>(r.data[k]||[]).filter(e=>!ids(k).has(e.id)).map(e=>e.name||[e.airline,e.flightNumber].filter(Boolean).join(' ')||e.type||'a booking'));
+            notifLogAdd({key:'upd:'+r.id+':'+r.version,tid:t.id,ic:'✏️',title:added.length?`New in ${t.name}: ${added.slice(0,2).join(', ')}${added.length>2?' +'+(added.length-2):''}`:`${t.name} was updated`,sub:'Changed by someone you plan this trip with'});}
           const mine=base?collabShape(collabToRemote(t,base.d),base.d,t):null;
           const merged=mine&&_cj(mine)!==_cj(base.d)?collabMerge(base.d,mine,r.data):r.data;
           collabReplace(t,collabFromRemote(merged,keep));cSetBase(r.id,{v:r.version,d:r.data});changed=true;
@@ -4055,7 +4134,7 @@ async function collabInvitesLoad(){
   const me=_acct.id;
   try{const{data,error}=await sbClient().rpc('trip_invites');if(!_stillMe(me))return;
     if(error){if(_collabMissingErr(error))_collabMissing=Date.now();return;}
-    const was=_cj(_collabInv);_collabInv=data||[];if(was!==_cj(_collabInv)&&(S.v==='dashboard'||S.v==='events'))render();}catch(e){}
+    const was=_cj(_collabInv);_collabInv=data||[];if(was!==_cj(_collabInv)){if(S.v==='dashboard'||S.v==='events')render();else notifBellUpdate();}}catch(e){}
 }
 function collabInvitesHtml(){
   if(!_collabInv.length)return'';
@@ -8684,6 +8763,9 @@ document.addEventListener('click',e=>{
       },100);
       }break;}
     case 'att-open':attOpen(el.dataset.aid);break;
+    case 'notif':notifToggle();break;
+    case 'notif-go':{const p=document.getElementById('nt-panel');if(p)p.remove();const d=el.dataset;
+      if(d.act==='view'&&d.id&&S.events.some(t=>t.id===d.id))nav('detail',{tid:d.id,tab:d.tab||'timeline'});else nav(d.to||'dashboard');break;}
     case 'guide-clear':{const q=document.getElementById('guide-q');if(q){q.value='';guideSearch('');q.focus();}break;}
     case 'people':showPeople(el.dataset.id);break;
     case 'cl-invite':{const t=S.events.find(x=>x.id===(document.querySelector('#mbg .modal')||{dataset:{}}).dataset.peopleTid);if(t)collabInvite(t);break;}
